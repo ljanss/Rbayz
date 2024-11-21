@@ -1,6 +1,6 @@
 ---
 #title: "Bayesian mixed models, shrinkage, sparse and interaction kernel regression"
-#author: "Luc Janss, Maria Izabel Cavassim Alves and Marni Tausen"
+#author: "Luc Janss, Marni Tausen and Maria Izabel Cavassim Alves"
 #date: "`r Sys.Date()`"
 output:
   md_document:
@@ -14,133 +14,114 @@ knitr::opts_chunk$set(echo = TRUE)
 # Bayesian mixed models, shrinkage, sparse and interaction kernel regression
 [![Build Status](https://travis-ci.org/MarniTausen/BayzR.svg?branch=master)](https://travis-ci.org/MarniTausen/BayzR)[![Coverage Status coveralls](https://coveralls.io/repos/github/MarniTausen/BayzR/badge.svg?branch=master)](https://coveralls.io/github/MarniTausen/BayzR?branch=master)
 
--   [How to install](#how-to-install)
--   [Short manual for using the bayz() main function](#Short-Manual)
+Sections in this page
+-   [About R/bayz](#About R/bayz)
+-   [Obtaining R/bayz](#Obtaining R/bayz)
+-   [A very short tour](#A very short tour of R/bayz)
 -   [Example](#examples)
 -   [Summarizing and using output](usingOutput.html)
 
-The Rbayz packages has a single main function 'bayz' that
-fits mixed-linear, Bayesian shrinkage, (sparse) kernel-regression, (kernel)
-interaction and multi-trait models with complex covariance structures using an extended R-formula syntax.
+# About R/bayz
+
+R/bayz is in the basis a mixed model packages, but it can do much more than what other common R mixed model packages offer.
+R/bayz has wide support to insert covariance / similarity / relationship structures on random effects, either
+through a supplied "kernel", with modelled structures such as spatial, unstructured and factor analytic
+covariance structures, and variaous approaches to model heterogeneous variances. For interactions of
+multiple random effects, R/bayz can build their covariance structure as a Kronecker product, and these
+Kronecker products are handled efficiently by avoiding to explicitly build the product matrix. A common
+application of this in plant breeding is to model Cultivar:Environment interactions with a Kronecker product
+of a genomic and a enviromic similarity matrix. R/bayz can go beyond interactions and Kronecker products
+of two terms, for instance, allowing to add a Trait dimension as well, to fit large multi-trait models using
+a Factor Analytic approach. R/bayz also
+supports using (multiple) large sets of predictors that can be modelled with different shrinkage regression options.
+Lastly, being Bayesian, R/bayz goes beyond standard mixed model capabilities by allowing different shrinkage and
+sparse shrinkage distributions on effects, as well as on kernels. 
+
 The R help ?bayz contains basic help information; full details are available on <ljanss.github.io/Rbayz>.
 
+# Obtaining R/bayz
 
-# How to install
+R/bayz us currently not an officially (cran) released R package. It can be downloaded and istalled with the options
+shown below. Not being on cran implies that dependencies need to be installed manually, which is also shown below.
 
-Most users would like to install our binary packages, that we have available
-for Windows 10 and MacOS in the bayz.biz website <http://www.bayz.biz/>.
+### 1. Precompiled binary versions (Windows, Mac)
 
-If you need or want to use the source code for installation, we have
-two repositories on github: in ljanss/BayzR, and in MarniTausen/BayzR.
-Installation from the ljanss/BayzR is recommended as first option,
-this repository contains regularly 'frozen' version that are tested on different
-data sets and compile-tested on Windows and Mac-OS. The version in 
-MarniTausen/BayzR is our development version and may only be of interest
-to those that want to co-develop and submit changes to our source code. 
-You may run into bugs or compilation errors when using the MarniTausen/BayzR
-version because we may just be in the middle of developing / testing something.
+You can try your luck if you can install some of the following precompiled binary packages for Windows and
+MacOS using the below commands in the R terminal. If this fails, go to option 2 to install source from Github.
 
-To install from the github repositories, the following is needed:
+Installing package dependencies:
+```{r, eval=FALSE}
+install.packages("Rcpp")
+install.packages("nlme")
+install.packages("coda")
+```
 
-1). download and install Rtools. This is not an R-package but a separate part of the
-R system and can be found on r-project.org. 
+For Windows (compiled on Win11 64-bit)
+```{r, eval=FALSE}
+install.packages("https://ljanss.github.io/Rbayz/Rbayz_0.9.0.zip",repos=NULL,type="win.binary")
+```
 
-2). install the devtools package.
+For MacOS (compiled on Mac Silicon)
+```{r, eval=FALSE}
+install.packages("https://ljanss.github.io/Rbayz/Rbayz_0.9.0.tgz",repos=NULL,type="mac.binary")
+```
+
+### 2. Install source from Github repository (all systems including linux)
+
+This requires a development environment in R, which needs Rtools on windows, or "command line tools" on MacOS,
+and the devtools package. On linux the development tools may often be pre-installed. The below commands run
+in the R terminal.
+
+Installing devtools and package dependencies:
 ```{r, eval=FALSE}
 install.packages("devtools")
-```
-
-3). Install dependencies lme4, coda and Rcpp.
-```{r, eval=FALSE}
-install.packages("lme4")
-install.packages("coda")
 install.packages("Rcpp")
+install.packages("nlme")
+install.packages("coda")
 ```
 
-4). Download and install/compile the BayzR package using:
+Download and install/compile Rbayz using:
 ```{r, eval=FALSE}
 library(devtools)
-devtools::install_github("ljanss/BayzR")
+devtools::install_github("ljanss/Rbayz")
 ```
-You may be asked to install several other packages.
-If you are sure you want the development-version, replace in step 3 to install from
-MarniTausen/BayzR. If the compilation succeeds, you are ready to use the main function bayz() after
-loading the package with library(BayzR).
 
-Short Manual
-============
+# A very short tour of R/bayz
 
-The bayz function fits various mixed-linear and Bayesian shrinkage models with complex
-covariance structures using an extended R-formula syntax.
+R/bayz has a single main function bayz() that accepts model formulas in an extended
+R-formula syntax where all
+explanatory (right-hand-side) variables are wrapped by a "function-like" to specify
+how to fit it in the model. 
+This may look like Yield ~ fx(Year) + rn(Variety)
+to fit Yield with Year as a fixed factor and Variety as a random factor (fx() and rn()
+imply the variable used should be (converted to) factor).
+For random effects, variance structures can be added with a V= option inside the
+rn(), for instance with a relationship / similarity matrix rn(Variety,V=Gmat), which
+implies the variance-covariance structure $Gmat \sigma_g^2$.
 
-The model formula in bayz has the basic syntax of an R formula but with all
-explanatory (right-hand-side) terms wrapped by a function to specify how to fit
-the explanatory variables in the model. This may look like Yield ~ fx(Year) + rn(Variety)
-to fit Yield with Year as a fixed factor and Variety as a random factor. 
-The equivalent lme4 model would be Yield ~ factor(Year) + (1|Variety). 
-The list of model functions currently available is:
-   fx() : fixed factors (with interactions)
-   rn() : random factors (with interactions)
-   rg() : fixed regressions (with interactions or nested in a factor)
-   rr() : random regressions 
-The model functions allow to specify interactions of variables, hierarchies, use of
-matrices as input data, complex covariance structures, and prior distributions can 
-be changed to modify standard mixed model in Bayesian shrinkage models.
+Interactions between fators are specified using the colon, such as fx(Year:Location)
+for fixed effects of Year-Location interactions. R/bayz does
+not support automatic expansion with main effects, and main effects, if desired, should
+be explicitly added in the model. For interactions in random effects, the variance specification
+is expanded to a product of terms (interpreted as Kronecker product), written as
+rn(Variety:Environment, V=Gmat*Emat), implying the variance-covariance structure for
+the interaction effects as $Gmat \otimes Emat \sigma_{ge}^2$. Using interactions
+and Kronecker products involving estimated unstructured covariance matrices allows to
+fit multi-trait models by supplying data in a "melted" form and specifying interactions
+with Trait. Interactions and the matching variance structures can be specified to any order.
+R/bayz can additionally fit large sets of predictors using the rr() (ridge or random regression)
+model function, regular fixed (nested) regressions using rg(), and random slope models using rs().
 
-Interactions between fators are specified using the colon, for instance by writing for a 
-fixed Year-Location interaction fx(Year:Location). Bayz does
-NOT support automatic expansion with main effects by using the 'star' (Year\*Location) or
-'forward slash' (Year/Location) syntaxes, hence bayz requires to manually add the desired
-main effects in the model (but 
-note that bayz uses the 'forward slash' to specify hierarchical models).
-Interactions between factors can be specified to any degree.
-The 'star' syntax can be used to indicate interaction
-between covariates, like rg(TempSum\*Precip), where it is simply interpreted as
-multiplication. 
-Interaction between a covariate and a factor is specified using the 'pipe'
-character as in lme4 models. It can be used to specify fixed nested regressions as 
-rg(TempSum|Year:Location) to specify regressions on TempSum within each Year-Location, or
-to speficy random slope models in rr(), for instance rr(TempSum|Variety). 
+R/bayz is used as many other R model functions by capturing the output object, and running methods
+on that output like summary(), plot(), various methods to extract part of the estimates, and a
+contrast and predict method. The summary() gives MCMC convergence diagnostics and Highest Posterior
+Density regions for selected "traced" parameters, while plot() produces trace plots and density plots.
 
-The bayz call has a data argument to specify an input data-frame (the "main data")
-to contain model variables,
-but bayz will also search the R environment if variables are not found in the main data.
-Typically, input in the form of matrices such as large sets of covariates, proportional
-variance-covariance / correlation / kernel / similarity matrices used in variance models,
-as well as data for hierarchical models, are not in the main data.
-Matrices / kernels should be prepared with row-names to match a variable
-in the data. For matrices / kernels used in variance models, the link is straightforward, 
-for instance in rn(Variety:Location, V=KG\*KE), KG and KE can be a genetic and environmental
-kinship / kernel matrix, respectively, and KG should have row-names matching Variety levels,
-while KE should have row-names matching Location levels. 
-To fit a large set of covariates, the match is specified using a hierachical specification
-rr(Variety/Metabolites), where Metabolites is then a matrix of covariates which must have
-row-names matching Variety levels. In both cases, such kernel or covariate matrices
-must have unique levels, but the main data may have repeated levels and in different order.
-If one has repeated metabolite data on each Variety, for instance at multiple time-points,
-then consider that Variety is not the appropriate link to the data, but Variety:Time is.
+Check the following manual pages for additional information on:
 
-For random effects a variance-covariance structure can be specified using a
-V= option within the model-term function, for example rn(Variety, V=KG).
-When the fit is for an interaction of factors, the variance specification should
-expand to include one term for each variable, separated by stars (which should
-be read as Kronecker products). The variance structure
-is then built up from a combination of given (proportional) variance-covariance / correlation /
-kernel matrices and predefined acronyms IDEN, DIAG and VCOV that indicate parameterized
-matrices (with parameters to be estimated from the data). 
-Alternatively, the variance structure can be specified as a linear model using V=~, 
-which is interpreted as a use of a log-linear model for the variances. 
-
-# Examples
-
-```{r, eval=FALSE}
-library(BayzR)
-# A dummy test for bayz
-y = rnorm(1000)
-A = as.factor(rep(1:20,50))
-B = as.factor(rep(1:10,each=100))
-dat1 = data.frame(y,A,B)
-library(BayzR)
-fit1 = bayz(y~fx(A)+fx(B)+rn(A:B),data=dat1,chain=c(2000,100,20))
-summary(fit1)
-```
+-   An extended tour of R/bayz with examples
+-   Full syntax for the bayz() function call
+-   Overview of all model-function terms and their options
+-   Overview of all variance-model specifications
+-   Specification of residual variance structures
+-   Using the output with summary() and other methods
