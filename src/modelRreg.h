@@ -33,6 +33,11 @@ public:
    }
    
    void sample() {
+      // [ToDo] if mixture model can have 0 variance, this needs to be accommodate here as special case.
+      // Variance 0 would in principle be weight INF -> makes sense, then par[k] would be become zero, but
+      // it could be set directly without going through the computations.
+      // And (de)corrections can be skipped dependent on whether old or new weight is INF or not.
+      double inf = std::numeric_limits<double>::infinity();
       for(size_t k=0; k < M->ncol; k++) {
          resid_decorrect(k);
          collect_lhs_rhs(k);   // update lhs and rhs variables

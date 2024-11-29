@@ -117,17 +117,87 @@ public:
 
 };
 
+/* lassVarStr is the Bayesian Power LASSO, on scalar level it is the model
+        b_i ~ Exp(- 'rate' |b_i|^'pow' ).
+   'rate' is estimated from the data, 'pow' is tunable "power" parameter with default value 0.8.
+   The 'rate' has a default improper uniform prior, or a user-supplied gamma prior.
+   OBS: lasso implementation from bayz does not match the generic interface of idenVarStr
+   with a vector of variances that is supplied to the 'lower' model to make mixed-model updates.
+*/
+
+class lassVarStr : public indepVarStr {
+
+public:
+
+    // "regular" constructor that gets variance info from the parsed model description
+    lassVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar)
+    {
+        // need to check how to get the power parameter from the parsed modeldescr
+        par = new parVector(modeldescr, 1.0l, "rate");
+        par->traced=1;
+        par->varianceStruct="LASS";
+    }
+
+    // this is still copy from diagVarStr, but it will probably look most like idenVarStr ...
+    void sample() {
+      double ssq=0.0;
+      for(size_t k=0; k < coefpar->nelem; k++)
+         ssq += coefpar->val[k]*coefpar->val[k]/diag.data[k];
+      par->val[0] = gprior.samplevar(ssq,coefpar->nelem);
+      double invvar = 1.0l/par->val[0];
+      for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
+    }
+
+};
+
 // mixtVarStr is now standard 2-class mixture with pi0, pi1, v0, v1
 class mixtVarStr : public indepVarStr {
 public:
     mixtVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
+        // some work to parse options in the MIXT[...] term; there should be 'vars' and 'counts' ...
+        std::vector<std::string> split_options = splitString(modeldescr.varOption,",");
+        std::string vars_string="",counts_string="";
+        for(size_t i=0; i<split_options.size(); i++){  // check for correct syntax vars=c(...) and cut out part between (...)
+            if(split_options[i].substr(0,7)=="vars=c(") vars_string=split_options[i].substr(7,(split_options[i].size()-8));
+            if(split_options[i].substr(0,9)=="counts=c(") counts_string=split_options[i].substr(7,(split_options[i].size()-10));
+        }
+        if(vars_string=="" || counts_string=="") {
+            throw(generalRbayzError("MIXT["+modeldescr.varOption+"] is missing vars=c() or counts=c() or it is not well formatted/spelled"));
+        }
+        std::vector<std::string> vars_values_strings = splitString(vars_string,",");  // the single values split but still as strings
+        std::vector<std::string> counts_values_strings = splitString(counts_string,",");
+        if(vars_values_strings.size() != counts_values_strings.size()) {
+            throw(generalRbayzError("In MIXT["+modeldescr.varOption+"] number of elements in vars and counts are not equal"));
+        }
+        Ncat = vars_values_strings.size();
+        Vars.resize(Ncat,0.0l);
+        Counts.resize(Ncat,0);
+        Pi.resize(Ncat);
+        int total_counts=0;
+        try {
+            for(size_t i=0; i<Ncat; i++) {
+                Vars[i]=std::stod(vars_values_strings[i]);
+                Counts[i]=std::stoi(counts_values_strings[i]);
+                total_counts += Counts[i];
+            }
+        }
+        catch(std::exception &err) {
+            Rbayz::Messages.push_back(std::string(err.what()));
+            throw(generalRbayzError("Error in reading vars or counts values from MIXT["+modeldescr.varOption+"]"));
+   	    }
+        for(size_t i=0; i<Ncat; i++)          // The pi's are initialized from the prior counts
+            Pi[i] = Counts[i]/total_counts;
 
-        // add constructor
+
     }
 
     void sample() {
         // add sample implementation
     }
+
+    int Ncat;
+    std::vector<double> Vars, Pi;
+    std::vector<int> Counts;
 
 //    getSetOptions(modeldescr.options["V"]); // not yet defined?
 //    modelBVS *mixmod;

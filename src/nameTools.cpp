@@ -41,6 +41,7 @@ std::vector<std::string> getMatrixNames(Rcpp::NumericMatrix & mat, int dim) {
    return names;
 }
 
+// This is doing what R paste0(text,1:n) would do, i.e. generateLabels(kk,5) would generate kk1, kk2, ..., kk5
 std::vector<std::string> generateLabels(std::string text, int n) {
    Rcpp::IntegerVector seq_ints = Rcpp::seq_len(n);      // 1..n as integers
    Rcpp::CharacterVector seq_strings                     // 1..n in Rcpp charvec

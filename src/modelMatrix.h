@@ -39,7 +39,7 @@ public:
       F = new dataFactor(modeldescr.variableObjects[0], modeldescr.variableNames[0]);
       M = new dataMatrix(modeldescr.variableObjects[1], modeldescr.variableNames[1]);
       par = new parVector(modeldescr, 0.0l, M->colnames);
-      weights.initWith(M->ncol,1.0l);
+//      weights.initWith(M->ncol,1.0l);  // I think weights is not used (but using varmodel->weights)
       builObsIndex(obsIndex,F,M);
       lhs = 0.0l;
       rhs = 0.0l;
@@ -53,13 +53,18 @@ public:
    
    // methods for single-site updates: data (de)corrections for a single covariate
    // column, and LHS and RHS statistics for a single covariate column.
+   // Updated to skip (de)corrections when regression coeff is zero - this could have big
+   // impact using the code for mixture models with many zero regcoeff.
    void resid_correct(size_t col) {
+      if(par->val[col]==0.0l) return;
       double * colptr = M->data[col];
-      for (size_t obs=0; obs < F->nelem; obs++)
+      for (size_t obs=0; obs < F->nelem; obs++) {
          resid[obs] -= par->val[col] * colptr[obsIndex[obs]];
+      }
    }
 
    void resid_decorrect(size_t col) {
+      if(par->val[col]==0.0l) return;
       double * colptr = M->data[col];
       for (size_t obs=0; obs < F->nelem; obs++)
          resid[obs] += par->val[col] * colptr[obsIndex[obs]];
@@ -118,7 +123,7 @@ public:
    */
    dataMatrix *M;
    dataFactor *F;
-   simpleDblVector weights;
+//   simpleDblVector weights;
    double lhs, rhs;          // lhs, rhs will be scalar here (per iteration)
    std::vector<double> fit;
    std::vector<size_t> obsIndex;

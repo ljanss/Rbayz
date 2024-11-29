@@ -197,9 +197,9 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
                }
                name = varianceElements[i].substr(0,bracket);
                options = varianceElements[i].substr(bracket+1,(len_tot-bracket-2));
-               if(name=="DIAG") {                 // separating first element in [...] as the variable
-                  size_t comma = options.find(',');     // for DIAG structures ([ToDo]to be extended ...)
-                  if(comma==std::string::npos) {
+               if(name=="DIAG") {                 // separating first element in [...] as the variable for DIAG structures
+                  size_t comma = options.find(',');     // [ToDo]to be extended to other structures where the first element
+                  if(comma==std::string::npos) {        // is expected to be a variable name/object ...
                      variable = options;
                      options = "";
                   }
@@ -208,8 +208,8 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
                      options = options.substr(comma+1,std::string::npos);
                   }
                }
-               else {
-                  variable="";
+               else {                  // for not DIAG (and with extensions not other structures with a variable name/object),
+                  variable="";         // variable is empty, options is all text between [... ] (possibly list of several comma-separated options) 
                }
             }
             varName.push_back(name);

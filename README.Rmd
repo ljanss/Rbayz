@@ -96,8 +96,8 @@ This may look like Yield ~ fx(Year) + rn(Variety)
 to fit Yield with Year as a fixed factor and Variety as a random factor (fx() and rn()
 imply the variable used should be (converted to) factor).
 For random effects, variance structures can be added with a V= option inside the
-rn(), for instance with a relationship / similarity matrix rn(Variety,V=Gmat), which
-implies the variance-covariance structure $Gmat \sigma_g^2$.
+rn(), for instance with a given relationship / similarity matrix rn(Variety,V=Gmat),
+which implies the variance-covariance structure Gmat $\sigma_g^2$.
 
 Interactions between fators are specified using the colon, such as fx(Year:Location)
 for fixed effects of Year-Location interactions. R/bayz does
@@ -105,7 +105,7 @@ not support automatic expansion with main effects, and main effects, if desired,
 be explicitly added in the model. For interactions in random effects, the variance specification
 is expanded to a product of terms (interpreted as Kronecker product), written as
 rn(Variety:Environment, V=Gmat*Emat), implying the variance-covariance structure for
-the interaction effects as $Gmat \otimes Emat \sigma_{ge}^2$. Using interactions
+the interaction effects as Gmat $\otimes$ Emat $\sigma_{ge}^2$. Using interactions
 and Kronecker products involving estimated unstructured covariance matrices allows to
 fit multi-trait models by supplying data in a "melted" form and specifying interactions
 with Trait. Interactions and the matching variance structures can be specified to any order.
