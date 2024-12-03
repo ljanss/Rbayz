@@ -152,6 +152,8 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
             tmpstring=optString.substr(pos1,(pos2-pos1+1));
          else                   // pos2 is after the last character (of piece to extract)
             tmpstring=optString.substr(pos1,(pos2-pos1));
+         // [ToDo] here thinking to also allow option syntax as "function-like" (looks like function),
+         // which is xxxx(value1,value2). This is convenient to write a list of values.
          pos4 = tmpstring.find("=");  // locate equal sign in option string
          if(pos4 == std::string::npos) {
             throw generalRbayzError("Error: option [" + tmpstring + "] is not <keyword>=<value> in " + shortModelTerm);
@@ -212,6 +214,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
                   variable="";         // variable is empty, options is all text between [... ] (possibly list of several comma-separated options) 
                }
             }
+            // [ToDo] Here make varOption split in a map? Now it is just the whole string ...
             varName.push_back(name);
             varVariable.push_back(variable);
             varOption.push_back(options);

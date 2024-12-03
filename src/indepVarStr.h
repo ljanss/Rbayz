@@ -19,6 +19,7 @@
 #include "simpleVector.h"
 #include "parVector.h"
 #include "dataCovar.h"
+#include "nameTools.h"
 #include <unistd.h>
 
 class indepVarStr : public modelVar {
@@ -172,7 +173,6 @@ public:
         Ncat = vars_values_strings.size();
         Vars.resize(Ncat,0.0l);
         Counts.resize(Ncat,0);
-        Pi.resize(Ncat);
         int total_counts=0;
         try {
             for(size_t i=0; i<Ncat; i++) {
@@ -185,8 +185,13 @@ public:
             Rbayz::Messages.push_back(std::string(err.what()));
             throw(generalRbayzError("Error in reading vars or counts values from MIXT["+modeldescr.varOption+"]"));
    	    }
-        for(size_t i=0; i<Ncat; i++)          // The pi's are initialized from the prior counts
-            Pi[i] = Counts[i]/total_counts;
+        std::vector<std::string> temp_labels = generateLabels("pi",Ncat);
+        temp_labels.insert(temp_labels.begin(),"var");
+        par = new parVector(modeldescr, 1.0l, temp_labels);
+        for(size_t i=1; i<=Ncat; i++)          // The pi's are initialized from the prior counts
+            par->val[i] = Counts[i]/total_counts;
+        par->traced=1;
+        par->varianceStruct="MIXT";
 
 
     }
@@ -196,7 +201,7 @@ public:
     }
 
     int Ncat;
-    std::vector<double> Vars, Pi;
+    std::vector<double> Vars;
     std::vector<int> Counts;
 
 //    getSetOptions(modeldescr.options["V"]); // not yet defined?
