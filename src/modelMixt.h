@@ -1,31 +1,28 @@
 //
-//  BayzR --- modelBVS.h
-//  Bayesian Variable Selection model - derives from modelMatrix to be a 'sibling' model
-//  to modelRreg and work on the same data structures as Rreg.
+//  Rbayz --- modelMixt.h
+//  Object to modify mixture class in MIXT variance structure.
 //
 //  Created by Luc Janss on 03/08/2018.
 //
 
-#ifndef modelBVS_h
-#define modelBVS_h
+#ifndef modelMixt_h
+#define modelMixt_h
 
 #include <Rcpp.h>
 #include "modelMatrix.h"
 
-class modelBVS : public modelMatrix {
+class modelMixt : public modelCoeff {
 
 public:
 
-   modelBVS(dcModelTerm & modeldescr, modelBase * rmod)
-         : modelRreg(modeldescr, rmod)
+   modelMixt(parsedModelTerm & modeldescr, modelBase * rmod)
+         : modelCoeff(modeldescr, rmod)
    {
-      par = regcoeff;    // same as in Rreg
-      hpar.initWith(par.nelem+2,1.0l);
-      hparName[0] = "pi0." + parName;
-      hparName[1] = "tau0." + parName;
+      par = regcoeff;
+
    }
 
-   ~modelBVS() {
+   ~modelMixt() {
    }
    
    void sample() {
@@ -40,4 +37,4 @@ public:
 
 };
 
-#endif /* modelBVS */
+#endif /* modelMixt_h */

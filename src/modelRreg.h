@@ -32,17 +32,22 @@ public:
       delete varmodel;
    }
    
+   // sample() now updated to handle zero variance (inf weight) from the variance model:
+   // - decorrect() runs to correct for old estimate, but skips if old one was already zero
+   // - for inf weight, regcoeff is set to zero, else it will go through the sampling procedure
+   // - correct() runs in case regcoeff != zero, but skips if it is zero
    void sample() {
-      // [ToDo] if mixture model can have 0 variance, this needs to be accommodate here as special case.
-      // Variance 0 would in principle be weight INF -> makes sense, then par[k] would be become zero, but
-      // it could be set directly without going through the computations.
-      // And (de)corrections can be skipped dependent on whether old or new weight is INF or not.
       double inf = std::numeric_limits<double>::infinity();
       for(size_t k=0; k < M->ncol; k++) {
          resid_decorrect(k);
-         collect_lhs_rhs(k);   // update lhs and rhs variables
-         lhs += varmodel->weights[k];
-         par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
+         if(varmodel->weights[k]==inf) {
+            par->val[k]=0;
+         }
+         else {
+            collect_lhs_rhs(k);   // update lhs and rhs variables
+            lhs += varmodel->weights[k];
+            par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
+         }
          resid_correct(k);
       }
       // need some thinking how to store sample info in file; likely every "saved" cycle.
@@ -77,5 +82,12 @@ public:
    }
 };
 
+class modelRregMixt : public modelRreg {
+public:
+   modelRregMixt(parsedModelTerm & pmdescr, modelResp * rmod)
+      : modelRreg(pmdescr, rmod) {
+      varmodel = new mixtVarStr(pmdescr, this->par);
+   }
+};
 
 #endif /* modelRreg */
