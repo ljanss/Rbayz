@@ -88,6 +88,11 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                model.push_back(new modelRregIden(pmt, modelR));
             else if (pmt.varianceStruct=="DIAG")
                model.push_back(new modelRregDiag(pmt, modelR));
+            else if (pmt.varianceStruct=="MIXT") {
+               model.push_back(new modelRregMixt(pmt, modelR));
+               modelRreg* rrmodel = model.back();
+               model.push_back(new modelMixt(pmt, rrmodel));
+            }
             else
                throw generalRbayzError("There is no class to model rr(...) with Variance structure " + pmt.options["V"]);
          }
