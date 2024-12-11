@@ -191,6 +191,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                   (*(Rbayz::parList[par]))->val[row] = par_pm[row];
             }
             modelR->readjResid();  // residuals need to be reset to match loaded fitted values.
+            for(size_t mod=0; mod<model.size(); mod++) model[mod]->restart();
          }
          else {  // no match
             throw (generalRbayzError("Initialisation values cannot be used because names or sizes don't match"));
