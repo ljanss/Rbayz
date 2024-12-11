@@ -55,7 +55,15 @@ public:
       return bounds;
    }
 
-   void sample();
+   void sample() {
+
+   }
+
+   void sampleHpars() {
+
+   }
+
+   void restart() {}
 
 private:
    Rcpp::IntegerVector catData;

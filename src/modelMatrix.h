@@ -70,6 +70,9 @@ public:
          resid[obs] += par->val[col] * colptr[obsIndex[obs]];
    }
 
+   // [ToDo] There is maybe some efficiency gain making a method that combined resid_decorrect()
+   // and collect_lhs_rhs() because it is the same loops and some computations are re-used.
+   // Also below, colptr[matrixrow] * residPrec[obs] is computed twice ...
    void collect_lhs_rhs(size_t col) {
       lhs = 0.0; rhs=0.0;
       size_t matrixrow;

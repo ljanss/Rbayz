@@ -59,6 +59,10 @@ public:
       varmodel->sample();
    }
 
+   void restart() {
+      varmodel->restart();
+   }
+
    indepVarStr* varmodel;
 
 };

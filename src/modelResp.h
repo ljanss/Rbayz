@@ -89,6 +89,10 @@ public:
       varModel->sample();
    }
 
+   void restart() {
+      varModel->restart();
+   }
+
    indepVarStr* varModel;
    Rcpp::LogicalVector missing;
    parVector* resid;

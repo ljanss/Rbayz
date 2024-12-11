@@ -96,6 +96,10 @@ void model_rn_cor_k0::sampleHpars() {
    varmodel->sample();
 }
 
+void model_rn_cor_k0::restart() {
+   varmodel->restart();
+}
+
 void model_rn_cor_k0::accumFit(simpleDblVector & fit) {
    /* these accumFit functions are not yet active, and I don't even know
       anymore why I started making them ...

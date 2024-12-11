@@ -47,6 +47,8 @@ public:
 
    void sampleHpars() {}
 
+   void restart() {}
+
    void accumFit(simpleDblVector & fit) {
       for (size_t obs=0; obs < C->nelem; obs++)
         fit[obs] += par->val[0] * C->data[obs];

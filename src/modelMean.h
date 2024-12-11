@@ -53,6 +53,8 @@ public:
 
    void sampleHpars() {}
 
+   void restart() {}
+
 private:
 };
 

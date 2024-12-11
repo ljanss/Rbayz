@@ -1,6 +1,6 @@
 //
 //  Rbayz --- modelMixt.h
-//  Object to modify mixture class in MIXT variance structure.
+//  Object to modify mixture class indicator for MIXT variance structure.
 //
 //  Created by Luc Janss on 03/08/2018.
 //
@@ -11,12 +11,12 @@
 #include <Rcpp.h>
 #include "modelMatrix.h"
 
-class modelMixt : public modelCoeff {
+class modelMixt : public modelBase {
 
 public:
 
-   modelMixt(parsedModelTerm & modeldescr, modelBase * rmod)
-         : modelCoeff(modeldescr, rmod)
+   modelMixt(parsedModelTerm & modeldescr, modelRreg * rrmod)
+         : modelbase()
    {
       par = regcoeff;
 
@@ -34,6 +34,11 @@ public:
       hpar[0] = gprior.samplevar(ssq, M->ncol);
    }
 
+   void sampleHpars() {
+
+   }
+
+   void restart() {}
 
 };
 

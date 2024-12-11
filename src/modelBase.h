@@ -28,10 +28,11 @@ public:
    virtual ~modelBase() {  }
    
    // sample and update methods, now updating of hyper pars (varcomps) is separated to
-   // allow running with fixed (estimated) hyper parameters.
+   // allow running with fixed hyper parameters.
    virtual void sample() = 0;
    virtual void sampleHpars() = 0;
    // virtual void updateGD() = 0; // updates using GD?
+   virtual void restart() = 0;
 
    // prepForOutput is for model classes that need to make a transform of
    // parameters for output, the base class defines an 'empty' version.

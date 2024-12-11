@@ -45,6 +45,11 @@ public:
         delete par;
     }
 
+    void restart() {
+       double invvar = 1.0l/par->val[0];
+       for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar;
+    }
+
     void sample() {
       double ssq=0.0;
       for(size_t k=0; k < coefpar->nelem; k++)
@@ -105,6 +110,11 @@ public:
    	    }
     }
 
+    void restart() {
+       double invvar = 1.0l/par->val[0];
+       for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
+    }
+
     void sample() {
       double ssq=0.0;
       for(size_t k=0; k < coefpar->nelem; k++)
@@ -137,6 +147,11 @@ public:
         par = new parVector(modeldescr, 1.0l, "rate");
         par->traced=1;
         par->varianceStruct="LASS";
+    }
+
+    void restart() {
+       double invvar = 1.0l/par->val[0];
+       for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
     }
 
     // this is still copy from diagVarStr, but it will probably look most like idenVarStr ...
@@ -194,6 +209,10 @@ public:
         par->varianceStruct="MIXT";
 
 
+    }
+
+    void restart() {
+        // ??
     }
 
     void sample() {

@@ -38,6 +38,12 @@ public:
       
    }
 
+   void sampleHpars() {
+
+   }
+
+   void restart() {}
+
 private:
    Rcpp::IntegerVector coldata;  // probably need to change, I want to prepare column for polyg() as character
 

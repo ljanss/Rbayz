@@ -40,6 +40,8 @@ public:
 
    void sampleHpars() {}
 
+   void restart() {}
+
 };
 
 #endif /* modelFixf_h */

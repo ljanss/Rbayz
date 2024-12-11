@@ -28,6 +28,7 @@ public:
    ~model_rn_cor_k0();
    void sample();
    void sampleHpars();
+   void restart();
    void accumFit(simpleDblVector & fit);
    void prepForOutput();
    std::vector<kernelMatrix*> kernelList;
