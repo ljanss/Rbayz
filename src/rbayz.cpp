@@ -252,7 +252,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       std::string method = Rcpp::as<std::string>(methodArg);
       if (method=="Bayes" || method=="BLUPMC") {
          if(verbose>0) {
-            Rcpp::Rcout << "Running chain at cycle ... convergence\n";
+            Rcpp::Rcout << "Cycle avgChange\n";
          }
          for (int cycle=1, save=0; cycle <= chain[0]; cycle++) {
             modelR->sample();
@@ -286,14 +286,14 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                      for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
                         if (save==0) postmean = (*(Rbayz::parList[i]))->val[j];  // if nothing saved yet, using sampled
                         else postmean = (*(Rbayz::parList[i]))->postMean[j];     // value instead of postmean.
-                        conv_change = abs( (prevShowConv[col] - postmean) / prevShowConv[col] );
+                        conv_change += abs( (prevShowConv[col] - postmean) / prevShowConv[col] );
                         prevShowConv[col] = postmean;
                         col++;
                      }
                   }
                }
                conv_change /= double(nTracedParam);
-               Rcpp::Rcout << " ... " << conv_change << "\n";
+               Rcpp::Rcout << " " << conv_change << "\n";
             }
          } // end for(cycle ...)
       }
