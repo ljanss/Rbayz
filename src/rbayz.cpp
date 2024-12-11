@@ -13,6 +13,7 @@
 #include "modelFreg.h"
 #include "modelRreg.h"
 #include "model_rn_cor.h"
+#include "modelMixt.h"
 #include "rbayzExceptions.h"
 #include "simpleMatrix.h"
 #include "simpleVector.h"
@@ -49,6 +50,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    // some variable are outside try{} because associated memory alloc needs to be cleaned up in catch{}
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
+
+   Rcpp::Rcout << "Hi there Wednesday\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -89,8 +92,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
             else if (pmt.varianceStruct=="DIAG")
                model.push_back(new modelRregDiag(pmt, modelR));
             else if (pmt.varianceStruct=="MIXT") {
-               model.push_back(new modelRregMixt(pmt, modelR));
-               modelRreg* rrmodel = model.back();
+               modelRreg* rrmodel = new modelRregMixt(pmt, modelR);
+               model.push_back(rrmodel);
                model.push_back(new modelMixt(pmt, rrmodel));
             }
             else

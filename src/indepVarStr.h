@@ -48,6 +48,7 @@ public:
     void restart() {
        double invvar = 1.0l/par->val[0];
        for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar;
+       Rcpp::Rcout << "In idenVarStr weights set to " << invvar << "\n";
     }
 
     void sample() {
@@ -164,6 +165,8 @@ public:
       for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
     }
 
+    simpleDblVector diag;
+
 };
 
 // mixtVarStr is now standard 2-class mixture with pi0, pi1, v0, v1
@@ -171,19 +174,19 @@ class mixtVarStr : public indepVarStr {
 public:
     mixtVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
         // some work to parse options in the MIXT[...] term; there should be 'vars' and 'counts' ...
-        std::vector<std::string> split_options = splitString(modeldescr.varOption,",");
+        std::vector<std::string> split_options = splitString(modeldescr.varOption[0],",");
         std::string vars_string="",counts_string="";
         for(size_t i=0; i<split_options.size(); i++){  // check for correct syntax vars=c(...) and cut out part between (...)
             if(split_options[i].substr(0,7)=="vars=c(") vars_string=split_options[i].substr(7,(split_options[i].size()-8));
             if(split_options[i].substr(0,9)=="counts=c(") counts_string=split_options[i].substr(7,(split_options[i].size()-10));
         }
         if(vars_string=="" || counts_string=="") {
-            throw(generalRbayzError("MIXT["+modeldescr.varOption+"] is missing vars=c() or counts=c() or it is not well formatted/spelled"));
+            throw(generalRbayzError("MIXT["+modeldescr.varOption[0]+"] is missing vars=c() or counts=c() or it is not well formatted/spelled"));
         }
         std::vector<std::string> vars_values_strings = splitString(vars_string,",");  // the single values split but still as strings
         std::vector<std::string> counts_values_strings = splitString(counts_string,",");
         if(vars_values_strings.size() != counts_values_strings.size()) {
-            throw(generalRbayzError("In MIXT["+modeldescr.varOption+"] number of elements in vars and counts are not equal"));
+            throw(generalRbayzError("In MIXT["+modeldescr.varOption[0]+"] number of elements in vars and counts are not equal"));
         }
         Ncat = vars_values_strings.size();
         Vars.resize(Ncat,0.0l);
@@ -198,7 +201,7 @@ public:
         }
         catch(std::exception &err) {
             Rbayz::Messages.push_back(std::string(err.what()));
-            throw(generalRbayzError("Error in reading vars or counts values from MIXT["+modeldescr.varOption+"]"));
+            throw(generalRbayzError("Error in reading vars or counts values from MIXT["+modeldescr.varOption[0]+"]"));
    	    }
         std::vector<std::string> temp_labels = generateLabels("pi",Ncat);
         temp_labels.insert(temp_labels.begin(),"var");
@@ -222,6 +225,7 @@ public:
     int Ncat;
     std::vector<double> Vars;
     std::vector<int> Counts;
+    simpleDblVector diag;
 
 //    getSetOptions(modeldescr.options["V"]); // not yet defined?
 //    modelBVS *mixmod;

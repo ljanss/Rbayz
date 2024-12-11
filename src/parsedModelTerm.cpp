@@ -214,7 +214,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
                   variable="";         // variable is empty, options is all text between [... ] (possibly list of several comma-separated options) 
                }
             }
-            // [ToDo] Here make varOption split in a map? Now it is just the whole string ...
+            // [ToDo] Here make varOption split in a elements (and further in map?). Now it is just the whole string ...
             varName.push_back(name);
             varVariable.push_back(variable);
             varOption.push_back(options);
