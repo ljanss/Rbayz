@@ -30,6 +30,7 @@ public:
    double* val=0;  // convenience shortcut to retrieve parameter values as par->val[k]
    simpleDblVector postMean;
    simpleDblVector postVar;
+   simpleDblVector sumSqDiff;
    size_t count_collect_stats=0;
    parVector(parsedModelTerm & modeldescr, double initval);
    parVector(parsedModelTerm & modeldescr, double initval, std::string namePrefix);

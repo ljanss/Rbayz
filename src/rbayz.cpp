@@ -51,7 +51,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   Rcpp::Rcout << "Hi there Wednesday\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.15\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -59,8 +59,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       // split the modelFormula in a list of response (LHS) and explanatory (RHS) terms.
       std::string formulaAsCppstring = convertFormula(modelFormula);
       removeSpaces(formulaAsCppstring);
-      std::vector<std::string> modelTerms      
-         = splitModelTerms(formulaAsCppstring);  // response will be modelTerms[0]
+      std::vector<std::string> modelTerms         // response will be modelTerms[0] and forces in a
+         = splitModelTerms(formulaAsCppstring);   // modelTerms[1] mn(0) or mn(1) for the intercept
       lastDone="Parsing model";
       if (verbose > 1) Rcpp::Rcout << "Parsing model done\n";
 
@@ -76,7 +76,9 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       for(size_t term=1; term<modelTerms.size(); term++) {
          parsedModelTerm pmt(modelTerms[term], inputData);
          if(verbose>2) Rcpp::Rcout << " ... building term " << term << " " << pmt.funcName << "()\n";
-         if(pmt.funcName=="mn") model.push_back(new modelMean(pmt, modelR));
+         if(pmt.funcName=="mn") {
+            if(pmt.variableString=="1") model.push_back(new modelMean(pmt, modelR));
+         }
          else if(pmt.funcName=="fx") model.push_back(new modelFixf(pmt, modelR));
          else if(pmt.funcName=="rn") {
             if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven")
@@ -194,6 +196,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                   (*(Rbayz::parList[par]))->val[row] = par_pm[row];
             }
             modelR->readjResid();  // residuals need to be reset to match loaded fitted values.
+            modelR->restart();
             for(size_t mod=0; mod<model.size(); mod++) model[mod]->restart();
          }
          else {  // no match

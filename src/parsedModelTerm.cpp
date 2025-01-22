@@ -130,7 +130,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
    // like: V=XX[a=1,b=2],W=YY[...]
    // Approach is therefore to scan character by character, check open & close brackets and compute
    // 'open_close_brack_balance'. A proper splitting comma is a comma where open_close_brack_balance==0. 
-   // Options are then stored in a map<string, string> split on first "=".
+   // Options are then stored in a map<string, string>, split on first "=".
    if (optString!="") {
       pos1=-1;                          // start of first option, it will move up 1 at the start of the loop
       pos2=0;                           // will move to comma after first option, or end of string
@@ -168,7 +168,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
    }
 
    // Split and analyse the variance description. This writes in varianceStruct a string
-   // that allows to select the right object class in main. Variances descriptions that are sequene of
+   // that allows to select the right object class in main. Variances descriptions that are sequence of
    // variance-structures and kernels get split and annotated further in varType etc. 
    std::string variance_text = options["V"];  // also need to handle VE?
    if (variance_text=="") {

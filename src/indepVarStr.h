@@ -48,7 +48,6 @@ public:
     void restart() {
        double invvar = 1.0l/par->val[0];
        for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar;
-       Rcpp::Rcout << "In idenVarStr weights set to " << invvar << "\n";
     }
 
     void sample() {
