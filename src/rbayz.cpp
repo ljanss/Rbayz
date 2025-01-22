@@ -283,19 +283,20 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
             }
             if (cycle % nShow == 0 && verbose>0) {  // show convergence
                Rcpp::Rcout << cycle;
-               double conv_change=0.0l, postmean;
+               double conv_change=0.0l, conv_denom=0.0l, postmean;
                for(size_t i=0, col=0; i<Rbayz::parList.size(); i++) {
                   if( (*(Rbayz::parList[i]))->traced ) {
                      for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
                         if (save==0) postmean = (*(Rbayz::parList[i]))->val[j];  // if nothing saved yet, using sampled
                         else postmean = (*(Rbayz::parList[i]))->postMean[j];     // value instead of postmean.
-                        conv_change += abs( (prevShowConv[col] - postmean) / prevShowConv[col] );
+                        conv_change += abs(prevShowConv[col] - postmean);
+                        conv_denom += abs(prevShowConv[col]);
                         prevShowConv[col] = postmean;
                         col++;
                      }
                   }
                }
-               conv_change /= double(nTracedParam);
+               conv_change /= conv_denom;
                Rcpp::Rcout << " " << conv_change << "\n";
             }
          } // end for(cycle ...)

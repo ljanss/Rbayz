@@ -11,8 +11,7 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    variables=modeldescr.variableString;                // as original, e.g A|B:C
    std::string tempname = modeldescr.variableString;   // and make parameter name from the variableString...
    size_t pos=0;                                       // that removes link-ID and changes :| to dots
-   if( (pos=tempname.find('/')) != std::string::npos )
-      tempname.erase(0, pos+1);
+   if( (pos=tempname.find('/')) != std::string::npos ) tempname.erase(0, pos+1);
    if(namePrefix=="")
       Name = tempname;
    else
@@ -45,10 +44,10 @@ parVector::parVector(parsedModelTerm & modeldescr, double initval, std::string n
       : Values(), postMean(), postVar(), sumSqDiff() {
    nelem=1;
    Values.initWith(1, initval);
-   Labels.push_back(namePrefix + "." + modeldescr.variableString);
-   size_t pos;  // still not good, now prefix falls out again ...
-   if( (pos=Labels[0].find('/')) != std::string::npos )  // also done in param Name, so a bit
-      Labels[0].erase(0, pos+1);                         // of same code in two places ...
+   std::string templabel = modeldescr.variableString;
+   size_t pos;
+   if( (pos=templabel.find('/')) != std::string::npos ) templabel.erase(0, pos+1);   
+   Labels.push_back(namePrefix + "." + templabel);
    common_constructor_items(modeldescr, namePrefix);
 }
 
