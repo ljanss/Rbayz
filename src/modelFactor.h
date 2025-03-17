@@ -39,9 +39,9 @@ public:
       delete par;
    }
 
-   void accumFit(simpleDblVector & fit) {
+   void fillFit() {
       for (size_t obs=0; obs < F->nelem; obs++)
-        fit[obs] += par->val[F->levcode[obs]];
+        fit[obs] = par->val[F->levcode[obs]];
    }
 
    

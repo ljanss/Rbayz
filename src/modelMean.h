@@ -46,9 +46,9 @@ public:
       for (obs=0; obs < Nresid; obs++) resid[obs] -= par->val[0];
    }
 
-   void accumFit(simpleDblVector & fit) {
+   void fillFit() {
       for (size_t obs=0; obs < Nresid; obs++)
-        fit[obs] += par->val[0];
+        fit[obs] = par->val[0];
    }
 
    void sampleHpars() {}

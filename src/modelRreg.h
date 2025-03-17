@@ -86,6 +86,42 @@ public:
    }
 };
 
+class modelRregGRL : public modelRreg {
+   public:
+   modelRregGRL(parsedModelTerm & pmdescr, modelResp * rmod)
+      : modelRreg(pmdescr, rmod) {
+      varmodel = new gridLVarStr(pmdescr, this->par);
+   }
+   // this will need different sample() than parent
+   void sample() {
+      int curr_grid, prop_grid;
+      double balanc_corr,beta_diff, sse;
+      double beta_scale = sqrt(varmodel->par[0]);
+      for(size_t k=0; k < M->ncol; k++) {
+         curr_grid = ?;           // maybe from variance model
+         if(curr_grid == -5) prop_grid = -4;
+         else if (curr_grid == 5) prop_grid = 4;
+         else {
+            if(R::runif(0,1) < 0.5) prop_grid = curr_grid-1;
+            else prop_grid = curr_grid + 1;
+         }
+         if(curr_grid == -5 || curr_grid == 5) balanc_corr = 0.5;
+         else if (prop_grid == -5 || prop_grid == 5) balanc_corr = 2;
+         else balanc_corr = 1;
+         collect_lhs_rhs(k);   // here need lhs and rhs stats without de-correction
+         sse=0.0l;
+         for (size_t obs=0; obs < F->nelem; obs++)
+            sse += resid[obs]*resid[obs]*residPrec[obs];
+         beta_diff = beta_scale*double(curr_grid-prop_grid);
+         
+
+
+      }
+
+
+   }
+}
+
 class modelRregMixt : public modelRreg {
 public:
    modelRregMixt(parsedModelTerm & pmdescr, modelResp * rmod)

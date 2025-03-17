@@ -29,11 +29,10 @@ public:
    void sample();
    void sampleHpars();
    void restart();
-   void accumFit(simpleDblVector & fit);
+   void fillFit();
    void prepForOutput();
    std::vector<kernelMatrix*> kernelList;
    parVector *regcoeff;
-   simpleDblVector fitval;
    std::vector<size_t> obsIndex;
    indepVarStr* varmodel;
 

@@ -68,7 +68,7 @@ void model_rn_cor_k0::sample() {
    double* colptr;
    kernelMatrix* K = kernelList[0];
    for (size_t obs=0; obs < F->nelem; obs++)
-      fitval[obs] = 0.0l;
+      fit[obs] = 0.0l;
    for(size_t col=0; col < K->ncol; col++) {
       colptr = K->data[col];
       // residual de-correction for this evec column
@@ -78,7 +78,7 @@ void model_rn_cor_k0::sample() {
       lhsl = 0.0l; rhsl=0.0l;
       for (size_t obs=0; obs < F->nelem; obs++) {
          matrixrow = obsIndex[obs];
-         rhsl += colptr[matrixrow] * residPrec[obs] * (resid[obs]-fitval[obs]);
+         rhsl += colptr[matrixrow] * residPrec[obs] * (resid[obs]-fit[obs]);
          lhsl += colptr[matrixrow] * colptr[matrixrow] * residPrec[obs];
       }
 
@@ -86,10 +86,10 @@ void model_rn_cor_k0::sample() {
       regcoeff->val[col] = R::rnorm( (rhsl/lhsl), sqrt(1.0/lhsl));
       // residual correction for this column with updated regression
       for (size_t obs=0; obs < F->nelem; obs++)
-         fitval[obs] += regcoeff->val[col] * colptr[obsIndex[obs]];
+         fit[obs] += regcoeff->val[col] * colptr[obsIndex[obs]];
    }
    for (size_t obs=0; obs < F->nelem; obs++)
-      resid[obs] -= fitval[obs];
+      resid[obs] -= fit[obs];
 }
 
 void model_rn_cor_k0::sampleHpars() {
@@ -100,13 +100,8 @@ void model_rn_cor_k0::restart() {
    varmodel->restart();
 }
 
-void model_rn_cor_k0::accumFit(simpleDblVector & fit) {
-   /* these accumFit functions are not yet active, and I don't even know
-      anymore why I started making them ...
-   for (size_t obs=0; obs < F->nelem; obs++)
-     fit[obs] += fitval[obs];
-   */
-}
+// fillFit() here defines an empty version - making fit is already done in sample()
+void model_rn_cor_k0::fillFit() { }
 
 // prepForOutput puts the transform to random effects in the par-vector
 // [!] this now only for 1, or 1 merged, kernel.

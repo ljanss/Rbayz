@@ -14,7 +14,7 @@ class modelCoeff : public modelBase {
    
 public:
 
-   modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : modelBase() {
+   modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : modelBase(), fit() {
       // updating bayzR to handle hierarchical models can imply some (large?) changes here,
       // because then the "response model" can be another coefficient model.
       // modelResp and modelCoeff are in different branches of the class hierarchy, and cannot
@@ -26,12 +26,13 @@ public:
       if(respModel->varModel==0) Rcpp::Rcout << "!respModel->varModel pointer is zero!\n";
       residPrec = respModel->varModel->weights.data;
       Nresid = respModel->resid->nelem;
+      fit.initWith(Nresid, 0.0l);
    }
 
    ~modelCoeff() {
    }
 
-   virtual void accumFit(simpleDblVector & fit) = 0;
+   virtual void fillFit() = 0;
 
    modelResp* respModel;
    // The following is for convenience so that all modelCoeff objects have direct
@@ -39,6 +40,7 @@ public:
    // here in modelCoeff cstr'or.
    double *resid=NULL, *residPrec=NULL;
    size_t Nresid=0;
+   simpleDblVector fit;
 
 };
 

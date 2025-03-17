@@ -70,7 +70,7 @@ public:
          resid[obs] += par->val[col] * colptr[obsIndex[obs]];
    }
 
-   // [ToDo] There is maybe some efficiency gain making a method that combined resid_decorrect()
+   // [ToDo] There is maybe some efficiency gain making a method that combined resis_decorrect()
    // and collect_lhs_rhs() because it is the same loops and some computations are re-used.
    // Also below, colptr[matrixrow] * residPrec[obs] is computed twice ...
    void collect_lhs_rhs(size_t col) {
@@ -83,15 +83,10 @@ public:
          lhs += colptr[matrixrow] * colptr[matrixrow] * residPrec[obs];
       }
    }
-
-   // Methods for updating groups of covariates / regressions
-
    
-
-   void accumFit(simpleDblVector & fit) {
-      // There is a fit vector declared in this object, but it is not filled.
-      // If that fit would be available, addding it here to the total fit would be faster.
+   void fillFit() {
       double * colptr;
+      for (size_t obs=0; obs < F->nelem; obs++) fit[obs] = 0.0l;
       for(size_t k=0; k < M->ncol; k++) {
          colptr = M->data[k];
          for (size_t obs=0; obs < F->nelem; obs++)
@@ -102,33 +97,9 @@ public:
    // Here no sample() yet, modelMatrix remains virtual. The derived classes implement sample()
    // by combining update_regressions() with update of hyper-paramters for that derived class.
 
-   /* old code from ranf_cor for comparison
-   void resid_correct(size_t col) {
-      for (size_t obs=0; obs < coldata.size(); obs++)
-         resid[obs] -= par[col] * matrixdata(coldata(obs),col);
-   }
-   
-   void resid_decorrect(size_t col) {
-      for (size_t obs=0; obs < coldata.size(); obs++)
-         resid[obs] += par[col] * matrixdata(coldata(obs),col);
-   }
-
-   void collect_lhs_rhs(size_t col) {
-      lhs = 0.0; rhs=0.0;
-      size_t rowlevel;
-      for (size_t obs=0; obs < coldata.size(); obs++) {
-         rowlevel = coldata(obs);
-         rhs += matrixdata(rowlevel,col) * residPrec[obs] * resid[obs];
-         lhs += matrixdata(rowlevel,col) * matrixdata(rowlevel,col) * residPrec[obs];
-      }
-   }
-
-   */
    dataMatrix *M;
    dataFactor *F;
-//   simpleDblVector weights;
    double lhs, rhs;          // lhs, rhs will be scalar here (per iteration)
-   std::vector<double> fit;
    std::vector<size_t> obsIndex;
 
 };

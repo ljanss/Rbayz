@@ -137,7 +137,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
       pos3=optString.size()-1;          // position of last character in optString
       int open_close_brack_balance=0;
       std::string tmpstring;
-      size_t pos4;
+      size_t pos4, pos5, tmpstring_len;
       do {
          pos1++;                        // for proper continuation: after processing an option,
                                         // pos1 will be left standing on the splitting comma.
@@ -152,13 +152,26 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
             tmpstring=optString.substr(pos1,(pos2-pos1+1));
          else                   // pos2 is after the last character (of piece to extract)
             tmpstring=optString.substr(pos1,(pos2-pos1));
-         // [ToDo] here thinking to also allow option syntax as "function-like" (looks like function),
-         // which is xxxx(value1,value2). This is convenient to write a list of values.
-         pos4 = tmpstring.find("=");  // locate equal sign in option string
-         if(pos4 == std::string::npos) {
-            throw generalRbayzError("Error: option [" + tmpstring + "] is not <keyword>=<value> in " + shortModelTerm);
+         /* tmpstring is an isolated option, it can have two formats (note: all spaces are removed):
+              keyword=value
+              keyword(value1,value2) - to set a vector of one or more values
+            In the initial parsing all is treated as text and stored in map 'options'. Multiple values
+            from the second format are stored as a string of the comma-separated values.
+            Note: keyword=value and keyword(value) are the same, they both end up in the map as options[keyword]=value.
+         */
+         pos4 = tmpstring.find('=');       // check option string for equal sign and open-parenth
+         pos5 = tmpstring.find('(');
+         tmpstring_len = tmpstring.size();
+         if(pos4 != std::string::npos) {   // keyword=value
+            options[tmpstring.substr(0,pos4)]=tmpstring.substr(pos4+1,tmpstring_len-pos4-1);
          }
-         options[tmpstring.substr(0,pos4)]=tmpstring.substr(pos4+1,std::string::npos);
+         else if(pos5 != std::string::npos) {  // keyword(value1,value2)
+            options[tmpstring.substr(0,pos5)]=tmpstring.substr(pos5+1,tmpstring_len-pos5-2);
+         }
+         else {
+            throw generalRbayzError("Error: option [" + tmpstring + "] is not keyword=value or keyword(value1,value2) in " +
+               shortModelTerm);
+         }
          if(optString[pos2]==',') {    // the while will continue for a next option
             pos1=pos2;
             pos2++;

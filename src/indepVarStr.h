@@ -128,6 +128,17 @@ public:
 
 };
 
+/* ---- grid-LASSO ----
+   This uses weights vector differently by storing the grid values on the
+   standardized -5 to 5 grid. The model par[0] is a regular variance, but estimated as
+   a scaling factor (and then stored as variance).
+   The actual beta's are sqrt(var)*grid-value.
+*/
+
+class gridLVarStr : public indepVarStr {
+
+}
+
 /* lassVarStr is the Bayesian Power LASSO, on scalar level it is the model
         b_i ~ Exp(- 'rate' |b_i|^'pow' ).
    'rate' is estimated from the data, 'pow' is tunable "power" parameter with default value 0.8.
