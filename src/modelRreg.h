@@ -38,13 +38,14 @@ public:
    // - correct() runs in case regcoeff != zero, but skips if it is zero
    void sample() {
       double inf = std::numeric_limits<double>::infinity();
+      double lhs, rhs;
       for(size_t k=0; k < M->ncol; k++) {
          resid_decorrect(k);
          if(varmodel->weights[k]==inf) {
             par->val[k]=0;
          }
          else {
-            collect_lhs_rhs(k);   // update lhs and rhs variables
+            collect_lhs_rhs(lhs, rhs, k);
             lhs += varmodel->weights[k];
             par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
          }
@@ -87,39 +88,88 @@ public:
 };
 
 class modelRregGRL : public modelRreg {
+
    public:
    modelRregGRL(parsedModelTerm & pmdescr, modelResp * rmod)
-      : modelRreg(pmdescr, rmod) {
+      : modelRreg(pmdescr, rmod), beta_grid() {
       varmodel = new gridLVarStr(pmdescr, this->par);
-   }
-   // this will need different sample() than parent
+      // make the grid, for the moment size and step are hard-coded in class member variabels below
+      double sum_prob=0.0l;
+      for(int i=0, double x=-grid_min_max; i<grid_size; i++, x+= grid_step) {
+          grid_x[i] = x;
+          grid_y[i] = exp(-abs(grid_x[i]));
+          sum_prob += grid_y[i];
+      }
+      // scale grid-probs and store as log(prob's)
+      for(int i=0; i<grid_size; i++) {
+         grid_y[i] /= sum_prob;
+         grid_y[i] = log(grid_y[i]);
+      }
+      beta_grid.initWith(M->ncol, 4); // 4 is middle value
+ }
+
+// modelRregGRL cannot use parent sample() and needs to re-define it
+// some notes:
+// - beta_grid is integer where each beta is in the grid, now from 0-8 and initialized at middle value 4
+// - the 'x' axis values are grid_x[0-8], this now goes from -4 to 4 with step 1.0 (it is doubles because steps
+//   are not neccessarily whole integers)
+// - the 'y' axis values are grid_y[0-8], stored as logs
+// - the actual beta-value includes the scale and is then beta[k] = scale*grid_x[beta_grid[k]]
+// - the algorithm also uses difference of beta's (current - proposal), this can be directly computed from the
+//   grid step-size and whether the proposal moves 'down' or 'up' in the grid (with move down current minus proposal
+//   is positive step-size, with move up current minus proposal is negative step-size)
    void sample() {
       int curr_grid, prop_grid;
-      double balanc_corr,beta_diff, sse;
+      double logtwo = log(2.0l);
+      double loghalf = log(0.5l);
+      double beta_diff;
+      double lhs, rhs;
       double beta_scale = sqrt(varmodel->par[0]);
+      double MHratio;
       for(size_t k=0; k < M->ncol; k++) {
-         curr_grid = ?;           // maybe from variance model
-         if(curr_grid == -5) prop_grid = -4;
-         else if (curr_grid == 5) prop_grid = 4;
-         else {
-            if(R::runif(0,1) < 0.5) prop_grid = curr_grid-1;
-            else prop_grid = curr_grid + 1;
+         curr_grid = beta_grid[k];
+         if(curr_grid == 0) {  // at left extreme, move up
+            prop_grid = 1;
+            beta_diff = -beta_scale*grid_step;
          }
-         if(curr_grid == -5 || curr_grid == 5) balanc_corr = 0.5;
-         else if (prop_grid == -5 || prop_grid == 5) balanc_corr = 2;
-         else balanc_corr = 1;
-         collect_lhs_rhs(k);   // here need lhs and rhs stats without de-correction
-         sse=0.0l;
-         for (size_t obs=0; obs < F->nelem; obs++)
-            sse += resid[obs]*resid[obs]*residPrec[obs];
-         beta_diff = beta_scale*double(curr_grid-prop_grid);
-         
-
-
+         else if (curr_grid == 8) { // at right extreme, move down 
+            prop_grid = 7;
+            beta_diff = beta_scale*grid_step;
+         }
+         else {  // in between toss a coin how to move
+            if(R::runif(0,1) < 0.5) {
+               prop_grid = curr_grid-1;
+               beta_diff = beta_scale*grid_step;
+            }
+            else {
+               prop_grid = curr_grid + 1;
+               beta_diff = -beta_scale*grid_step;
+            }
+         }
+         collect_lhs_rhs(lhs, rhs, k);
+         MHratio = -beta_diff*rhs - 0.5*beta_diff*beta_diff*lhs + 
+            grid_prob[prop_grid] - grid_prob[curr_grid];
+         if(curr_grid == 0 || curr_grid == 8) MHratio += loghalf;
+         else if (prop_grid == 0 || prop_grid == 8) MHratio += logtwo;
+         if(MHratio > 0 || log(R::runif(0,1)) < MHratio ) { // accept
+            beta_grid[k] = prop_grid;
+            resid_betaUpdate(beta_diff, k);
+         }
       }
-
-
+      // need to work on collecting fit that is needed for variance update
    }
+
+   // Other methods from the parent class are:
+   // - sampleHpars() - this calls varmodel->sample() and needs to have fit from this class - solve in constructor??
+   // - restart() - this calls varmodel->restart() and is maybe not needed here? - insert an empty one in the variance class?
+
+   int grid_size=9;
+   double grid_min_max=4.0;
+   double grid_step=1.0;
+   double grid_x[9];
+   double grid_y[9];
+   simpleIntVector beta_grid;
+
 }
 
 class modelRregMixt : public modelRreg {

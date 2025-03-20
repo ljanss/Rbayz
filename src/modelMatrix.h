@@ -41,8 +41,6 @@ public:
       par = new parVector(modeldescr, 0.0l, M->colnames);
 //      weights.initWith(M->ncol,1.0l);  // I think weights is not used (but using varmodel->weights)
       builObsIndex(obsIndex,F,M);
-      lhs = 0.0l;
-      rhs = 0.0l;
    }
    
    ~modelMatrix() {
@@ -70,20 +68,35 @@ public:
          resid[obs] += par->val[col] * colptr[obsIndex[obs]];
    }
 
-   // [ToDo] There is maybe some efficiency gain making a method that combined resis_decorrect()
-   // and collect_lhs_rhs() because it is the same loops and some computations are re-used.
-   // Also below, colptr[matrixrow] * residPrec[obs] is computed twice ...
-   void collect_lhs_rhs(size_t col) {
-      lhs = 0.0; rhs=0.0;
-      size_t matrixrow;
+   void resid_betaUpdate(double beta_diff, size_t col) {
       double * colptr = M->data[col];
+      for (size_t obs=0; obs < F->nelem; obs++)
+         resid[obs] += beta_diff * colptr[obsIndex[obs]];
+
+   }
+
+   // [ToDo] I thought there could be some efficiency gain making a method that combined resis_decorrect()
+   // and collect_lhs_rhs() because it is the same loops and some computations are re-used, but it looks more
+   // difficult to take advantage of skipping zero regcoeff (which also partly happens in sample()) ....
+   void collect_lhs_rhs(double & lhs, double & rhs, size_t col) {
+      size_t matrixrow;
+      lhs = 0.0l; rhs = 0.0l;
+      double * colptr = M->data[col];
+      double temp1;
       for (size_t obs=0; obs < F->nelem; obs++) {
          matrixrow = obsIndex[obs];
-         rhs += colptr[matrixrow] * residPrec[obs] * resid[obs];
-         lhs += colptr[matrixrow] * colptr[matrixrow] * residPrec[obs];
+         temp1 = colptr[matrixrow] * residPrec[obs];
+         rhs += temp1 * resid[obs];
+         lhs += temp1 * colptr[matrixrow];
       }
    }
    
+   void collect_sse(double & sse) {
+      sse=0.0l;
+      for (size_t obs=0; obs < F->nelem; obs++)
+         sse += resid[obs]*resid[obs]*residPrec[obs];
+   }
+
    void fillFit() {
       double * colptr;
       for (size_t obs=0; obs < F->nelem; obs++) fit[obs] = 0.0l;
