@@ -244,7 +244,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
          size_t nKernels=0, nVCOV=0;  // [ToDo] extend to also count the others ...
          for(size_t i=0; i<varianceElements.size(); i++) {
             std::string name=varName[i];
-            if(name=="IDEN" || name=="MIXT" || name=="VCOV" || name=="WGHT" || name=="LLIN") {  
+            if(name=="IDEN" || name=="MIXT" || name=="LASS" || name=="VCOV" || name=="WGHT" || name=="LLIN") {  
                varObject.push_back(R_NilValue);                            // I think LLIN cannot come in here ...
                varType.push_back(name);
                if(name=="VCOV") nVCOV++;

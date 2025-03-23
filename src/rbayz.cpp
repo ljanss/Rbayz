@@ -51,7 +51,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.15\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.17\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -93,6 +93,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                model.push_back(new modelRregIden(pmt, modelR));
             else if (pmt.varianceStruct=="DIAG")
                model.push_back(new modelRregDiag(pmt, modelR));
+            else if (pmt.varianceStruct=="LASS")
+               model.push_back(new modelRregGRL(pmt, modelR));
             else if (pmt.varianceStruct=="MIXT") {
                modelRreg* rrmodel = new modelRregMixt(pmt, modelR);
                model.push_back(rrmodel);

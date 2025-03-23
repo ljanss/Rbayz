@@ -34,6 +34,17 @@ public:
 
    virtual void fillFit() = 0;
 
+   // make statistics to estimate scale of fitted values:
+   // lhs=sum(fit^2), rhs=sum(fit*resid) with resid de-corrected for fit.
+   void getFitScaleStats(double & lhs, double & rhs) {
+      lhs=0.0l;
+      rhs=0.0l;
+      for(size_t i=0; i < Nresid; i++) {
+         lhs += fit.data[i] * fit.data[i];
+         rhs += fit.data[i] * (resid[i] + fit.data[i]);
+      }
+   }
+
    modelResp* respModel;
    // The following is for convenience so that all modelCoeff objects have direct
    // pointers to residuals and residual variance, and it only needs to be set once

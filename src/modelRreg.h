@@ -11,6 +11,7 @@
 #define modelRreg_h
 
 #include <Rcpp.h>
+#include <cmath>
 #include "modelMatrix.h"
 #include "indepVarStr.h"
 #include "dataMatrix.h"
@@ -95,10 +96,12 @@ class modelRregGRL : public modelRreg {
       varmodel = new gridLVarStr(pmdescr, this->par);
       // make the grid, for the moment size and step are hard-coded in class member variabels below
       double sum_prob=0.0l;
-      for(int i=0, double x=-grid_min_max; i<grid_size; i++, x+= grid_step) {
+      double x = -grid_min_max;
+      for(int i=0; i<grid_size; i++) {
           grid_x[i] = x;
           grid_y[i] = exp(-abs(grid_x[i]));
           sum_prob += grid_y[i];
+          x+= grid_step;
       }
       // scale grid-probs and store as log(prob's)
       for(int i=0; i<grid_size; i++) {
@@ -106,6 +109,9 @@ class modelRregGRL : public modelRreg {
          grid_y[i] = log(grid_y[i]);
       }
       beta_grid.initWith(M->ncol, 4); // 4 is middle value
+      // there is no way to automatically adjust the starting variance based on raw variance
+      // in the response. Here experimenting if it works better if it is roughly adjusted from the start:
+      varmodel->par->val[0]=0.0001;
  }
 
 // modelRregGRL cannot use parent sample() and needs to re-define it
@@ -124,8 +130,10 @@ class modelRregGRL : public modelRreg {
       double loghalf = log(0.5l);
       double beta_diff;
       double lhs, rhs;
-      double beta_scale = sqrt(varmodel->par[0]);
+      double beta_scale = sqrt(varmodel->par->val[0]);
       double MHratio;
+      Rcpp::Rcout << "scale=" << beta_scale << "\n";
+      int count_accept=0;
       for(size_t k=0; k < M->ncol; k++) {
          curr_grid = beta_grid[k];
          if(curr_grid == 0) {  // at left extreme, move up
@@ -148,20 +156,28 @@ class modelRregGRL : public modelRreg {
          }
          collect_lhs_rhs(lhs, rhs, k);
          MHratio = -beta_diff*rhs - 0.5*beta_diff*beta_diff*lhs + 
-            grid_prob[prop_grid] - grid_prob[curr_grid];
+            grid_y[prop_grid] - grid_y[curr_grid];
          if(curr_grid == 0 || curr_grid == 8) MHratio += loghalf;
          else if (prop_grid == 0 || prop_grid == 8) MHratio += logtwo;
          if(MHratio > 0 || log(R::runif(0,1)) < MHratio ) { // accept
             beta_grid[k] = prop_grid;
-            resid_betaUpdate(beta_diff, k);
+            par->val[k] = beta_scale*grid_x[prop_grid];
+            resid_fit_betaUpdate(beta_diff, k);
+            count_accept++;
          }
       }
-      // need to work on collecting fit that is needed for variance update
+      Rcpp::Rcout << "Accept " << count_accept << " last MHratio " << MHratio << "\n";
+      Rcpp::Rcout << "Two beta's" << par->val[0] << " " << par->val[1] << "\n"; 
    }
 
-   // Other methods from the parent class are:
-   // - sampleHpars() - this calls varmodel->sample() and needs to have fit from this class - solve in constructor??
-   // - restart() - this calls varmodel->restart() and is maybe not needed here? - insert an empty one in the variance class?
+   // also sampleHpars needs to be re-defined, it works differently than the version
+   // in the parent class.
+   void sampleHpars() {
+      double lhs, rhs;
+      getFitScaleStats(lhs, rhs);
+      Rcpp::Rcout << "Retrieved fit lhs rhs " << lhs << " " << rhs << "\n";
+      varmodel->sampleScale(lhs, rhs);
+   }
 
    int grid_size=9;
    double grid_min_max=4.0;
@@ -170,7 +186,7 @@ class modelRregGRL : public modelRreg {
    double grid_y[9];
    simpleIntVector beta_grid;
 
-}
+};
 
 class modelRregMixt : public modelRreg {
 public:

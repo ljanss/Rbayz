@@ -43,14 +43,27 @@ public:
       par = new parVector(modeldescr,0.0l,labels,"fitval");
       resid = new parVector(modeldescr, 0.0l, labels,"resid");
       missing = Rcpp::is_na(tempY);
+      double sum=0.0;
+      int N=0;
       for(size_t row=0; row<par->nelem; row++) {
          if(missing[row]) {
             Y.data[row] = 0.0l;
             resid->val[row] = 0.0l;
          }
-         else
+         else {
             resid->val[row] = Y.data[row];
+            sum += Y.data[row];
+            N++;
+         }
+         stats.Nobs=N;
+         stats.mean=sum/double(Nobs);
+         sum=0.0;
+         for(size_t row=0; row<par->nelem; row++) {
+            if(!missing[row]) sum += (Y.data[row] - stats.mean)*(Y.data[row] - stats.mean);
+         }
+         stats.var = sum/Nobs;
       }
+
       // [ToDo] Move out when implementing more variance structures in residuals
       varModel = new idenVarStr(modeldescr,resid);
    }
@@ -96,8 +109,11 @@ public:
    indepVarStr* varModel;
    Rcpp::LogicalVector missing;
    parVector* resid;
-
    simpleDblVector Y;
+   struct stats  {
+      integer Nobs; double mean; double var;
+   };
+   
 
 };
 

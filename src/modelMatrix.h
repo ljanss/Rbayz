@@ -68,11 +68,14 @@ public:
          resid[obs] += par->val[col] * colptr[obsIndex[obs]];
    }
 
-   void resid_betaUpdate(double beta_diff, size_t col) {
+   // de+correct residuals and fit for a 'beta update': a change in beta.
+   // The difference old-beta minus new-beta is passed as 'beta_diff'.
+   void resid_fit_betaUpdate(double beta_diff, size_t col) {
       double * colptr = M->data[col];
-      for (size_t obs=0; obs < F->nelem; obs++)
+      for (size_t obs=0; obs < F->nelem; obs++) {
          resid[obs] += beta_diff * colptr[obsIndex[obs]];
-
+         fit[obs] += beta_diff * colptr[obsIndex[obs]];
+      }
    }
 
    // [ToDo] I thought there could be some efficiency gain making a method that combined resis_decorrect()

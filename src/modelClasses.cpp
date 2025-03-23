@@ -47,7 +47,6 @@ model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
    // obsIndex makes new level codes matching F->labels from every row in data to K->labels, it could
    // in principle replace the F->data and no need for the obsIndex vector.
    builObsIndex(obsIndex,F,kernelList[0]);
-   fitval.initWith(F->nelem, 0.0l);
    // [ToDo] create the variance object - may need to move out as in ranfi
    varmodel = new diagVarStr(modeldescr, this->regcoeff, kernelList[0]->weights);
 }
@@ -68,7 +67,7 @@ void model_rn_cor_k0::sample() {
    double* colptr;
    kernelMatrix* K = kernelList[0];
    for (size_t obs=0; obs < F->nelem; obs++)
-      fit[obs] = 0.0l;
+      fit.data[obs] = 0.0l;
    for(size_t col=0; col < K->ncol; col++) {
       colptr = K->data[col];
       // residual de-correction for this evec column
@@ -78,7 +77,7 @@ void model_rn_cor_k0::sample() {
       lhsl = 0.0l; rhsl=0.0l;
       for (size_t obs=0; obs < F->nelem; obs++) {
          matrixrow = obsIndex[obs];
-         rhsl += colptr[matrixrow] * residPrec[obs] * (resid[obs]-fit[obs]);
+         rhsl += colptr[matrixrow] * residPrec[obs] * (resid[obs]-fit.data[obs]);
          lhsl += colptr[matrixrow] * colptr[matrixrow] * residPrec[obs];
       }
 
@@ -86,10 +85,10 @@ void model_rn_cor_k0::sample() {
       regcoeff->val[col] = R::rnorm( (rhsl/lhsl), sqrt(1.0/lhsl));
       // residual correction for this column with updated regression
       for (size_t obs=0; obs < F->nelem; obs++)
-         fit[obs] += regcoeff->val[col] * colptr[obsIndex[obs]];
+         fit.data[obs] += regcoeff->val[col] * colptr[obsIndex[obs]];
    }
    for (size_t obs=0; obs < F->nelem; obs++)
-      resid[obs] -= fit[obs];
+      resid[obs] -= fit.data[obs];
 }
 
 void model_rn_cor_k0::sampleHpars() {

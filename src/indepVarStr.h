@@ -28,6 +28,17 @@ public:
        coefpar = cpar;
        weights.initWith(coefpar->nelem, 1.0l);
    }
+   // A generic variance sample / update method to estimate a scale by regressing
+   // fitted values on residuals. The estimate is still stored as variance in par->val[0].
+   // The lhs and rhs to be passed can be made by getFitScaleStats(lhs, rhs), which is a method
+   // for all modelCoeff classes.
+   void sampleScale(double lhs, double rhs) {
+       double curr_scale = sqrt(par->val[0]);
+       double sample_mean = curr_scale*rhs/lhs;
+       double sample_sd = curr_scale/sqrt(lhs);
+       double scale = R::rnorm( sample_mean, sample_sd);
+       par->val[0] = scale*scale;
+   }
    simpleDblVector weights;
 };
 
@@ -129,15 +140,36 @@ public:
 };
 
 /* ---- grid-LASSO ----
-   This uses weights vector differently by storing the grid values on the
-   standardized -5 to 5 grid. The model par[0] is a regular variance, but estimated as
-   a scaling factor (and then stored as variance).
-   The actual beta's are sqrt(var)*grid-value.
+   The weights vector is not used, but no easy way to avoid it being allocated in the parent class.
+   Maybe it can be used in future for a 'reweighted' LASSO version, supplying prior weights.
+   The model par[0] is variance, but estimated as a scaling factor.
+   The constructor stores pointers to residual and fit-vectors in the coefficient class that uses this
+   class as variance structure.
 */
 
 class gridLVarStr : public indepVarStr {
 
-}
+public:
+
+    gridLVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
+        par = new parVector(modeldescr, 1.0l, "var");
+        par->traced=1;
+        par->varianceStruct="grLASS";
+     }
+ 
+     ~gridLVarStr() {
+         delete par;
+     }
+ 
+     void restart() {  }
+ 
+     // The class hierarchy requires defining a void sample(), but this class actually uses
+     // a void sample(double, double) function.
+     void sample() {
+        throw generalRbayzError("Incorrect calling of gridLVarStr::sample()");
+     }
+
+};
 
 /* lassVarStr is the Bayesian Power LASSO, on scalar level it is the model
         b_i ~ Exp(- 'rate' |b_i|^'pow' ).
