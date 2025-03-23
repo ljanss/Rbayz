@@ -109,9 +109,10 @@ class modelRregGRL : public modelRreg {
          grid_y[i] = log(grid_y[i]);
       }
       beta_grid.initWith(M->ncol, 4); // 4 is middle value
-      // there is no way to automatically adjust the starting variance based on raw variance
-      // in the response. Here experimenting if it works better if it is roughly adjusted from the start:
-      varmodel->par->val[0]=0.0001;
+      // it is important to start the gridLASSO at a roughly right scale, it is taken here
+      // as 0.10 * (raw response var) / Npredictors
+      varmodel->par->val[0]= 0.1*rmod->stats.var/double(M->ncol);
+      Rcpp::Rcout << "RregGRL var initialized at " << varmodel->par->val[0] << "\n";
  }
 
 // modelRregGRL cannot use parent sample() and needs to re-define it

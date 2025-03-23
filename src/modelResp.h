@@ -55,15 +55,15 @@ public:
             sum += Y.data[row];
             N++;
          }
-         stats.Nobs=N;
-         stats.mean=sum/double(Nobs);
-         sum=0.0;
-         for(size_t row=0; row<par->nelem; row++) {
-            if(!missing[row]) sum += (Y.data[row] - stats.mean)*(Y.data[row] - stats.mean);
-         }
-         stats.var = sum/Nobs;
       }
-
+      stats.Nobs=N;
+      stats.mean=sum/double(N);
+      sum=0.0;
+      for(size_t row=0; row<par->nelem; row++) {
+         if(!missing[row]) sum += (Y.data[row] - stats.mean)*(Y.data[row] - stats.mean);
+      }
+      stats.var = sum/double(N);
+      Rcpp::Rcout << "Response statistics " << stats.Nobs << " " << stats.mean << " " << stats.var << "\n";
       // [ToDo] Move out when implementing more variance structures in residuals
       varModel = new idenVarStr(modeldescr,resid);
    }
@@ -110,9 +110,7 @@ public:
    Rcpp::LogicalVector missing;
    parVector* resid;
    simpleDblVector Y;
-   struct stats  {
-      integer Nobs; double mean; double var;
-   };
+   struct dataStatistics { int Nobs; double mean; double var; } stats;
    
 
 };
