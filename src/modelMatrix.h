@@ -74,7 +74,7 @@ public:
       double * colptr = M->data[col];
       for (size_t obs=0; obs < F->nelem; obs++) {
          resid[obs] += beta_diff * colptr[obsIndex[obs]];
-         fit[obs] += beta_diff * colptr[obsIndex[obs]];
+         fit[obs] -= beta_diff * colptr[obsIndex[obs]];
       }
    }
 

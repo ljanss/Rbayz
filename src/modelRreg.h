@@ -112,7 +112,6 @@ class modelRregGRL : public modelRreg {
       // it is important to start the gridLASSO at a roughly right scale, it is taken here
       // as 0.10 * (raw response var) / Npredictors
       varmodel->par->val[0]= 0.1*rmod->stats.var/double(M->ncol);
-      Rcpp::Rcout << "RregGRL var initialized at " << varmodel->par->val[0] << "\n";
  }
 
 // modelRregGRL cannot use parent sample() and needs to re-define it
@@ -133,7 +132,6 @@ class modelRregGRL : public modelRreg {
       double lhs, rhs;
       double beta_scale = sqrt(varmodel->par->val[0]);
       double MHratio;
-      Rcpp::Rcout << "scale=" << beta_scale << "\n";
       int count_accept=0;
       for(size_t k=0; k < M->ncol; k++) {
          curr_grid = beta_grid[k];
@@ -167,16 +165,13 @@ class modelRregGRL : public modelRreg {
             count_accept++;
          }
       }
-      Rcpp::Rcout << "Accept " << count_accept << " last MHratio " << MHratio << "\n";
-      Rcpp::Rcout << "Two beta's" << par->val[0] << " " << par->val[1] << "\n"; 
    }
 
-   // also sampleHpars needs to be re-defined, it works differently than the version
-   // in the parent class.
+   // also sampleHpars needs to be re-defined, the version in the parent class calls the usual
+   // varmodel->sample(), but here the varmodel->sampleScale() should be used.
    void sampleHpars() {
       double lhs, rhs;
       getFitScaleStats(lhs, rhs);
-      Rcpp::Rcout << "Retrieved fit lhs rhs " << lhs << " " << rhs << "\n";
       varmodel->sampleScale(lhs, rhs);
    }
 

@@ -163,8 +163,8 @@ public:
  
      void restart() {  }
  
-     // The class hierarchy requires defining a void sample(), but this class actually uses
-     // a void sample(double, double) function.
+     // The class hierarchy requires defining sample(), but variance in this class needs to be
+     // updated using sampleScale(). The coefficient class sampleHpars() should do this appropriately.
      void sample() {
         throw generalRbayzError("Incorrect calling of gridLVarStr::sample()");
      }
