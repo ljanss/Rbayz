@@ -12,6 +12,11 @@ indepVarStr::indepVarStr(parsedModelTerm & modeldescr, parVector* cpar)
 // fitted values on residuals. The estimate is still stored as variance in par->val[0].
 // The lhs and rhs to be passed can be made by getFitScaleStats(lhs, rhs), which is a method
 // for all modelCoeff classes.
+// [ToDo] Code can crash when all beta's in the Rreg model are zero (which could happen if using
+// an MH sampler and nothing gets accepted to change from the initial zero starting value).
+// In that case, lhs and rhs are zero, which leads to zero-division.
+// A solution can be to adjust the scale downwards. The problem with no acceptance in an MH sampler
+// can happen when initial scale is too large, so that all proposals are not acceptable.
 void indepVarStr::sampleScale(double lhs, double rhs) {
     double curr_scale = sqrt(par->val[0]);
     double sample_mean = curr_scale*rhs/lhs;
