@@ -78,6 +78,17 @@ public:
       }
    }
 
+   // adjust residuals and fit for a change in scale, this works on total fit
+   // (no argument for the column of the covar to use)
+   void resid_fit_scaleUpdate(double scale_old, double scale_new) {
+      double resid_adjust = (1.0l - scale_new/scale_old);
+      double fit_adjust = scale_new/scale_old;
+      for (size_t obs=0; obs < F->nelem; obs++) {
+         resid[obs] += fit[obs]*resid_adjust;
+         fit[obs] = fit[obs]*fit_adjust;
+      }
+   }
+
    // [ToDo] I thought there could be some efficiency gain making a method that combined resis_decorrect()
    // and collect_lhs_rhs() because it is the same loops and some computations are re-used, but it looks more
    // difficult to take advantage of skipping zero regcoeff (which also partly happens in sample()) ....
@@ -100,6 +111,8 @@ public:
          sse += resid[obs]*resid[obs]*residPrec[obs];
    }
 
+   // [ToDo] OBS: this fillFit is not right if the variance of random effect
+   // is modelled with a scale. In that case fit = scale * par[] * covar[]
    void fillFit() {
       double * colptr;
       for (size_t obs=0; obs < F->nelem; obs++) fit[obs] = 0.0l;

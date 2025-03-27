@@ -51,7 +51,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.19\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.26\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -247,6 +247,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       // to show convergence set "nShow" interval and make vector to hold previously shown solutions
       int nShow = chain[0]/10;
       if( nShow < 1) nShow=1;
+      int collect_first_conv = chain[0]/20;
+      if (collect_first_conv < 1) collect_first_conv=1;
       Rcpp::NumericVector prevShowConv(int(nTracedParam), 0.5l);
       lastDone="Preparing to run MCMC";
       if (verbose>1) Rcpp::Rcout << "Preparing to run MCMC done\n";
@@ -266,9 +268,6 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                modelR->sampleHpars();
                for(size_t mt=0; mt<model.size(); mt++) model[mt]->sampleHpars();
             }
-   /*         for(size_t i=0; i<parList.size(); i++)
-               Rcpp::Rcout << " " << (*(parList[i]))->val[0];
-            Rcpp::Rcout << "\n";*/
             // At the 'skip' intervals (and after burn-in): 1) update posterior statistics using
             // collectStats(); 2) save MCMC samples for the 'traced' parameters 
             if ( (cycle > chain[1]) && (cycle % chain[2] == 0) ) {  // save cycle
@@ -283,14 +282,25 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                }
                save++;  // save is counter for output (saved) cycles
             }
-            if (cycle % nShow == 0 && verbose>0) {  // show convergence
+            // at 'collect_first_conv' cycle store parameter values in prevShowConv to allow computing
+            // first convergence; then at 'nShow' intervals show convergence on screen (when verbose > 0)
+            if (cycle == collect_first_conv) {
+               for(size_t i=0, col=0; i<Rbayz::parList.size(); i++) {
+                  if( (*(Rbayz::parList[i]))->traced ) {
+                     for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
+                        prevShowConv[col] = (*(Rbayz::parList[i]))->postMean[j];
+                        col++;
+                     }
+                  }
+               }
+            }
+            if (cycle % nShow == 0 && verbose>0) {
                Rcpp::Rcout << cycle;
                double conv_change=0.0l, conv_denom=0.0l, postmean;
                for(size_t i=0, col=0; i<Rbayz::parList.size(); i++) {
                   if( (*(Rbayz::parList[i]))->traced ) {
                      for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
-                        if (save==0) postmean = (*(Rbayz::parList[i]))->val[j];  // if nothing saved yet, using sampled
-                        else postmean = (*(Rbayz::parList[i]))->postMean[j];     // value instead of postmean.
+                        postmean = (*(Rbayz::parList[i]))->postMean[j];
                         conv_change += abs(prevShowConv[col] - postmean);
                         conv_denom += abs(prevShowConv[col]);
                         prevShowConv[col] = postmean;

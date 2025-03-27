@@ -94,21 +94,7 @@ class modelRregGRL : public modelRreg {
    modelRregGRL(parsedModelTerm & pmdescr, modelResp * rmod)
       : modelRreg(pmdescr, rmod), beta_grid() {
       varmodel = new gridLVarStr(pmdescr, this->par);
-      // make the grid, for the moment size and step are hard-coded in class member variabels below
-      double sum_prob=0.0l;
-      double x = -grid_min_max;
-      for(int i=0; i<grid_size; i++) {
-          grid_x[i] = x;
-          grid_y[i] = exp(-abs(grid_x[i]));
-          sum_prob += grid_y[i];
-          x+= grid_step;
-      }
-      // scale grid-probs and store as log(prob's)
-      for(int i=0; i<grid_size; i++) {
-         grid_y[i] /= sum_prob;
-         grid_y[i] = log(grid_y[i]);
-      }
-      beta_grid.initWith(M->ncol, 4); // 4 is middle value
+      beta_grid.initWith(M->ncol, grid.mid); // initialize grid-steps as the middle value
       // it is important to start the gridLASSO at a roughly right scale, it is taken here
       // as 0.10 * (raw response var) / Npredictors
       varmodel->par->val[0]= 0.1*rmod->stats.var/double(M->ncol);
@@ -135,32 +121,21 @@ class modelRregGRL : public modelRreg {
       int count_accept=0;
       for(size_t k=0; k < M->ncol; k++) {
          curr_grid = beta_grid[k];
-         if(curr_grid == 0) {  // at left extreme, move up
-            prop_grid = 1;
-            beta_diff = -beta_scale*grid_step;
+         if(curr_grid == 0) prop_grid = 1;                           // at left extreme, move up
+         else if (curr_grid == grid.last) prop_grid = grid.last - 1; // at right extreme, move down 
+         else {                                                      // in between toss a coin how to move
+            if(R::runif(0,1) < 0.5) prop_grid = curr_grid-1;
+            else prop_grid = curr_grid + 1;
          }
-         else if (curr_grid == 8) { // at right extreme, move down 
-            prop_grid = 7;
-            beta_diff = beta_scale*grid_step;
-         }
-         else {  // in between toss a coin how to move
-            if(R::runif(0,1) < 0.5) {
-               prop_grid = curr_grid-1;
-               beta_diff = beta_scale*grid_step;
-            }
-            else {
-               prop_grid = curr_grid + 1;
-               beta_diff = -beta_scale*grid_step;
-            }
-         }
+         beta_diff = beta_scale*(grid.x[curr_grid]-grid.x[prop_grid]);
          collect_lhs_rhs(lhs, rhs, k);
          MHratio = -beta_diff*rhs - 0.5*beta_diff*beta_diff*lhs + 
-            grid_y[prop_grid] - grid_y[curr_grid];
-         if(curr_grid == 0 || curr_grid == 8) MHratio += loghalf;
-         else if (prop_grid == 0 || prop_grid == 8) MHratio += logtwo;
+            grid.logp[prop_grid] - grid.logp[curr_grid];
+         if(curr_grid == 0 || curr_grid == grid.last) MHratio += loghalf;
+         else if (prop_grid == 0 || prop_grid == grid.last) MHratio += logtwo;
          if(MHratio > 0 || log(R::runif(0,1)) < MHratio ) { // accept
             beta_grid[k] = prop_grid;
-            par->val[k] = beta_scale*grid_x[prop_grid];
+            par->val[k] = beta_scale*grid.x[prop_grid];
             resid_fit_betaUpdate(beta_diff, k);
             count_accept++;
          }
@@ -170,17 +145,42 @@ class modelRregGRL : public modelRreg {
    // also sampleHpars needs to be re-defined, the version in the parent class calls the usual
    // varmodel->sample(), but here the varmodel->sampleScale() should be used.
    void sampleHpars() {
+      double oldscale = sqrt(varmodel->par->val[0]);
       double lhs, rhs;
       getFitScaleStats(lhs, rhs);
       varmodel->sampleScale(lhs, rhs);
+      resid_fit_scaleUpdate(oldscale,sqrt(varmodel->par->val[0]));
    }
 
-   int grid_size=9;
-   double grid_min_max=4.0;
-   double grid_step=1.0;
-   double grid_x[9];
-   double grid_y[9];
-   simpleIntVector beta_grid;
+   // Standard Bayesian LASSO-based grid
+   /*
+   struct {size_t n {7}; size_t mid {3}; size_t last {6};
+            double x[7] {-5, -3.5, -2, 0, 2, 3.5, 5}; 
+            double p[7] {0.005, 0.022, 0.101, 0.744, 0.101, 0.022, 0.005};
+            double logp[7] {-5.296, -3.796, -2.296, -0.296, -2.296, -3.796, -5.296}; } grid;
+   */
+
+   // Epow(0.7) grid
+   struct {size_t n {7}; size_t mid {3}; size_t last {6};
+   double x[7] {-10, -6, -3, 0, 3, 6, 10}; 
+   double p[7] {0.005, 0.023, 0.089, 0.767, 0.089, 0.023, 0.005};
+   double logp[7] {-5.278, -3.771, -2.424, -0.266, -2.424, -3.771, -5.278}; } grid;
+
+   // Epow(0.5) grid
+   /*
+   struct {size_t n {7}; size_t mid {3}; size_t last {6};
+            double x[7] {-20, -10, -5, 0, 5, 10, 20}; 
+            double p[7] {0.009, 0.032, 0.081, 0.757, 0.081, 0.032, 0.009};
+            double logp[7] {-4.751, -3.441, -2.515, -0.279, -2.515, -3.441, -4.751}; } grid;
+   */
+
+//   int grid_size=9;
+//   double grid_min_max=4.0;
+//   double grid_step=1.0;
+//   double grid_x[9];
+//   double grid_y[9];
+
+simpleIntVector beta_grid;
 
 };
 

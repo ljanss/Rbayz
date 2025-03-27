@@ -71,6 +71,10 @@ diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar, simpleD
     diag.initWith(Ddiag);
 }
 
+diagVarStr::~diagVarStr() {
+    delete par;
+}
+
 // "regular" constructor that gets variance info from the parsed model description
 diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar)
 {
@@ -155,6 +159,10 @@ lassVarStr::lassVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indep
     par->varianceStruct="LASS";
 }
 
+lassVarStr::~lassVarStr() {
+    delete par;
+}
+
 void lassVarStr::restart() {
    double invvar = 1.0l/par->val[0];
    for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
@@ -214,6 +222,10 @@ mixtVarStr::mixtVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indep
     par->varianceStruct="MIXT";
 }
 
+mixtVarStr::~mixtVarStr() {
+    delete par;
+}
+
 void mixtVarStr::restart() {
     // ??
 }
@@ -227,6 +239,11 @@ void mixtVarStr::sample() {
 loglinVarStr::loglinVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
     // add constructor
 }
+
+loglinVarStr::~loglinVarStr() {
+//    ....
+}
+
 
 void loglinVarStr::sample() {
     // add sample implementation
