@@ -74,6 +74,19 @@ parVector::parVector(parsedModelTerm & modeldescr, double initval, Rcpp::Charact
    common_constructor_items(modeldescr,"");
 }
 
+// parVector constructor that uses another 'related' parVector to copy size and labels, and name it as
+// namePrefix + name of the relatedPar. This is used now in modelHelper class to add objects to hold
+// additional parameter vectors.
+parVector::parVector(parsedModelTerm & modeldescr, double initval, parVector & relatedPar, std::string namePrefix)
+         : Values(), postMean(), postVar(), sumSqDiff() {
+   nelem = relatedPar.nelem;
+   Values.initWith(nelem, initval);
+   Labels.resize(nelem);
+   for(size_t i=0; i<nelem; i++)
+      Labels[i]=relatedPar.Labels[i];
+   common_constructor_items(modeldescr,namePrefix);
+}
+
 // nearly the same but labels is a vector<string>
 parVector::parVector(parsedModelTerm & modeldescr, double initval, std::vector<std::string>& inplabels)
   : Values(), postMean(), postVar(), sumSqDiff() {

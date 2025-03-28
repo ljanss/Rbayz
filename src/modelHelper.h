@@ -1,7 +1,14 @@
-// modelHelper.h
-// "helper" class to store additional modelling vectors.
-// Using an additional model-object for this, the 'par' vector gets automatically
-// added on the list of model parameter vectors.
+//
+//  Rbayz --- modelHelper.h
+//
+//  "helper" class to store additional modelling vectors.
+//  There is always an association with a certain model-term and the main parameter in that model-term.
+//  Thus this class using a modeldescr (from which basis of the parameter name can be extracted), and the
+//  parameter vector after which the helper needs to be set up (with equal size and labels).
+//  The helper parameter vector then gets a name as supplied namePrefix + same name as the 'fiendPar' supplied.
+//
+//  Created by Luc Janss on 27/03/2025.
+//
 
 #ifndef modelHelper_h
 #define modelHelper_h
@@ -14,19 +21,18 @@ class modelHelper : public modelBase {
    
 public:
 
-   // for now using constructor that needs labels and namePrefix, using standard default 0 to set-up the
-   // par-vector.
-   modelHelper(parsedModelTerm & modeldescr, Rcpp::CharacterVector& labels, std::string namePrefix)
+   modelHelper(parsedModelTerm & modeldescr, double initVal, parVector& friendPar, std::string namePrefix)
                  : modelBase() {
-      // maybe I need to make a new parVector constructor, for the lasso case there is no Rcpp:CharacterVector
-      // of labels, but a vector<string>, and the combination with a namePrefix now does not exist.
-      // It could also be convenient to use data from existing parVector to create a new one?
-      par = new parVector(modeldescr, 0.0l, labels, namePrefix);
+      par = new parVector(modeldescr, initVal, friendPar, namePrefix);
    }
 
    ~modelHelper() {
       delete par;
    }
+
+   void sample() { }
+   void sampleHpars() { }
+   void restart() { }
 
 };
 

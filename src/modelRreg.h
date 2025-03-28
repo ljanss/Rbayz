@@ -17,6 +17,7 @@
 #include "dataMatrix.h"
 #include "parseFunctions.h"
 #include "rbayzExceptions.h"
+#include "modelHelper.h"
 
 class modelRreg : public modelMatrix {
 
@@ -95,10 +96,15 @@ class modelRregGRL : public modelRreg {
       : modelRreg(pmdescr, rmod), beta_grid() {
       varmodel = new gridLVarStr(pmdescr, this->par);
       beta_grid.initWith(M->ncol, grid.mid); // initialize grid-steps as the middle value
+      ppi = new modelHelper(pmdescr, 0.0l, *(this->par), "ppi");
       // it is important to start the gridLASSO at a roughly right scale, it is taken here
       // as 0.10 * (raw response var) / Npredictors
       varmodel->par->val[0]= 0.1*rmod->stats.var/double(M->ncol);
- }
+   }
+
+   ~modelRregGRL() {
+      delete ppi;    // the varmodel is deleted in the parent
+   }
 
 // modelRregGRL cannot use parent sample() and needs to re-define it
 // some notes:
@@ -138,6 +144,9 @@ class modelRregGRL : public modelRreg {
             par->val[k] = beta_scale*grid.x[prop_grid];
             resid_fit_betaUpdate(beta_diff, k);
             count_accept++;
+           // also update ppi, it is 0 when at the mode, and 1 otherwise
+           if(beta_grid[k]==grid.mid) ppi->par->val[k] = 0.0l;
+           else ppi->par->val[k] = 1.0l;
          }
       }
    }
@@ -161,18 +170,18 @@ class modelRregGRL : public modelRreg {
    */
 
    // Epow(0.7) grid
+   /*
    struct {size_t n {7}; size_t mid {3}; size_t last {6};
    double x[7] {-10, -6, -3, 0, 3, 6, 10}; 
    double p[7] {0.005, 0.023, 0.089, 0.767, 0.089, 0.023, 0.005};
    double logp[7] {-5.278, -3.771, -2.424, -0.266, -2.424, -3.771, -5.278}; } grid;
+   */
 
    // Epow(0.5) grid
-   /*
    struct {size_t n {7}; size_t mid {3}; size_t last {6};
             double x[7] {-20, -10, -5, 0, 5, 10, 20}; 
             double p[7] {0.009, 0.032, 0.081, 0.757, 0.081, 0.032, 0.009};
             double logp[7] {-4.751, -3.441, -2.515, -0.279, -2.515, -3.441, -4.751}; } grid;
-   */
 
 //   int grid_size=9;
 //   double grid_min_max=4.0;
@@ -180,7 +189,8 @@ class modelRregGRL : public modelRreg {
 //   double grid_x[9];
 //   double grid_y[9];
 
-simpleIntVector beta_grid;
+   simpleIntVector beta_grid;
+   modelHelper* ppi;
 
 };
 

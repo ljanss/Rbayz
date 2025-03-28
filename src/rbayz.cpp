@@ -51,7 +51,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.26\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.30\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -283,12 +283,12 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                save++;  // save is counter for output (saved) cycles
             }
             // at 'collect_first_conv' cycle store parameter values in prevShowConv to allow computing
-            // first convergence; then at 'nShow' intervals show convergence on screen (when verbose > 0)
+            // first convergence; then at 'nShow' intervals show convergence on screen (when verbose > 0).
             if (cycle == collect_first_conv) {
                for(size_t i=0, col=0; i<Rbayz::parList.size(); i++) {
                   if( (*(Rbayz::parList[i]))->traced ) {
-                     for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
-                        prevShowConv[col] = (*(Rbayz::parList[i]))->postMean[j];
+                     for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {                        
+                        prevShowConv[col] = (*(Rbayz::parList[i]))->val[j];
                         col++;
                      }
                   }
@@ -300,7 +300,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                for(size_t i=0, col=0; i<Rbayz::parList.size(); i++) {
                   if( (*(Rbayz::parList[i]))->traced ) {
                      for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
-                        postmean = (*(Rbayz::parList[i]))->postMean[j];
+                        if (save==0) postmean = (*(Rbayz::parList[i]))->val[j];  // if nothing saved yet, using sampled
+                        else postmean = (*(Rbayz::parList[i]))->postMean[j];     // value instead of postmean.
                         conv_change += abs(prevShowConv[col] - postmean);
                         conv_denom += abs(prevShowConv[col]);
                         prevShowConv[col] = postmean;
