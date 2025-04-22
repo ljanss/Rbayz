@@ -6,6 +6,7 @@
 #include "parsedModelTerm.h"
 #include "parseFunctions.h"
 #include "rbayzExceptions.h"
+#include "optionsInfo.h"
 
 // parseModelTerm_step1: splits a model-term in 3 strings according to possible syntaxes
 //  (1)   funcname(variableString,optionString)
@@ -131,6 +132,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
    // Approach is therefore to scan character by character, check open & close brackets and compute
    // 'open_close_brack_balance'. A proper splitting comma is a comma where open_close_brack_balance==0. 
    // Options are then stored in a map<string, string>, split on first "=".
+   /* this part now moving to optionsInfo class
    if (optString!="") {
       pos1=-1;                          // start of first option, it will move up 1 at the start of the loop
       pos2=0;                           // will move to comma after first option, or end of string
@@ -152,13 +154,13 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
             tmpstring=optString.substr(pos1,(pos2-pos1+1));
          else                   // pos2 is after the last character (of piece to extract)
             tmpstring=optString.substr(pos1,(pos2-pos1));
-         /* tmpstring is an isolated option, it can have two formats (note: all spaces are removed):
+         // tmpstring is an isolated option, it can have two formats (note: all spaces are removed):
               keyword=value
-              keyword(value1,value2) - to set a vector of one or more values
+              keyword(value1,value2)
             In the initial parsing all is treated as text and stored in map 'options'. Multiple values
             from the second format are stored as a string of the comma-separated values.
             Note: keyword=value and keyword(value) are the same, they both end up in the map as options[keyword]=value.
-         */
+         //
          pos4 = tmpstring.find('=');       // check option string for equal sign and open-parenth
          pos5 = tmpstring.find('(');
          tmpstring_len = tmpstring.size();
@@ -179,6 +181,12 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
       }
       while (optString[pos1]==',');
    }
+   */
+
+   // It could be a good idea to check here if options are valid, this avoids a lot of hassle on checking and throwing
+   // errors in all the model-term objectcs. It could be done relatively smooth using a little 'data base' that lists
+   // the model-term function name (rr, rn, etc., which is available here), the allowed options for that model-term, and
+   // can also check some of the contents (esp. boolean type and numerical ones).
 
    // Split and analyse the variance description. This writes in varianceStruct a string
    // that allows to select the right object class in main. Variances descriptions that are sequence of

@@ -147,6 +147,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
 
       // Make parameter name disambiguation - this skips residuals (parList[0])
       // I considered this can move to parVector where names are set.
+/*
       {
          Rcpp::CharacterVector parNames;
          for(size_t i=1; i<Rbayz::parList.size(); i++)
@@ -171,6 +172,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
          }
       }
       if (verbose>4) Rcpp::Rcout << "Parameter names disambiguation checked\n";
+*/
 
       // Load initial values if given. An easy start is to only allow init-values from a run
       // with the same model - so that parameter-names and sizes all align.

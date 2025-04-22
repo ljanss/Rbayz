@@ -25,7 +25,7 @@ public:
 
    modelRreg(parsedModelTerm & modeldescr, modelResp * rmod)
          : modelMatrix(modeldescr, rmod)   {
-      if(checkOptions(modeldescr.options, "V prior pvals")>0) {
+      if(checkOptions(modeldescr.options, "V prior trace save")>0) {
          throw(generalRbayzError("ERROR: unrecognized option(s) in "+modeldescr.shortModelTerm));
       }
    }

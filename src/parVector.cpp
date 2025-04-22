@@ -2,6 +2,7 @@
 //  BayzR -- parVector.cpp
 //
 
+#include "Rbayz.h"
 #include "parVector.h"
 using Rsize_t = long int;
 
@@ -12,22 +13,64 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    std::string tempname = modeldescr.variableString;   // and make parameter name from the variableString...
    size_t pos=0;                                       // that removes link-ID and changes :| to dots
    if( (pos=tempname.find('/')) != std::string::npos ) tempname.erase(0, pos+1);
-   if(namePrefix=="")
-      Name = tempname;
-   else
-      Name=namePrefix + "." + tempname;
-   while( (pos=Name.find_first_of(":|/",pos)) != std::string::npos) {
-      Name[pos]='.';
+   if(namePrefix!="")
+      tempname = namePrefix + "." + tempname;
+   while( (pos=tempname.find_first_of(":|/",pos)) != std::string::npos) {
+      tempname[pos]='.';
       pos++;  // start re-search after currently replaced character
    }
-   // [ToDo] Move disambiguation of parameter Name here??
+   Name=tempname;
+   // Check for duplicate names in already stored parameter-list;
+   // The last element in parList should be the one currently constructed, because
+   // modelBase constructor runs first to put the par-pointer in parList, after which
+   // the 'downstream' constructors run to allocate the parVector ... so run the loop
+   // until < parList.size()-1. Also skip element 0 in parList (it is residuals).
+   {
+      bool duplicateFound;
+      int duplicateCount=0;
+      do {
+         duplicateFound=false;
+         for(size_t i=1; i < (Rbayz::parList.size()-1); i++) {
+            if((*Rbayz::parList[i])->Name == tempname) {
+               duplicateFound=true;
+               break;
+            }
+         }
+         if(duplicateFound) {
+            duplicateCount++;
+            tempname=Name+std::to_string(duplicateCount);
+         }
+      }
+      while(duplicateFound);
+   }
+   Name=tempname;
    modelFunction=modeldescr.funcName;
    varianceStruct="-";
    val=Values.data;
    postMean.initWith(nelem,0.0l);
    postVar.initWith(nelem,0.0l);
    sumSqDiff.initWith(nelem, 0.0l);
-   // [ToDo] parVector could also check the modeldescr for user-set 'traced' option
+   // get save and trace options from the model-description
+   std::string traceopt = modeldescr.options["trace"];
+   if(traceopt=="TRUE" || traceopt=="T" || traceopt=="1" || traceopt=="y") {
+      traced = 1;
+      if(nelem>100) Rbayz::Messages.push_back("WARNING using 'trace' on "+Name+" (size="+std::to_string(nelem)+
+             ") may need large memory; you could use 'save' instead to store samples in a file");
+   }
+   else if (traceopt=="FALSE" || traceopt=="F" || traceopt=="0" || traceopt=="n") {
+      traced = 0;
+   }
+   else {
+      // error
+   }
+   std::string saveopt = modeldescr.options["save"];
+   if(saveopt=="TRUE" || saveopt=="T" || saveopt=="1" || saveopt=="y") {
+   }
+   else if (saveopt=="FALSE" || saveopt=="F" || saveopt=="0" || saveopt=="n") {
+   }
+   else {
+      // error
+   }
 }
 
 // contructor for par-vector with single element where the "variableString" is also used for the label
