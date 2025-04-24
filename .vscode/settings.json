@@ -69,6 +69,12 @@
         "unordered_set": "cpp",
         "utility": "cpp",
         "vector": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "__verbose_abort": "cpp",
+        "clocale": "cpp",
+        "execution": "cpp",
+        "print": "cpp",
+        "stack": "cpp",
+        "variant": "cpp"
     }
 }
