@@ -46,6 +46,7 @@ size_t findClosingBrack(std::string &s, size_t fromPos) {
    else return std::string::npos;
 }
 
+// 'simple' split string where the splitting character can be modified
 std::vector<std::string> splitString(std::string text, std::string splitchar) {
    std::vector<std::string> parts;
    if (text=="") {
@@ -67,17 +68,55 @@ std::vector<std::string> splitString(std::string text, std::string splitchar) {
    return parts;
 }
 
-// wrappers around stoi (integer) and stod (double) handling catching errors
-// to allow get better context info in Rbayz messages list.
-// Because return value cannot be used to flag errors, the only way is for
-// calling function to check needStop setting.
+// Advanced split string that splits comma-separated string and ignores commas in nested parentheses.
+// This is used to split option-lists that can be of format: "xxx(a=1,b=2),yyy(c=3)" and should split
+// in "xxx(a=1,b=2)" and "yyy(c=3)", i.e. the comma nested within xxx() is ignored.
+// Parenthesis can be both round '()' and square '[]' and can be freely mixed (something like xxx(]
+// will work although looking ugly).
+std::vector<std::string> splitStringNested(std::string text) {
+   std::vector<std::string> parts;
+   if (text=="") {
+      return parts;
+   }
+   size_t pos1,pos2,pos3,pos4,pos5,tmpstring_len;
+   pos1=-1;                          // Start of first option, it will move up 1 at the start of the loop.
+   pos2=0;                           // Will move to comma after first option, or end of string.
+   pos3=text.size()-1;               // Position of last character in text
+   int open_close_brack_balance=0;   // Nested commas are ignored by keeping track of open/close brackets,
+                                     // a comma is only a proper split when this balance is zero.
+   std::string tmpstring;
+   do {
+      pos1++;                        // for proper continuation: after processing an option,
+                                     // pos1 will be left standing on the splitting comma.
+      while( !(open_close_brack_balance==0 && text[pos2]==',') && pos2<pos3) {
+         if(text[pos2]=='(' || text[pos2]=='[')
+            open_close_brack_balance++;
+         if(text[pos2]==')' || text[pos2]==']')
+            open_close_brack_balance--;
+         pos2++;
+      }
+      if(pos2==pos3)         // pos2 on the last character
+         tmpstring=text.substr(pos1,(pos2-pos1+1));
+      else                   // pos2 is after the last character (of piece to extract)
+         tmpstring=text.substr(pos1,(pos2-pos1));
+      parts.push_back(tmpstring);
+      if(text[pos2]==',') {    // the while will continue for a next option
+         pos1=pos2;
+         pos2++;
+      }
+   } while (text[pos1]==',');
+   return parts;
+}
+
+// wrappers around stoi (integer) and stod (double) catching errors to get better context info in Rbayz messages list.
+// Because return value cannot be used to flag errors, the only way is that the calling function checks needStop setting.
 int str2int(std::string s, std::string context) {
    int retval;
    try {
       retval = std::stoi(s);
    }
    catch (std::exception& e) {
-      Rbayz::Messages.push_back("Error reading value (not an integer number?) from <" + context + "> at <" + s + ">");
+      Rbayz::Messages.push_back("Error reading value (not an integer?) from <" + context + "> at <" + s + ">");
       Rbayz::needStop=true;
       return 0;
    }

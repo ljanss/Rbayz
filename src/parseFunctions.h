@@ -14,6 +14,7 @@
 
 void removeSpaces(std::string &s);
 std::vector<std::string> splitString(std::string text, std::string splitchar);
+std::vector<std::string> splitStringNested(std::string text);
 int str2int(std::string s, std::string context);
 double str2dbl(std::string s, std::string context);
 std::string convertFormula(Rcpp::Formula f);
