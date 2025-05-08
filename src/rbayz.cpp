@@ -28,6 +28,7 @@
 std::vector<parVector**> Rbayz::parList;
 std::vector<std::string> Rbayz::Messages;
 bool Rbayz::needStop=false;
+Rcpp::DataFrame mainData;
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
@@ -43,6 +44,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::parList.clear();
    Rbayz::Messages.clear();
    Rbayz::needStop=false;
+   Rbayz::mainData=inputData;
 
    // rbayz retains a small string of last executed code that is sometimes added in errors
    std::string lastDone;
@@ -66,7 +68,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
 
       // build response object - including response variance structure
       std::string VEstr =  Rcpp::as<std::string>(VE);
-      parsedModelTerm parsedResponseVariable(modelTerms[0], VEstr, inputData);
+      parsedModelTerm parsedResponseVariable(modelTerms[0], VEstr);
       // here still need to add selecting different response objects based on variance structure
       modelR = new modelResp(parsedResponseVariable);   
       if (verbose > 1) Rcpp::Rcout << "Response model-object done\n";
@@ -74,7 +76,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       // Build vector of modelling objects from RHS terms (loop from term=1)
       if(verbose>2) Rcpp::Rcout << "Starting on building model objects ...\n";
       for(size_t term=1; term<modelTerms.size(); term++) {
-         parsedModelTerm pmt(modelTerms[term], inputData);
+         parsedModelTerm pmt(modelTerms[term]);
          if(verbose>2) Rcpp::Rcout << " ... building term " << term << " " << pmt.funcName << "()\n";
          if(pmt.funcName=="mn") {
             if(pmt.variableString=="1") model.push_back(new modelMean(pmt, modelR));

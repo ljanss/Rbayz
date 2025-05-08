@@ -60,9 +60,9 @@ std::vector<std::string> generateLabels(std::string text, int n) {
 // Could be improved by making a sorted version of the column names and using binary_search,
 // but ideally then also storing and re-using the sorted version for all look-ups.
 // Then the sorted names must be prepared in the main function....?
-int findDataColumn(Rcpp::DataFrame d, std::string name) {
+int findDataColumn(std::string name) {
    std::vector<std::string> colnames;
-   CharVec2cpp(colnames, d.names());
+   CharVec2cpp(colnames, Rbayz::mainData.names());
    size_t col;
    for(col=0; col<colnames.size(); col++) {
       if(colnames[col]==name) break;

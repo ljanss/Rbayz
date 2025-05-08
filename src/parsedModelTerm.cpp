@@ -73,7 +73,7 @@ std::vector<std::string> parseModelTerm_step1(std::string mt) {
 // parseModelTerm_step2: splitting / interpreting variables, options, etc.
 // This one is defined as a member function to fill object member variables
 void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrString, 
-                     std::string optString, Rcpp::DataFrame &d) {
+                     std::string optString) {
 
    funcName = fnName;
    variableString = vrString;
@@ -116,7 +116,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
          variableTypes.push_back(0);
       }
       else {
-         variableObjects.push_back(getVariableObject(d,variableNames[i]));
+         variableObjects.push_back(getVariableObject(variableNames[i]));
              // getVariableObject searches both the data frame 'd' and the R environment
          if(variableObjects.back() != R_NilValue)
             variableTypes.push_back(getVariableType(variableObjects.back()));
@@ -301,7 +301,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
 } // end parsedModelTerm
 
 // constructor for handling response term with separate variance description
-parsedModelTerm::parsedModelTerm(std::string mt, std::string VEdescr, Rcpp::DataFrame &d)
+parsedModelTerm::parsedModelTerm(std::string mt, std::string VEdescr)
 {
    std::vector<std::string> parse_step1 = parseModelTerm_step1(mt);
    // for now not accepting functions on response, but it could be extended here to
@@ -310,14 +310,14 @@ parsedModelTerm::parsedModelTerm(std::string mt, std::string VEdescr, Rcpp::Data
    // [workHere] the next one could just be a message
    if(parse_step1[2]!="") throw(generalRbayzError("Unexpected options retrieved from response term: "+mt));
    // here not inserted "rp" as funcName and residual variance description as ony possible option
-   parseModelTerm_step2("rp", parse_step1[1], VEdescr, d);
+   parseModelTerm_step2("rp", parse_step1[1], VEdescr);
 }
 
 // constructor for handling RHS model terms
-parsedModelTerm::parsedModelTerm(std::string mt, Rcpp::DataFrame &d)
+parsedModelTerm::parsedModelTerm(std::string mt)
 {
    std::vector<std::string> parse_step1 = parseModelTerm_step1(mt);
-   parseModelTerm_step2(parse_step1[0], parse_step1[1], parse_step1[2], d);
+   parseModelTerm_step2(parse_step1[0], parse_step1[1], parse_step1[2]);
 }
 
 std::ostream& operator<<(std::ostream& os, parsedModelTerm& p)

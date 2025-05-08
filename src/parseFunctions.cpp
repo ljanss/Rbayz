@@ -167,15 +167,15 @@ int getVariableType(Rcpp::RObject x) {
    return(9);
 }
 
-// Search and retrieve a variable 'name' by searching in the dataframe 'd' or in the R
+// Search and retrieve a variable 'name' by searching in the Rbayz::mainData or in the R
 // environment, and return it as an RObject. If not found return R_NilValue.
-Rcpp::RObject getVariableObject(Rcpp::DataFrame &d, std::string name) {
+Rcpp::RObject getVariableObject(std::string name) {
    bool foundInEnv;
    Rcpp::RObject tempObject;
    Rcpp::Environment Renv;
-   int colnr = findDataColumn(d, name);  // returns -1 if not found
-   if(colnr>=0) {                        // found in data frame
-      tempObject = Rcpp::as<Rcpp::RObject>(d[colnr]);
+   int colnr = findDataColumn(name);    // returns -1 if not found
+   if(colnr>=0) {                       // found in data frame
+      tempObject = Rcpp::as<Rcpp::RObject>(Rbayz::mainData[colnr]);
    }
    else {                               // search in R environment
       foundInEnv = Renv.exists(name);
@@ -249,9 +249,10 @@ std::vector<std::string> getModelRHSTerms(std::string mf) {
 }
 */
 
-std::vector<std::string> parseColNames(Rcpp::DataFrame & d, size_t col) {
+// [ToDo] I think this function is no longer used
+std::vector<std::string> parseColNames(size_t col) {
    std::vector<std::string> names(7,"");
-   Rcpp::CharacterVector AllColNames = d.names();
+   Rcpp::CharacterVector AllColNames = Rbayz::mainData.names();
    std::string colName = Rcpp::as<std::string>(AllColNames[col]);
    // remove all spaces from the column name to facilitate parsing
    size_t pos;

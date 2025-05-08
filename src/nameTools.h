@@ -16,6 +16,6 @@
 void CharVec2cpp(std::vector<std::string> & labels, Rcpp::CharacterVector templabels);
 std::vector<std::string> getMatrixNames(Rcpp::NumericMatrix & mat, int dim);
 std::vector<std::string> generateLabels(std::string text, int n);
-int findDataColumn(Rcpp::DataFrame d, std::string name);
+int findDataColumn(std::string name);
 
 #endif /* nameTools_h */

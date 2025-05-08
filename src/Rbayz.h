@@ -10,12 +10,14 @@
 #ifndef Rbayz_h
 #define Rbayz_h
 
+#include <Rcpp.h>
 #include "parVector.h"
 
 namespace Rbayz {
    extern std::vector<parVector**> parList;
    extern std::vector<std::string> Messages;
    extern bool needStop;
+   extern Rcpp::DataFrame mainData; 
 }
 
 #endif /* Rbayz_h */
