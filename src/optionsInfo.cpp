@@ -8,15 +8,20 @@ void check_options(std::string fn, std::vector<optionSpec>& opts) {
    for(size_t opt=0; opt<opts.size(); opt++) {
       if(!opts[opt].haserror) {
          std::map<std::string, int>::iterator it1 = option2format.find(opts[opt].keyw);
-         // needs improvement because variable name in DIAG cannot be found in option2format
-         if(it1==option2format.end()) {
-            if(opts[opt].format==1) {
+         if(it1==option2format.end()) {           // Unfound option can be a variable name!
+            if(opts[opt].format==1) {             // But this check will not find more complex A:B combinations...
                Rcpp::Robject varobj = getVariableObject(opts[opt].keyw);
-
+               if(varobj==R_NilValue) {
+                  Rbayz::Messages.push_back("Unrecognized option <"+opts[opt].keyw+"> (misspelled?) in <" + opts[opt].optionText + ">");
+                  Rbayz::needStop = true;
+                  opts[opt].haserror=true;
+               }
+               else { // OK, relabel this option as a variable-name
+                  opts[opt].varObject = varobj;
+                  opts[opt].format = 10;
+                  opts[opt].valbool = false;
+               }
             }
-            Rbayz::Messages.push_back("Unrecognized option <"+opts[opt].keyw+">: misspelled?");
-            opts[opt].haserror=true;
-            errors++;
          }
          else {
             // the option is known, resolve 234 format ...
@@ -25,19 +30,48 @@ void check_options(std::string fn, std::vector<optionSpec>& opts) {
             modOptPair tempMod2Opt(fn,opts[opt].keyw);
             std::vector<modOptPair>::iterator it2 = find(modterm2option.begin(),modterm2option.end(),tempMod2Opt);
             if(it==modterm2option.end()) {
-               Rbayz::Messages.push_back("Misplaced option <"+opts[opt].keyw+">: not used here");
+               Rbayz::Messages.push_back("Misplaced option <"+opts[opt].keyw+"> (not used here) in <" + opts[opt].optionText + ">");
+               Rbayz::needStop = true;
                opts[opt].haserror=true;
-               errors++;
             }
          }
       }
    }
 }
 
+// Parse values that are still stored in string to the 'bool' or 'numb' slots.
+// If str2dbl conversion goes wrong, it will set needStop flag in the background, 
 void parse_option_values(std::vector<optionSpec>& opts) {
    for(size_t opt=0; opt<opts.size(); opt++) {
       if(!opts[opt].haserror) {
-
+         switch (opts[opt].format)
+         {
+         case 3:
+            opts[opt].valnumb.push_back(str2dbl(opts[opt].valstring));
+            break;
+         case 4:
+            if(opts[opt].valstring=="y" || opts[opt].valstring=="TRUE" || opts[opt].valstring=="T" || opts[opt].valstring=="1") {
+               opts[opt].valbool = true;
+            }
+            else if (opts[opt].valstring=="n" || opts[opt].valstring=="FALSE" || opts[opt].valstring=="F" || opts[opt].valstring=="0") {
+               opts[opt].valbool = false;
+            }
+            else {  // not a good boolean
+               Rbayz::Messages.push_back("Boolean option <" + opts[opt].optionText + "> requires TRUE/FALSE y/n T/F or 1/0");
+               Rbayz::needStop = true;
+               opts[opt].haserror=true;
+            }
+            break;
+         case 5:
+         case 6:
+            std::vector<std::string> splits = splitString(opts[opt].valstring,',');
+            for(size_t i=0; i<splits.size(); i++) {
+               opts[opt].valnumb.push_back(str2dbl(splits[i]));
+            }
+            break;
+         default:
+            break;
+         }
       }
    }
 }
@@ -54,6 +88,7 @@ optionsInfo::optionsInfo(std::string fname, std::string optstring)
    size_t errors=0;
    int varstruct_index=-1;
    for(size_t opt=0; opt<optionsStrings.size(); opt++) {
+      optionList[opt].optionText = optionsStrings[opt];
       size_t equal,parenth,equalAfterParenth,star,optlen;
       equal = optionsStrings[opt].find('=');
       parenth = optionsStrings[opt].find_first_of("([");
@@ -70,6 +105,7 @@ optionsInfo::optionsInfo(std::string fname, std::string optstring)
       else {
          if(star!=std::string::npos) {                                     // when not a varstruct, star is not allowed!
             Rbayz::Messages.push_back("Badly formatted option <"+optionsStrings[opt]+">: misplaced asterix(es)");
+            Rbayz::needStop = true;
             optionList[opt].haserror=true;
             errors++;
          }
@@ -101,6 +137,7 @@ optionsInfo::optionsInfo(std::string fname, std::string optstring)
             // involve presence of equalAfterParenth), formats 9 and 11 are variances and are already handled in the first if,
             // and for the moment format 10 is not supported.
             Rbayz::Messages.push_back("Badly formatted option <"+optionsStrings[opt]+">: syntax not recognized");
+            Rbayz::needStop = true;
             optionList[opt].haserror=true;
             errors++;
          }
@@ -115,6 +152,7 @@ optionsInfo::optionsInfo(std::string fname, std::string optstring)
       varstructList.resize(varstructStrings.size());
       size_t parenth, parenth2, equal2, optlen;
       for(size_t i=0; i<varstructStrings.size(); i++) {
+         varstructList[i].optionText=varstructStrings[i];
          parenth = varstructStrings[i].find_first_of("([");
          if(parenth==std::string::npos) {                  // no parenth, varstruct without options
             varstructList[i].keyw=varstructStrings[i];
@@ -146,8 +184,9 @@ optionsInfo::optionsInfo(std::string fname, std::string optstring)
             }
          }
          if(!(varstructList[i].keyw=="DIAG" || varstructList[i].keyw=="MIXT" || 
-               varstructList[i].keyw=="LASS" || varstructList[i].keyw=="VCOV"))
+               varstructList[i].keyw=="LASS" || varstructList[i].keyw=="VCOV")) {
             varstructList[i].iskernel=true;
+         }
       }
    }
 
@@ -160,12 +199,34 @@ optionsInfo::optionsInfo(std::string fname, std::string optstring)
       else check_options(varstructList[i].keyw, varstructList[i].varOptions);
    }
 
-   // and parse the values in all option-lists
+   // Parse the values in all option-lists
    parse_option_values(optionList);
    for(size_t i=0; i<varstructList.size(); i++) parse_option_values(varstructList[i].varOptions);
 
-   // need to add checking 'required' options - it needs to search through the list in a different way
-}
+   // Checking required options - now simply checking the few cases with required options and not using the required
+   // flag in the modterm2option list. With only few requirements this looks easier, but clearly shows some repetitive coding ...
+   for(size_t i=0; i<varstructList.size(); i++) {
+      if(varstructList[i].keyw=="MIXT") {
+         bool vars_present=false;
+         bool counts_present=false;
+         for(size_t j=0; j<varstructList[i].varOptions.size; i++) {
+            if (varstructList[i].varOptions[j].keyw=="vars") vars_present=true;
+            if (varstructList[i].varOptions[j].keyw=="counts") counts_present=true;
+         }
+         if(!vars_present) {
+            Rbayz::Messages.push_back("Variance structure <" + varstructList[i].optionText + "> is missing vars() specification");
+            Rbayz::needStop = true;
+            varstructList[i].haserror=true;
+         }
+         if(!counts_present) {
+            Rbayz::Messages.push_back("Variance structure <" + varstructList[i].optionText + "> is missing counts() specification");
+            Rbayz::needStop = true;
+            varstructList[i].haserror=true;
+         }
+      }
+   }
+
+} // end of class constructor
 
 
 optionSpec & optionsInfo::operator[](std::string& s) {

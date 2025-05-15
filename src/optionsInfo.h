@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <Rcpp.h>
 #include <utility>
 #include "Rbayz.h"
 #include "parseFunctions.h"
@@ -17,8 +18,10 @@
 // a struct with option specifications
 struct optionSpec
 {
+   std::string optionText; // the original option as text, used for error reporting
    bool isgiven=false;     // whether option is given; this is used to return a 'not given' option
    bool haserror=false;
+   Rcpp::Robject varObject;
    int format;             // set to 0 as default for not yet defined
    std::string keyw="";
    std::string key2="";
@@ -28,15 +31,21 @@ struct optionSpec
    optionSpec() {          // default constructor is needed as soon as specifying additional constructors ... 
       isgiven=true;
       haserror=false;
+      varObject = R_NilValue;
       format=0;
-      keyw=""; key2=""; valstring="";
+      optionText="";
+      keyw=""; key2="";
+      valstring="";
       valbool=false;
    }
    optionSpec(bool b) {
       isgiven=b;
       haserror=false;
+      varObject = R_NilValue;
       format=0;
-      keyw=""; key2=""; valstring="";
+      optionText="";
+      keyw=""; key2="";
+      valstring="";
       valbool=false;
    }
 };
@@ -44,16 +53,16 @@ struct optionSpec
 // a struct with variance specification
 struct varianceSpec
 {
+   std::string optionText; // the original complete vartruct as text, used for error reporting
    bool haserror;
    bool iskernel;
    std::string keyw;
-//   std::string optstring;
    std::vector<optionSpec> varOptions;
    varianceSpec() {
+      optionText="";
       haserror=false;
       iskernel=false;
       keyw="";
-//      optstring="";
    }
 };
 
