@@ -12,23 +12,22 @@
 #include <Rcpp.h>
 #include <utility>
 #include "Rbayz.h"
-#include "parseFunctions.h"
-#include "rbayzExceptions.h"
 
-// a struct with option specifications
-struct optionSpec
-{
-   std::string optionText; // the original option as text, used for error reporting
-   bool isgiven=false;     // whether option is given; this is used to return a 'not given' option
+// a class to specify one option allowing to store a boolean, text, vector<double> or
+// an Robject.
+class optionSpec {
+public:
+   std::string optionText;  // the original option as text, used for error reporting
+   bool isgiven=false;      // whether option is given; this is used to return a 'not given' option
    bool haserror=false;
-   Rcpp::Robject varObject;
-   int format;             // set to 0 as default for not yet defined
+   Rcpp::RObject varObject; // not variance but variable object!
+   int format;              // set to 0 as default for not yet defined
    std::string keyw="";
    std::string key2="";
    std::string valstring="";
    bool valbool=false;
    std::vector<double> valnumb;
-   optionSpec() {          // default constructor is needed as soon as specifying additional constructors ... 
+   optionSpec() {          // default constructor
       isgiven=true;
       haserror=false;
       varObject = R_NilValue;
@@ -50,13 +49,14 @@ struct optionSpec
    }
 };
 
-// a struct with variance specification
-struct varianceSpec
-{
+// a class to specify one variance-structure
+class varianceSpec {
+public:
    std::string optionText; // the original complete vartruct as text, used for error reporting
-   bool haserror;
-   bool iskernel;
    std::string keyw;
+   bool haserror;
+   bool iskernel;          // extend to: is kernel, is reserved structure, is number?
+   Rcpp::RObject kernObject;
    std::vector<optionSpec> varOptions;
    varianceSpec() {
       optionText="";
@@ -64,6 +64,7 @@ struct varianceSpec
       iskernel=false;
       keyw="";
    }
+   optionSpec operator[](std::string s);
 };
 
 /* A struct to store a combination of model-term, option, and 'required' flag.
@@ -117,11 +118,18 @@ private:
       std::make_pair("counts",3)
    };
 public:
-   optionsInfo(std::string fname, std::string optstring);
-   ~optionsInfo() {
-
+   optionsInfo() { }
+   void constr(std::string fname, std::string optstring);
+   ~optionsInfo() { }
+   bool haserror=false;
+   optionSpec operator[](std::string);
+   std::vector<varianceSpec>& Vlist() {
+      return this->varstructList;
    }
-   optionSpec& operator[](std::string&); 
+   // There is no way (yet...) to directly retrieve values for an option. Issues in providing that are
+   // 1) options can be text, bool or vector<double>, so it would need 3 retrieval functions?
+   // 2) it was difficult to think how to return if option is not present. Text could return "", vector<double>
+   // could return a zero-lenghth vector, but missing bool value?
 };
 
 

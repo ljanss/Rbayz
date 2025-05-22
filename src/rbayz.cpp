@@ -28,7 +28,7 @@
 std::vector<parVector**> Rbayz::parList;
 std::vector<std::string> Rbayz::Messages;
 bool Rbayz::needStop=false;
-Rcpp::DataFrame mainData;
+Rcpp::DataFrame Rbayz::mainData;
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
@@ -40,7 +40,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
 //                          Nullable initVals list, therefore the Nullable<list> comes last ...
 {
 
-   // clearing global variables
+   // clearing and setting global variables
    Rbayz::parList.clear();
    Rbayz::Messages.clear();
    Rbayz::needStop=false;

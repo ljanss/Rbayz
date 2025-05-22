@@ -78,7 +78,7 @@ std::vector<std::string> splitStringNested(std::string text) {
    if (text=="") {
       return parts;
    }
-   size_t pos1,pos2,pos3,pos4,pos5,tmpstring_len;
+   size_t pos1,pos2,pos3;
    pos1=-1;                          // Start of first option, it will move up 1 at the start of the loop.
    pos2=0;                           // Will move to comma after first option, or end of string.
    pos3=text.size()-1;               // Position of last character in text
@@ -377,6 +377,8 @@ std::string getOptionText(std::string modelTerm, std::string text) {
 // Check if keywords in user-specified options (stored in a map of (key,value) pairs) matches allowed
 // list of options. Errors are stored in Messages list, but higher level needs to throw exception.
 // Returns 0 for success, 1 for failure.
+//       **** deprecated **** replaced by checks in optionsInfo object
+/*
 int checkOptions(std::map<std::string,std::string> userOpts, std::string allowedOpts) {
    std::istringstream ss(allowedOpts);
    std::map<std::string, int> allowedOptsMap;
@@ -391,3 +393,4 @@ int checkOptions(std::map<std::string,std::string> userOpts, std::string allowed
    }
    if(Rbayz::needStop) return 1; else return 0;
 }
+*/

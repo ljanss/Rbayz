@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <Rcpp.h>
+#include "Rbayz.h"
 #include "labeledMatrix.h"
 #include "dataFactor.h"
 

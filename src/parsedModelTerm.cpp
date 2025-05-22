@@ -6,7 +6,6 @@
 #include "parsedModelTerm.h"
 #include "parseFunctions.h"
 #include "rbayzExceptions.h"
-#include "optionsInfo.h"
 
 // parseModelTerm_step1: splits a model-term in 3 strings according to possible syntaxes
 //  (1)   funcname(variableString,optionString)
@@ -126,162 +125,44 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
       }
    }
 
-   // split and store the options.
-   // The options cannot simply be separated on commas, because there can be commas inside options
-   // like: V=XX[a=1,b=2],W=YY[...]
-   // Approach is therefore to scan character by character, check open & close brackets and compute
-   // 'open_close_brack_balance'. A proper splitting comma is a comma where open_close_brack_balance==0. 
-   // Options are then stored in a map<string, string>, split on first "=".
-   /* this part now moving to optionsInfo class
-   if (optString!="") {
-      pos1=-1;                          // start of first option, it will move up 1 at the start of the loop
-      pos2=0;                           // will move to comma after first option, or end of string
-      pos3=optString.size()-1;          // position of last character in optString
-      int open_close_brack_balance=0;
-      std::string tmpstring;
-      size_t pos4, pos5, tmpstring_len;
-      do {
-         pos1++;                        // for proper continuation: after processing an option,
-                                        // pos1 will be left standing on the splitting comma.
-         while( !(open_close_brack_balance==0 && optString[pos2]==',') && pos2<pos3) {
-            if(optString[pos2]=='(' || optString[pos2]=='[')
-               open_close_brack_balance++;
-            if(optString[pos2]==')' || optString[pos2]==']')
-               open_close_brack_balance--;
-            pos2++;
-         }
-         if(pos2==pos3)         // pos2 on the last character
-            tmpstring=optString.substr(pos1,(pos2-pos1+1));
-         else                   // pos2 is after the last character (of piece to extract)
-            tmpstring=optString.substr(pos1,(pos2-pos1));
-         // tmpstring is an isolated option, it can have two formats (note: all spaces are removed):
-              keyword=value
-              keyword(value1,value2)
-            In the initial parsing all is treated as text and stored in map 'options'. Multiple values
-            from the second format are stored as a string of the comma-separated values.
-            Note: keyword=value and keyword(value) are the same, they both end up in the map as options[keyword]=value.
-         //
-         pos4 = tmpstring.find('=');       // check option string for equal sign and open-parenth
-         pos5 = tmpstring.find('(');
-         tmpstring_len = tmpstring.size();
-         if(pos4 != std::string::npos) {   // keyword=value
-            options[tmpstring.substr(0,pos4)]=tmpstring.substr(pos4+1,tmpstring_len-pos4-1);
-         }
-         else if(pos5 != std::string::npos) {  // keyword(value1,value2)
-            options[tmpstring.substr(0,pos5)]=tmpstring.substr(pos5+1,tmpstring_len-pos5-2);
-         }
-         else {
-            throw generalRbayzError("Error: option [" + tmpstring + "] is not keyword=value or keyword(value1,value2) in " +
-               shortModelTerm);
-         }
-         if(optString[pos2]==',') {    // the while will continue for a next option
-            pos1=pos2;
-            pos2++;
-         }
-      }
-      while (optString[pos1]==',');
+   allOptions.constr(funcName, optString);  // what if optString is empty, will all work OK?
+   if(allOptions.haserror) {
+      throw generalRbayzError("Errors in interpreting options in model-term " + shortModelTerm);
    }
-   */
 
-   // It could be a good idea to check here if options are valid, this avoids a lot of hassle on checking and throwing
-   // errors in all the model-term objectcs. It could be done relatively smooth using a little 'data base' that lists
-   // the model-term function name (rr, rn, etc., which is available here), the allowed options for that model-term, and
-   // can also check some of the contents (esp. boolean type and numerical ones).
-
-   // Split and analyse the variance description. This writes in varianceStruct a string
-   // that allows to select the right object class in main. Variances descriptions that are sequence of
-   // variance-structures and kernels get split and annotated further in varType etc. 
-   std::string variance_text = options["V"];  // also need to handle VE?
-   if (variance_text=="") {
+   // Analyse the (combination of) variance structures. This writes in varianceStruct a string
+   // that allows to select the right object class in main.
+   optionSpec var_option = allOptions["V"];
+   if( !var_option.isgiven ) {
       varianceStruct="notgiven";
    }
    else {
+      std::string variance_text = var_option.valstring;
       if (variance_text[0]=='~') {
          varianceStruct="llin";
       }
-      else {    // all other cases should be structure keywords and kernels separated by stars
-         std::vector<std::string> varianceElements = splitString(variance_text,"*");
-         // Here there could be a way to allow fixing variances by detecting if the last
-         // element is a numerical value, then store and remove that last element.
-         // Split every variance element in a name and a parameter-part
-         for(size_t i=0; i<varianceElements.size(); i++) {
-            size_t bracket = varianceElements[i].find_first_of("([");
-            size_t len_tot = varianceElements[i].length();
-            std::string name, variable, options;
-            if (bracket == std::string::npos) {   // simple variance-term like "Gmat"
-               name = varianceElements[i];
-               options = "";
-               variable = "";
-            }
-            else {                                // variance-term with [...] like K1[dim=5] or DIAG[W]
-               size_t closeBrack = findClosingBrack(varianceElements[i], bracket);
-               if(closeBrack != (len_tot-1) ) {
-                  throw generalRbayzError("Unbalanced parentheses in: "+varianceElements[i]);
-               }
-               name = varianceElements[i].substr(0,bracket);
-               options = varianceElements[i].substr(bracket+1,(len_tot-bracket-2));
-               if(name=="DIAG") {                 // separating first element in [...] as the variable for DIAG structures
-                  size_t comma = options.find(',');     // [ToDo]to be extended to other structures where the first element
-                  if(comma==std::string::npos) {        // is expected to be a variable name/object ...
-                     variable = options;
-                     options = "";
-                  }
-                  else {
-                     variable = options.substr(0,comma);
-                     options = options.substr(comma+1,std::string::npos);
-                  }
-               }
-               else {                  // for not DIAG (and with extensions not other structures with a variable name/object),
-                  variable="";         // variable is empty, options is all text between [... ] (possibly list of several comma-separated options) 
-               }
-            }
-            // [ToDo] Here make varOption split in a elements (and further in map?). Now it is just the whole string ...
-            varName.push_back(name);
-            varVariable.push_back(variable);
-            varOption.push_back(options);
-         }  // end for-loop over varianceElements
-         // if allowed to have DIAG in multiple var-elements, DIAG is not necessarily the last one,
-         // and this check may need to move inside the above for-loop.
-         if(varName.back()=="DIAG" && varVariable.back()=="") {
-            throw generalRbayzError("DIAG specification is missing a variable in " + shortModelTerm);
-         }
+      else {
+         std::vector<varianceSpec> varianceList = allOptions.Vlist();
+         // Old code here was using varName, varVaroable, varOption ...
          // Fill the varianceObjects and varianceType vectors.
          // The Type is one of keywords IDEN, VCOV etc. OR "kernel";
-         // The Objects are the kernel (matrix) object for type "kernel", the variable object for type "DIAG",
-         // or R_NilValue in other cases. If an Robject is needed but cannot be found, that's an error.
-         size_t nKernels=0, nVCOV=0;  // [ToDo] extend to also count the others ...
-         for(size_t i=0; i<varianceElements.size(); i++) {
-            std::string name=varName[i];
-            if(name=="IDEN" || name=="MIXT" || name=="LASS" || name=="VCOV" || name=="WGHT" || name=="LLIN") {  
-               varObject.push_back(R_NilValue);                            // I think LLIN cannot come in here ...
-               varType.push_back(name);
-               if(name=="VCOV") nVCOV++;
-            }
-            else if (name=="DIAG") {
-               varObject.push_back(getVariableObject(d,varVariable[i]));
-               if(varObject.back() == R_NilValue) {
-                  throw generalRbayzError("Variable <" + varVariable[i]+">in DIAG[] not found in the R Environment in "
-                                   + shortModelTerm);
-               }
-               varType.push_back(name);
-            }
-            else {   // expect a "kernel"
-               varObject.push_back(getVariableObject(d,name));
-               if(varObject.back() == R_NilValue) {
-                  throw generalRbayzError("Variance/kernel <"+name+"> not found in the R Environment in "
-                                   + shortModelTerm);
-               }
-               varType.push_back("kernel");
+         size_t nKernels=0, nVCOV=0;                       // [ToDo] extend to also count the others ...
+         for(size_t i=0; i<varianceList.size(); i++) {
+            std::string name=varianceList[i].keyw;
+            if(varianceList[i].iskernel) {
                nKernels++;
             }
+            else {
+               if (varianceList[i].keyw=="VCOV") {
+                  nVCOV++;
+               }
+            }
          }
-         // Determine the combination of variance-structures and set varianceStruct to indicate what
-         // variance class to use for the modelling [ToDo] ... more work to be done here ...
-         size_t nVarparts=varianceElements.size();
+         size_t nVarparts=varianceList.size();
          if(nVarparts==1) {
             if (nKernels==1) varianceStruct="1kernel";
             if (nVCOV==1) varianceStruct="1VCOV";
-            if (nKernels==0 && nVCOV==0) varianceStruct=varType[0];
+            if (nKernels==0 && nVCOV==0) varianceStruct=varianceList[i].keyw;
          }
          else {  // multiple VTERMs
             if(nKernels==nVarparts)
@@ -307,7 +188,7 @@ parsedModelTerm::parsedModelTerm(std::string mt, std::string VEdescr)
    // for now not accepting functions on response, but it could be extended here to
    // allow e.g. log(Y), probit(Y), etc
    if(parse_step1[0]!="") throw(generalRbayzError("Unexpected function on response term: "+mt));
-   // [workHere] the next one could just be a message
+   // [ToDo] the next one could just be a message
    if(parse_step1[2]!="") throw(generalRbayzError("Unexpected options retrieved from response term: "+mt));
    // here not inserted "rp" as funcName and residual variance description as ony possible option
    parseModelTerm_step2("rp", parse_step1[1], VEdescr);

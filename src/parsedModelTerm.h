@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "optionsInfo.h"
 
 class parsedModelTerm {
 public:
@@ -26,7 +27,7 @@ public:
    std::vector<std::string> variableNames;
    std::vector<Rcpp::RObject> variableObjects;
    std::vector<int> variableTypes;
-   std::map<std::string, std::string> options; 
+   optionsInfo allOptions;
    std::string varianceStruct="";
    std::string varianceLinMod="";
    // vectors from variance-term parsing

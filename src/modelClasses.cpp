@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 #include "model_rn_cor.h"
 #include "indexTools.h"
+#include "optionsInfo.h"
 
 /* ------------------------- modelBase
 */
@@ -25,20 +26,21 @@ int modelBase::openSamplesFile() {
 model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
       : modelFactor(modeldescr, rmod)
 {
-   // for rn_cor_k0 all variance objects must be kernels
-   for(size_t i=0; i<modeldescr.varObject.size(); i++) {
-      if (modeldescr.varObject[i]==R_NilValue) {
+   // for rn_cor_k0 all variance objects must be kernels (with an attached RObject)
+   std::vector<varianceSpec> varianceList = modeldescr.allOptions.Vlist();
+   for(size_t i=0; i<varianceList.size(); i++) {
+      if (! varianceList[i].iskernel ) {   // iskernel true guarantees there is an RObject
          throw(generalRbayzError("Attempting to run rn_cor_k0 with parameterised kernels"));
       }
    }
    // Get the first kernel and then add (making kronecker products) with second etc., if available
-   kernelList.push_back(new kernelMatrix(modeldescr.varObject[0], modeldescr.varName[0],modeldescr.options));
-   if (modeldescr.varName.size()==2) {  // combine with a second kernel if present
-      kernelMatrix* K2 = new kernelMatrix(modeldescr.varObject[1], modeldescr.varName[1],modeldescr.options);
+   kernelList.push_back(new kernelMatrix(varianceList[0]));
+   if (varianceList.size()==2) {  // combine with a second kernel if present
+      kernelMatrix* K2 = new kernelMatrix(varianceList[1]);
       kernelList[0]->addKernel(K2);
       delete K2;
    }
-   if (modeldescr.varName.size()>2) {  // need to think if I can keep combining kernels with addKernel()
+   if (varianceList.size()>2) {  // need to think if I can keep combining kernels with addKernel()
       throw(generalRbayzError("Not yet ready to combine more than 2 kernels for interaction"));
    }
    // Here add a vector regcoeff (size K->ncol) to hold the regresssion on eigenvectors.
@@ -119,7 +121,7 @@ void model_rn_cor_k0::prepForOutput() {
 
 /* start on making the "non-merged" approach where kernels remain individually in a list
 model_rn_cor_k1::model_rn_cor_k1(parsedModelTerm & modeldescr, modelResp * rmod)
-           : modelFactor(modeldescr, rmod), regcoeff(), fitval(), gprior(modeldescr.options["prior"]) {
+           : modelFactor(modeldescr, rmod), regcoeff(), fitval(), gprior(modeldescr.allOptions["prior"]) {
    // For the moment all variance objects must be kernels
    for(size_t i=0; i<modeldescr.varObject.size(); i++) {
       if (modeldescr.varObject[i]==R_NilValue) {

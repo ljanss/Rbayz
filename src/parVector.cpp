@@ -51,7 +51,7 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    postVar.initWith(nelem,0.0l);
    sumSqDiff.initWith(nelem, 0.0l);
    // get save and trace options from the model-description
-   std::string traceopt = modeldescr.options["trace"];
+   std::string traceopt = modeldescr.allOptions["trace"];
    if(traceopt=="TRUE" || traceopt=="T" || traceopt=="1" || traceopt=="y") {
       traced = 1;
       if(nelem>100) Rbayz::Messages.push_back("WARNING using 'trace' on "+Name+" (size="+std::to_string(nelem)+
@@ -63,7 +63,7 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    else {
       // error
    }
-   std::string saveopt = modeldescr.options["save"];
+   std::string saveopt = modeldescr.allOptions["save"];
    if(saveopt=="TRUE" || saveopt=="T" || saveopt=="1" || saveopt=="y") {
    }
    else if (saveopt=="FALSE" || saveopt=="F" || saveopt=="0" || saveopt=="n") {

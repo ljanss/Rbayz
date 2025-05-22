@@ -75,7 +75,7 @@ public:
     std::vector<double> Vars;
     std::vector<int> Counts;
     simpleDblVector diag;
-//    getSetOptions(modeldescr.options["V"]); // not yet defined?
+//    getSetOptions(modeldescr.allOptions["V"]); // not yet defined?
 //    modelBVS *mixmod;
 };
 

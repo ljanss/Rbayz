@@ -19,7 +19,7 @@ class modelVar : public modelBase {
 public:
 
    modelVar(parsedModelTerm & modeldescr)
-      : modelBase(), gprior(modeldescr.options["prior"]) {
+      : modelBase(), gprior(modeldescr.allOptions["prior"].valstring) {
    }
 
    virtual ~modelVar() {

@@ -19,18 +19,19 @@
 #include "labeledMatrix.h"
 #include "simpleVector.h"
 #include "nameTools.h"
+#include "optionsInfo.h"
 
 class kernelMatrix : public labeledMatrix {
 
 public:
 
-   kernelMatrix(Rcpp::RObject col, std::string & name,    std::map<std::string, std::string> & mtoptions)
+   kernelMatrix(varianceSpec var_descr)
          : labeledMatrix(), weights() {
 //    note: kernelMatrix starts with an empty labeledMatrix, parent constructors have not done anything,
 //    accept for having the matrix and vectors for storing data and row and column labels.
 //    The initWith() used at the end to copy eigenvec contents in the object is not simpleMatrix' initWith,
 //    but labeledMatrix' version that also handles copying row and column labels.
-      Rcpp::NumericMatrix kerneldata = Rcpp::as<Rcpp::NumericMatrix>(col);
+      Rcpp::NumericMatrix kerneldata = Rcpp::as<Rcpp::NumericMatrix>(var_descr.kernObject);
    	Rcpp::Function eig("eigen");
 	   Rcpp::List eigdecomp;
    	try {
@@ -50,19 +51,21 @@ public:
       std::string dimopt, dimpopt;
       double dim_pct=0;
       int dim_size=0;
-      if( ( dimopt = mtoptions["dim"]) != "") {
-         dim_size = str2int(dimopt, ("dim="+dimopt));
+      optionSpec dim_opt = var_descr["dim"];
+      optionSpec dimp_opt = var_descr["dimp"];
+      if( dim_opt.isgiven ) {
+         dim_size = (int) dim_opt.valnumb[0];
          if(dim_size <= 0 || dim_size > eigvalues.size()) {
-            Rbayz::Messages.push_back("Warning: invalid dim setting <"+dimopt+"> processing kernel "+name+", setting default dimp=90");
+            Rbayz::Messages.push_back("Warning: invalid dim setting <" + std::to_string(dim_size) + "> processing kernel " + var_descr.keyw + ", setting default dimp=90");
             dim_size=0;  // if dim not well set this does not trigger error,
             dim_pct=90;  // but goes back to cutting off on 90% of variance.
          }
       }
       else {  // without 'dim' option, check for 'dimp' (note: dim will be used when both are set!)
-         if( (dimpopt = mtoptions["dimp"]) != "") {
-            dim_pct = str2dbl(dimpopt,("dimp="+dimpopt));
+         if( dimp_opt.isgiven ) {
+            dim_pct = dimp_opt.valnumb[0];
             if(dim_pct <= 0 || dim_pct > 100) {
-               Rbayz::Messages.push_back("Warning: invalid dimp setting <"+dimpopt+"> processing kernel "+name+", setting default dimp=90");
+               Rbayz::Messages.push_back("Warning: invalid dimp setting <" + std::to_string(dim_pct) + "> processing kernel " + var_descr.keyw + ", setting default dimp=90");
                dim_pct=90;  // also here not error, but fall back to default dimp=90
             }
          }
@@ -76,11 +79,11 @@ public:
          double eval_cutoff = dim_pct * sumeval / 100.0l;
          sumeval = 0.0l;
          while (sumeval < eval_cutoff) sumeval += eigvalues[dim_size++];
-         std::string s = "Note: for kernel " + name + " using dimp=" + std::to_string(dim_pct) + " takes "
+         std::string s = "Note: for kernel " + var_descr.keyw + " using dimp=" + std::to_string(dim_pct) + " takes "
                       + std::to_string(dim_size) + " eigenvectors";
          Rbayz::Messages.push_back(s);
       }
-      this->initWith(eigvectors, name, dim_size);
+      this->initWith(eigvectors, var_descr.keyw, dim_size);
       weights.initWith(eigvalues, dim_size);
    }
 
