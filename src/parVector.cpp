@@ -3,6 +3,7 @@
 //
 
 #include "Rbayz.h"
+#include "rbayzExceptions.h"
 #include "parVector.h"
 using Rsize_t = long int;
 
@@ -50,26 +51,23 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    postMean.initWith(nelem,0.0l);
    postVar.initWith(nelem,0.0l);
    sumSqDiff.initWith(nelem, 0.0l);
-   // get save and trace options from the model-description
-   std::string traceopt = modeldescr.allOptions["trace"];
-   if(traceopt=="TRUE" || traceopt=="T" || traceopt=="1" || traceopt=="y") {
+   // check trace option from the model-description
+   // [ToDo]? This does not yet allow to switch off tracing where it is default on, to handle that,
+   // need to check if the default is set before or after this parVector constructor ... switching it
+   // off where when the model constructor switches it back on as default does not work ...
+   optionSpec trace_opt = modeldescr.allOptions["trace"];
+   if (trace_opt.isgiven && trace_opt.valbool==true) {
       traced = 1;
       if(nelem>100) Rbayz::Messages.push_back("WARNING using 'trace' on "+Name+" (size="+std::to_string(nelem)+
              ") may need large memory; you could use 'save' instead to store samples in a file");
    }
-   else if (traceopt=="FALSE" || traceopt=="F" || traceopt=="0" || traceopt=="n") {
-      traced = 0;
-   }
-   else {
-      // error
-   }
-   std::string saveopt = modeldescr.allOptions["save"];
-   if(saveopt=="TRUE" || saveopt=="T" || saveopt=="1" || saveopt=="y") {
-   }
-   else if (saveopt=="FALSE" || saveopt=="F" || saveopt=="0" || saveopt=="n") {
-   }
-   else {
-      // error
+   // check save option and open samples file if requested
+   optionSpec save_opt = modeldescr.allOptions["save"];
+   if(save_opt.isgiven && save_opt.valbool==true) {
+      if( (openSamplesFile()) > 0) {
+         throw generalRbayzError("Unable to open file for writing samples from " + Name);
+      }
+      saveSamples=true;
    }
 }
 
@@ -144,26 +142,46 @@ parVector::parVector(parsedModelTerm & modeldescr, double initval, std::vector<s
 // Update cumulative means and variances
 void parVector::collectStats() {
    double olddev, newdev;
-   this->count_collect_stats++;
+   count_collect_stats++;
    double n = double(count_collect_stats);
    if (count_collect_stats==1) {                  // at first sample collection store mean
       for(size_t i=0; i<nelem; i++) {
-         this->postMean.data[i] = this->Values[i];
+         postMean.data[i] = val[i];
       }
    }
    else {                                     // can update mean, sumSqDiff and compute var
       for(size_t i=0; i<nelem; i++) {
-         olddev = this->Values[i] - this->postMean.data[i]; // deviation with old mean
-         this->postMean.data[i] += olddev/n;
-         newdev = this->Values[i] - this->postMean.data[i]; // deviation with updated mean
-         this->sumSqDiff.data[i] += olddev*newdev;
-         this->postVar.data[i] = this->sumSqDiff.data[i]/(n-1.0l);
+         olddev = val[i] - postMean.data[i]; // deviation with old mean
+         postMean.data[i] += olddev/n;
+         newdev = val[i] - postMean.data[i]; // deviation with updated mean
+         sumSqDiff.data[i] += olddev*newdev;
+         postVar.data[i] = sumSqDiff.data[i]/(n-1.0l);
       }
    }
 }
 
-// Function to write (part of) parVector (for debugging purposes) - Rcout accepts this fine.
-// operator<< overload must be defined as a non-member ...
+int parVector::openSamplesFile() {
+   std::string filename = "samples." + Name + ".txt";
+   samplesFile = fopen(filename.c_str(),"w"); 
+   return (samplesFile==0) ? 1 : 0; 
+}
+
+void parVector::writeSamples(int cycle) {
+   if(saveSamples) {
+      fprintf(samplesFile,"%d",cycle);
+      for(size_t k=0; k<nelem; k++)
+         fprintf(samplesFile," %g",Values[k]);
+      fprintf(samplesFile,"\n");
+   }
+}
+
+parVector::~parVector() {
+   if(samplesFile != 0) fclose(samplesFile);
+}
+
+// Function to write name, size and first elements of a parVector (for debugging purposes),
+// can be used with Rcpp::Rcout << `parVector`;
+// ... operator<< overload must be defined as a non-member ...
 std::ostream& operator<<(std::ostream& os, const parVector& p)
 {
     os << p.Name << "[" << p.nelem << "] ";

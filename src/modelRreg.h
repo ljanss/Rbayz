@@ -86,7 +86,7 @@ public:
    }
 };
 
-class modelRregGRL : public modelRreg {
+class modelRregGRL : public modelRreg {                                      // *** GRid Lasso ***
 
    public:
    modelRregGRL(parsedModelTerm & pmdescr, modelResp * rmod)
@@ -121,7 +121,7 @@ class modelRregGRL : public modelRreg {
       double lhs, rhs;
       double beta_scale = sqrt(varmodel->par->val[0]);
       double MHratio;
-      int count_accept=0;
+//      int count_accept=0;
       for(size_t k=0; k < M->ncol; k++) {
          curr_grid = beta_grid[k];
          if(curr_grid == 0) prop_grid = 1;                           // at left extreme, move up
@@ -140,7 +140,7 @@ class modelRregGRL : public modelRreg {
             beta_grid[k] = prop_grid;
             par->val[k] = beta_scale*grid.x[prop_grid];
             resid_fit_betaUpdate(beta_diff, k);
-            count_accept++;
+//            count_accept++;
            // also update ppi, it is 0 when at the mode, and 1 otherwise
            if(beta_grid[k]==grid.mid) ppi->par->val[k] = 0.0l;
            else ppi->par->val[k] = 1.0l;

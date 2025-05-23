@@ -11,7 +11,6 @@
 #include <map>
 #include <Rcpp.h>
 #include <utility>
-#include "Rbayz.h"
 
 // a class to specify one option allowing to store a boolean, text, vector<double> or
 // an Robject.
@@ -130,6 +129,12 @@ public:
    // 1) options can be text, bool or vector<double>, so it would need 3 retrieval functions?
    // 2) it was difficult to think how to return if option is not present. Text could return "", vector<double>
    // could return a zero-lenghth vector, but missing bool value?
+   // Now thinking it is still useful to have member variable or function:
+   //  - istrue(): returns if bool option is set true, but can only determine if false together with isgiven
+   //  - text(): return text (valstring) or "" when not given or not appropriate
+   //  - ?? numeric values: there is instances where there is only one value to return, other cases will need the
+   //       whole vector. Using a missing value could help for the one-value cases.
+   // This would allow to use expressions like allOptions["V"].text(), or allOptions["save"].istrue(), etc.
 };
 
 

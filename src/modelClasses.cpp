@@ -6,17 +6,6 @@
 #include "indexTools.h"
 #include "optionsInfo.h"
 
-/* ------------------------- modelBase
-*/
-
-void modelBase::writeSamples() {
-
-}
-
-int modelBase::openSamplesFile() {
-   return 0;
-}
-
 /* *********************** model_rn_cor classes ***************************/
 
 // ---- model_ran_cor_k0

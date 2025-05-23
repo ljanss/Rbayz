@@ -4,13 +4,13 @@
 //  Copyright © 2018 Luc Janss. All rights reserved.
 //
 
+#ifndef parseFunctions_h
+#define parseFunctions_h
+
 #include <Rcpp.h>
 #include <vector>
 #include <string>
 #include <map>
-
-#ifndef parseFunctions_h
-#define parseFunctions_h
 
 void removeSpaces(std::string &s);
 std::vector<std::string> splitString(std::string text, std::string splitchar);

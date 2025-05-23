@@ -38,14 +38,6 @@ public:
    // parameters for output, the base class defines an 'empty' version.
    virtual void prepForOutput() { };
 
-   // saveSamples saves MCMC samples in a file, it will kick in when the constructor
-   // has set saveSamples=true. There is a definition in modelClasses.cpp file.
-   // [!] Better idea: saving samples can move to parVector class??
-   virtual int openSamplesFile();
-   virtual void writeSamples();
-   bool saveSamples = false;
-   FILE* samplesFile;
-
    parVector* par=0;
 
 };

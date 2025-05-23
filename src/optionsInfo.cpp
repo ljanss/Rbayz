@@ -1,6 +1,7 @@
 #include "optionsInfo.h"
 #include "parseFunctions.h"
 #include "rbayzExceptions.h"
+#include "Rbayz.h"
 
 // Check if options are allowed for a model-term or variance-structure; 
 // - also resolve formats 2-3-4

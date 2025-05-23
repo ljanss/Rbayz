@@ -88,7 +88,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
             else if (pmt.varianceStruct=="1kernel" || pmt.varianceStruct=="kernels")
                model.push_back(new model_rn_cor_k0(pmt, modelR));
             else
-               throw generalRbayzError("There is no class to model rn(...) with Variance structure " + pmt.options["V"]);
+               throw generalRbayzError("There is no class to model rn(...) with Variance structure " + pmt.allOptions["V"].valstring);
          }
          else if (pmt.funcName=="rr") {
             if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven")
@@ -103,7 +103,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                model.push_back(new modelMixt(pmt, rrmodel));
             }
             else
-               throw generalRbayzError("There is no class to model rr(...) with Variance structure " + pmt.options["V"]);
+               throw generalRbayzError("There is no class to model rr(...) with Variance structure " + pmt.allOptions["V"].valstring);
          }
          else if (pmt.funcName=="rg") {    // [ToDo] work on adding rg() versions
             if(pmt.variablePattern=="onevar")

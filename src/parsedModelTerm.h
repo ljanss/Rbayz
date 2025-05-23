@@ -10,7 +10,6 @@
 #include <Rcpp.h>
 #include <vector>
 #include <string>
-#include <map>
 #include "optionsInfo.h"
 
 class parsedModelTerm {

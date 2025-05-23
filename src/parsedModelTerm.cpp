@@ -1,8 +1,5 @@
 //  parsedModelTerm.cpp
 
-#include <Rcpp.h>
-#include <vector>
-#include <string>
 #include "parsedModelTerm.h"
 #include "parseFunctions.h"
 #include "rbayzExceptions.h"
@@ -162,7 +159,7 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
          if(nVarparts==1) {
             if (nKernels==1) varianceStruct="1kernel";
             if (nVCOV==1) varianceStruct="1VCOV";
-            if (nKernels==0 && nVCOV==0) varianceStruct=varianceList[i].keyw;
+            if (nKernels==0 && nVCOV==0) varianceStruct=varianceList[0].keyw;
          }
          else {  // multiple VTERMs
             if(nKernels==nVarparts)
@@ -205,28 +202,9 @@ std::ostream& operator<<(std::ostream& os, parsedModelTerm& p)
 {
     os << p.shortModelTerm << ": funcName" << "[" << p.funcName << "] ";
     os << "variableString" << "[" << p.variableString << "] ";
-    os << "variance" << "[" << p.options["V"] << "] ";
+    os << "variance" << "[" << p.allOptions["V"].valstring << "] ";
     os << "varianceStruct" << "[" << p.varianceStruct << "] ";
-    os << "prior" << "[" << p.options["prior"] << "] ";
+    os << "prior" << "[" << p.allOptions["prior"].valstring << "] ";
     os << "\n";
     return os;
 }
-
-/* variables that are in parsedModelTerm:
-   std::string funcName="";
-   std::string shortModelTerm="";
-   std::string variableString="";
-   std::string variablePattern="";
-   std::vector<std::string> variableNames;
-   std::vector<Rcpp::RObject> variableObjects;
-   std::vector<int> variableTypes;
-   std::string varianceStruct="";
-   std::string varianceLinMod="";
-   std::vector<std::string> varOption;
-   std::vector<std::string> varName;
-   std::vector<Rcpp::RObject> varObject;
-   std::vector<int> varianceKernelType;
-   int hierarchType; // 0=no, 1=simplified form index/matrix, 2=genuine
-   std::string hierarchModel="";
-   std::string logging="";
-*/

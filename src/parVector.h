@@ -6,14 +6,14 @@
 //  Created by Luc Janss on 13/09/2023.
 //
 
+#ifndef parVector_h
+#define parVector_h
+
 #include <Rcpp.h>
 #include <string>
 #include <vector>
 #include "simpleVector.h"
 #include "parsedModelTerm.h"
-
-#ifndef parVector_h
-#define parVector_h
 
 class parVector {
 
@@ -32,6 +32,8 @@ public:
    simpleDblVector postVar;
    simpleDblVector sumSqDiff;
    size_t count_collect_stats=0;
+   bool saveSamples = false;
+   FILE* samplesFile=0;
    parVector(parsedModelTerm & modeldescr, double initval);
    parVector(parsedModelTerm & modeldescr, double initval, std::string namePrefix);
    parVector(parsedModelTerm & modeldescr, double initval, Rcpp::CharacterVector& labels, std::string namePrefix);
@@ -40,7 +42,9 @@ public:
    parVector(parsedModelTerm & modeldescr, double initval, std::vector<std::string>& labels);
    void common_constructor_items(parsedModelTerm & modeldescr, std::string namePrefix);
    void collectStats();
-   ~parVector() {   }
+   int openSamplesFile();
+   void writeSamples(int);
+   ~parVector();
    
 };
 
