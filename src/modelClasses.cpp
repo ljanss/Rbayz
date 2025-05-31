@@ -2,6 +2,7 @@
 //
 
 #include <Rcpp.h>
+#include "Rbayz.h"
 #include "model_rn_cor.h"
 #include "indexTools.h"
 #include "optionsInfo.h"
@@ -22,6 +23,9 @@ model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
          throw(generalRbayzError("Attempting to run rn_cor_k0 with parameterised kernels"));
       }
    }
+   // check if the model-term has set dim and dimp options ...
+   // ... then pass to kernelMatrix building, but depends on 1 kernel or >1 kernels how to use it ...
+
    // Get the first kernel and then add (making kronecker products) with second etc., if available
    kernelList.push_back(new kernelMatrix(varianceList[0]));
    if (varianceList.size()==2) {  // combine with a second kernel if present
@@ -35,6 +39,13 @@ model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
    // Here add a vector regcoeff (size K->ncol) to hold the regresssion on eigenvectors.
    // It is a parVector class so that the variance object can accept and work on it.
    regcoeff = new parVector(modeldescr, 0.0l, kernelList[0]->colnames);
+   regcoeff->Name = regcoeff->Name + ".alpha";
+   if(modeldescr.allOptions["alpha_est"].isgiven || modeldescr.allOptions["alpha_save"].isgiven) {
+      Rbayz::parList.push_back(&regcoeff);
+   }
+   if (modeldescr.allOptions["alpha_save"].isgiven) {
+      regcoeff->saveSamples=true;
+   }
    // obsIndex makes new level codes matching F->labels from every row in data to K->labels, it could
    // in principle replace the F->data and no need for the obsIndex vector.
    builObsIndex(obsIndex,F,kernelList[0]);

@@ -62,6 +62,7 @@ public:
       haserror=false;
       iskernel=false;
       keyw="";
+      kernObject = R_NilValue;
    }
    optionSpec operator[](std::string s);
 };
@@ -105,16 +106,24 @@ private:
       {"rn","prior",false},
       {"rr","prior",false},
       {"MIXT","vars",true},
-      {"MIXT","counts",true}
+      {"MIXT","counts",true},
+      {"KERN","dim",false},
+      {"KERN","dimp",false},
+      {"rn","alpha_est",false},
+      {"rn","alpha_save",false}
    };
    std::map<std::string, int> option2format
    {
-      std::make_pair("trace",2),
-      std::make_pair("save",2),
+      std::make_pair("trace",4),
+      std::make_pair("save",4),
       std::make_pair("V",1),
-      std::make_pair("prior",4),
-      std::make_pair("vars",3),
-      std::make_pair("counts",3)
+      std::make_pair("prior",6),
+      std::make_pair("vars",5),
+      std::make_pair("counts",5),
+      std::make_pair("dim",3),
+      std::make_pair("dimp",3),
+      std::make_pair("alpha_est",4),
+      std::make_pair("alpha_save",4)
    };
 public:
    optionsInfo() { }
@@ -128,7 +137,7 @@ public:
    // There is no way (yet...) to directly retrieve values for an option. Issues in providing that are
    // 1) options can be text, bool or vector<double>, so it would need 3 retrieval functions?
    // 2) it was difficult to think how to return if option is not present. Text could return "", vector<double>
-   // could return a zero-lenghth vector, but missing bool value?
+   // could return a zero-length vector, but missing bool value?
    // Now thinking it is still useful to have member variable or function:
    //  - istrue(): returns if bool option is set true, but can only determine if false together with isgiven
    //  - text(): return text (valstring) or "" when not given or not appropriate

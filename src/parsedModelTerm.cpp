@@ -12,10 +12,9 @@
 // be empty ("") if not available from syntaxes (2) and (3).
 std::vector<std::string> parseModelTerm_step1(std::string mt) {
 
-   std::vector<std::string> result(3);
+   std::vector<std::string> result(3,"");
    size_t pos1, pos2;
    bool has_funcname=false;
-
    // determine if there are parenthesis - so there should be a funcname
    if ( (pos1 = mt.find('(')) != std::string::npos)
       has_funcname=true;
@@ -55,7 +54,7 @@ std::vector<std::string> parseModelTerm_step1(std::string mt) {
    result[1]=mt.substr(pos1,retrieve_length);
 
    // 3. optionString: if pos2 is on a comma there are options upto closing parenthesis
-   if(mt[pos2]==',') {
+   if(pos2 != std::string::npos && mt[pos2]==',') {
       retrieve_length = mt.size()-pos2-2;
       result[2]=mt.substr((pos2+1),retrieve_length);
    }
@@ -126,7 +125,6 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
    if(allOptions.haserror) {
       throw generalRbayzError("Errors in interpreting options in model-term " + shortModelTerm);
    }
-
    // Analyse the (combination of) variance structures. This writes in varianceStruct a string
    // that allows to select the right object class in main.
    optionSpec var_option = allOptions["V"];
@@ -138,11 +136,8 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
       if (variance_text[0]=='~') {
          varianceStruct="llin";
       }
-      else {
+      else {  // variance descriptions that are one or more variance-structures ...
          std::vector<varianceSpec> varianceList = allOptions.Vlist();
-         // Old code here was using varName, varVaroable, varOption ...
-         // Fill the varianceObjects and varianceType vectors.
-         // The Type is one of keywords IDEN, VCOV etc. OR "kernel";
          size_t nKernels=0, nVCOV=0;                       // [ToDo] extend to also count the others ...
          for(size_t i=0; i<varianceList.size(); i++) {
             std::string name=varianceList[i].keyw;
@@ -161,13 +156,13 @@ void parsedModelTerm::parseModelTerm_step2(std::string fnName, std::string vrStr
             if (nVCOV==1) varianceStruct="1VCOV";
             if (nKernels==0 && nVCOV==0) varianceStruct=varianceList[0].keyw;
          }
-         else {  // multiple VTERMs
-            if(nKernels==nVarparts)
+         else {  // multiple VTERMs - this now only accepts multiple kernels and is prepared to
+            if(nKernels==nVarparts)                          // accept combinations with one VCOV 
                varianceStruct="kernels";
             else if (nKernels==(nVarparts-1) && nVCOV==1)
                varianceStruct="kernels-1vcov";
-            else
-               throw generalRbayzError("Cannot handle this variance pattern: "+variance_text);
+            else  // something mixed e.g. with reserved keyword structures
+               varianceStruct="mixed";
          }
          // possible other cases to consider:
          // nkernels>0 && nVCOV>0 && (nKernels+nVCOV)==nVarparts:  kernels and multiple VCOV structures
@@ -184,9 +179,9 @@ parsedModelTerm::parsedModelTerm(std::string mt, std::string VEdescr)
    std::vector<std::string> parse_step1 = parseModelTerm_step1(mt);
    // for now not accepting functions on response, but it could be extended here to
    // allow e.g. log(Y), probit(Y), etc
-   if(parse_step1[0]!="") throw(generalRbayzError("Unexpected function on response term: "+mt));
+   if(parse_step1[0]!="") throw generalRbayzError("Unexpected function on response term "+mt+" :"+parse_step1[0]);
    // [ToDo] the next one could just be a message
-   if(parse_step1[2]!="") throw(generalRbayzError("Unexpected options retrieved from response term: "+mt));
+   if(parse_step1[2]!="") throw generalRbayzError("Unexpected options retrieved for response term "+mt+" :"+parse_step1[2]);
    // here not inserted "rp" as funcName and residual variance description as ony possible option
    parseModelTerm_step2("rp", parse_step1[1], VEdescr);
 }

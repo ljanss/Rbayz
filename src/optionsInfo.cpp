@@ -31,6 +31,12 @@ int check_options(std::string fn, std::vector<optionSpec>& opts, std::vector<mod
                   opts[opt].keyw = "varname";            // the keyw becomes 'varname'
                }
             }
+            else {  // Other than format 1 and not in option2format -> error
+               Rbayz::Messages.push_back("Unrecognized option <"+opts[opt].keyw+"> (misspelled?) in <" + opts[opt].optionText + ">");
+               Rbayz::needStop = true;
+               opts[opt].haserror=true;
+               errors++;
+            }
          }
          else {
             // the option is known, resolve 234 format ...
@@ -86,12 +92,13 @@ int parse_option_values(std::vector<optionSpec>& opts) {
 
 void optionsInfo::constr(std::string fname, std::string optstring)
 {
+   if (optstring=="") return; // nothing to do!
+
    // split options on comma (using splitStringNested that ignores nested commas)
    std::vector<std::string> optionsStrings = splitStringNested(optstring);
 
    // fill optionList vector with default/empty slots for each option
    optionList.resize(optionsStrings.size());
-
    // parse/store each option in the optionList. In the optionList variance options (V=) are stored as string.
    size_t errors=0;
    int varstruct_index=-1;
@@ -174,6 +181,7 @@ void optionsInfo::constr(std::string fname, std::string optstring)
                equal2=optStrings[j].find('=');                                  // optStrings in the varOptions slots.
                parenth2=optStrings[j].find_first_of("([");
                optlen=optStrings[j].size();
+               varstructList[i].varOptions[j].optionText=optStrings[j];
                if (equal2==std::string::npos && parenth2==std::string::npos) {  // here same parsing as above, but
                   varstructList[i].varOptions[j].format=1;                      // options within varstructs can only
                   varstructList[i].varOptions[j].keyw=optStrings[j];            // be format 1, 234, or 5.
@@ -249,7 +257,7 @@ void optionsInfo::constr(std::string fname, std::string optstring)
       }
       else if (varstructList[i].keyw=="DIAG") {
          bool varname_present=false;
-         for(size_t j=0; j<varstructList[i].varOptions.size(); i++) {
+         for(size_t j=0; j<varstructList[i].varOptions.size(); j++) {
             if (varstructList[i].varOptions[j].keyw=="varname") varname_present=true;
          }
          if(!varname_present) {
@@ -260,7 +268,44 @@ void optionsInfo::constr(std::string fname, std::string optstring)
          }
       }
    }
-
+/**** printing content of optionsInfo object on screen
+   Rcpp::Rcout << "OptionsInfo.constr for " << fname << ", " << optionList.size() << " options";
+   if(varstructList.size()>0) Rcpp::Rcout << ", varstructList with " << varstructList.size() << " components\n";
+   else Rcpp::Rcout << ", no varstructList\n";
+   for(size_t i=0; i<optionList.size(); i++) {
+      Rcpp::Rcout << "  option " << i << " <" << optionList[i].optionText << ">: error=" << optionList[i].haserror << " format=" << optionList[i].format
+                  << " keyw=" << optionList[i].keyw << " bool=" << optionList[i].valbool << " string=" << optionList[i].valstring;
+      if(optionList[i].varObject == R_NilValue) Rcpp::Rcout << " RObject=No";
+      else Rcpp::Rcout << " RObject=Yes";
+      if(optionList[i].valnumb.size()>0) {
+         Rcpp::Rcout << " valnumb:";
+         for(size_t j=0; j<optionList[i].valnumb.size(); j++) Rcpp::Rcout << " " << optionList[i].valnumb[j];
+      }
+      else Rcpp::Rcout << " valnumb: empty";
+      Rcpp::Rcout << "\n";
+   }
+   for(size_t i=0; i<varstructList.size(); i++) {
+      Rcpp::Rcout << "  varstruct component " << i << " keyw=" << varstructList[i].keyw << " error=" << varstructList[i].haserror;
+      Rcpp::Rcout << " iskernel=" << varstructList[i].iskernel << " options:" << varstructList[i].varOptions.size();
+      if(varstructList[i].kernObject == R_NilValue) Rcpp::Rcout << " RObject=No";
+      else Rcpp::Rcout << " RObject=Yes";
+      Rcpp::Rcout << "\n";
+      for(size_t j=0; j<varstructList[i].varOptions.size(); j++) {
+         Rcpp::Rcout << "    option " << j << " <" << varstructList[i].varOptions[j].optionText << ">: error=" << varstructList[i].varOptions[j].haserror
+                     << " format=" << varstructList[i].varOptions[j].format
+                     << " keyw=" << varstructList[i].varOptions[j].keyw << " bool=" << varstructList[i].varOptions[j].valbool << " string=" << varstructList[i].varOptions[j].valstring;
+         if(varstructList[i].varOptions[j].varObject == R_NilValue) Rcpp::Rcout << " RObject=No";
+         else Rcpp::Rcout << " RObject=Yes";
+         if(varstructList[i].varOptions[j].valnumb.size()>0) {
+            Rcpp::Rcout << " valnumb:";
+            for(size_t k=0; k<varstructList[i].varOptions[j].valnumb.size(); k++) Rcpp::Rcout << " " << varstructList[i].varOptions[j].valnumb[k];
+         }
+         else Rcpp::Rcout << " valnumb empty";
+         Rcpp::Rcout << "\n";
+      }
+   }
+   Rcpp::Rcout << "OptionsInfo final status errors=" << errors << "\n";
+*/
    if(errors) {
       this->haserror=true;
    }

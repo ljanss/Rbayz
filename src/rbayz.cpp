@@ -53,7 +53,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.9.30\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.10(.04)\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -81,16 +81,23 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
          if(pmt.funcName=="mn") {
             if(pmt.variableString=="1") model.push_back(new modelMean(pmt, modelR));
          }
-         else if(pmt.funcName=="fx") model.push_back(new modelFixf(pmt, modelR));
+         else if(pmt.funcName=="fx") {
+            model.push_back(new modelFixf(pmt, modelR));
+         }
          else if(pmt.funcName=="rn") {
-            if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven")
+            if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven") {
                model.push_back(new model_rn_ind_iden(pmt, modelR));
-            else if (pmt.varianceStruct=="1kernel" || pmt.varianceStruct=="kernels")
+            }
+            else if (pmt.varianceStruct=="1kernel" || pmt.varianceStruct=="kernels") {
                model.push_back(new model_rn_cor_k0(pmt, modelR));
-            else
+            }
+            else {
                throw generalRbayzError("There is no class to model rn(...) with Variance structure " + pmt.allOptions["V"].valstring);
+            }
          }
          else if (pmt.funcName=="rr") {
+            // Note: varianceStruct DIAG, LASS, MIXT are always single (for now) - see parsedModelTerm.
+            //       If there would be multiple with a DIAG it would be annotated as "mixed" varianceStruct.
             if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven")
                model.push_back(new modelRregIden(pmt, modelR));
             else if (pmt.varianceStruct=="DIAG")
@@ -111,7 +118,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
 //            else if (pmt.variablePattern="nestedreg")
 //             need a new model object for the nested regression
             else
-               throw generalRbayzError("Regression with the variable syntax " + pmt.variableString + "not supported\n");
+               throw generalRbayzError("Regression with the variable syntax " + pmt.variableString + " not yet supported\n");
          }
          else {
            throw generalRbayzError("Unknown model-function \'" + pmt.funcName + "\' at "+pmt.shortModelTerm);
@@ -272,9 +279,11 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                modelR->sampleHpars();
                for(size_t mt=0; mt<model.size(); mt++) model[mt]->sampleHpars();
             }
-            // At the 'skip' intervals (and after burn-in): 1) update posterior statistics using
-            // collectStats(); 2) save MCMC samples for the 'traced' parameters 
-            if ( (cycle > chain[1]) && (cycle % chain[2] == 0) ) {  // save cycle
+            // At the 'skip' intervals and after burn-in:
+            // 1) update posterior statistics using collectStats();
+            // 2) save MCMC samples in memory for the 'traced' parameters;
+            // 3) save MCMC samples on disk for parameters with 'saveSamples' option
+            if ( (cycle > chain[1]) && (cycle % chain[2] == 0) ) {
                for(size_t mt=0; mt<model.size(); mt++) model[mt]->prepForOutput();
                for(size_t i=0; i<Rbayz::parList.size(); i++) (*(Rbayz::parList[i]))->collectStats();
                for(size_t i=0, col=0; i<Rbayz::parList.size(); i++) {
@@ -282,6 +291,9 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                      for(size_t j=0; j< (*(Rbayz::parList[i]))->nelem; j++) {
                         tracedSamples(save,col) = (*(Rbayz::parList[i]))->val[j]; col++;
                      }
+                  }
+                  if( (*(Rbayz::parList[i]))->saveSamples ) {
+                     (*(Rbayz::parList[i]))->writeSamples(cycle);
                   }
                }
                save++;  // save is counter for output (saved) cycles

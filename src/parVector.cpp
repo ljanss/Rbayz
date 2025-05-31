@@ -16,9 +16,8 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    if( (pos=tempname.find('/')) != std::string::npos ) tempname.erase(0, pos+1);
    if(namePrefix!="")
       tempname = namePrefix + "." + tempname;
-   while( (pos=tempname.find_first_of(":|/",pos)) != std::string::npos) {
-      tempname[pos]='.';
-      pos++;  // start re-search after currently replaced character
+   for(pos=0; pos < tempname.size(); pos++) {
+      if(tempname[pos]==':' || tempname[pos]=='|' || tempname[pos]=='/') tempname[pos]='.';
    }
    Name=tempname;
    // Check for duplicate names in already stored parameter-list;
@@ -54,7 +53,7 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    // check trace option from the model-description
    // [ToDo]? This does not yet allow to switch off tracing where it is default on, to handle that,
    // need to check if the default is set before or after this parVector constructor ... switching it
-   // off where when the model constructor switches it back on as default does not work ...
+   // off here where when the model constructor switches it back on as default does not work ...
    optionSpec trace_opt = modeldescr.allOptions["trace"];
    if (trace_opt.isgiven && trace_opt.valbool==true) {
       traced = 1;
@@ -65,7 +64,7 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
    optionSpec save_opt = modeldescr.allOptions["save"];
    if(save_opt.isgiven && save_opt.valbool==true) {
       if( (openSamplesFile()) > 0) {
-         throw generalRbayzError("Unable to open file for writing samples from " + Name);
+         throw generalRbayzError("Unable to open file for writing samples for " + Name);
       }
       saveSamples=true;
    }
@@ -167,6 +166,13 @@ int parVector::openSamplesFile() {
 }
 
 void parVector::writeSamples(int cycle) {
+   // There are cases where samplesFile is not opened, it happens when saving with
+   // other than the standard 'save' option (e.g. alpha's from the rn() model with kernel).
+   if(saveSamples && samplesFile==0) {
+      if ( (openSamplesFile()) > 0) {
+         throw generalRbayzError("Unable to open file for writing samples for " + Name);
+      }
+   }
    if(saveSamples) {
       fprintf(samplesFile,"%d",cycle);
       for(size_t k=0; k<nelem; k++)
@@ -188,6 +194,5 @@ std::ostream& operator<<(std::ostream& os, const parVector& p)
     size_t loopsize = (p.nelem<5)? p.nelem : 5;
     for(size_t i=0; i<loopsize; i++) os << p.val[i] << " ";
     if(p.nelem >5 ) os << "...";
-    os << "\n";
     return os;
 }

@@ -31,6 +31,7 @@ public:
 //    accept for having the matrix and vectors for storing data and row and column labels.
 //    The initWith() used at the end to copy eigenvec contents in the object is not simpleMatrix' initWith,
 //    but labeledMatrix' version that also handles copying row and column labels.
+
       Rcpp::NumericMatrix kerneldata = Rcpp::as<Rcpp::NumericMatrix>(var_descr.kernObject);
    	Rcpp::Function eig("eigen");
 	   Rcpp::List eigdecomp;
@@ -40,15 +41,17 @@ public:
    	catch(std::exception &err) {
          throw(generalRbayzError("An error occurred running eigen(): "+std::string(err.what())));
    	}
+
    	Rcpp::NumericVector eigvalues = eigdecomp["values"];
 	   Rcpp::NumericMatrix eigvectors = eigdecomp["vectors"];
+
       // re-attach the dimnames again to the eigvectors matrix for correct further processing
       if (kerneldata.hasAttribute("dimnames")) {
          Rcpp::List dimnames = Rcpp::as<Rcpp::List>(kerneldata.attr("dimnames"));
          eigvectors.attr("dimnames") = dimnames;
       }
-      // Determine how many evectors to keep
-      std::string dimopt, dimpopt;
+
+      // Get / check / set dim_size (dim) and/or dim_pct (dimp) options
       double dim_pct=0;
       int dim_size=0;
       optionSpec dim_opt = var_descr["dim"];
@@ -72,17 +75,28 @@ public:
          else  // no options set: take default
             dim_pct=90;
       }
-      if(dim_size==0) {      // cut-off on %variance, need to find the matching number of evecs
-         double sumeval = 0.0l;                             //  \/ only summing the positive ones!
-         for (size_t i = 0; i < unsigned(eigvalues.size()) && eigvalues[i] > 0; i++)
-            sumeval += eigvalues[i];
-         double eval_cutoff = dim_pct * sumeval / 100.0l;
-         sumeval = 0.0l;
-         while (sumeval < eval_cutoff) sumeval += eigvalues[dim_size++];
-         std::string s = "Note: for kernel " + var_descr.keyw + " using dimp=" + std::to_string(dim_pct) + " takes "
-                      + std::to_string(dim_size) + " eigenvectors";
-         Rbayz::Messages.push_back(s);
+      double sumeval = 0.0l;             // the sum of all positive eigenvalues and their count
+      size_t counted_positive_evals=0;
+      for (size_t i = 0; i < unsigned(eigvalues.size()) && eigvalues[i] > 0; i++) {
+         sumeval += eigvalues[i];
+         counted_positive_evals++;
       }
+      if(dim_size==0) {        // need to get a dim_size from dim_pct
+         double eval_cutoff = dim_pct * sumeval / 100.0l;
+         double sum_part = 0.0l;
+         while (sum_part < eval_cutoff) sum_part += eigvalues[dim_size++];
+      }
+      else {                 // dim_size is set, check var explained and that it does not cover negative evals
+         if (dim_size > counted_positive_evals) dim_size = counted_positive_evals;
+         double sum_part = 0.0l;
+         for (size_t i = 0; i < dim_size; i++) {
+            sum_part += eigvalues[i];
+         }
+         dim_pct = 100.0 * sum_part / sumeval;
+      }
+      std::string s = "Note: in " + var_descr.optionText + " for kernel " + var_descr.keyw + " using dimp=" + std::to_string(dim_pct)
+                     + " and dim=" + std::to_string(dim_size);
+      Rbayz::Messages.push_back(s);
       this->initWith(eigvectors, var_descr.keyw, dim_size);
       weights.initWith(eigvalues, dim_size);
    }

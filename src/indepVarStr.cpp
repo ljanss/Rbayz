@@ -55,11 +55,11 @@ void idenVarStr::sample() {
 
 /* diagVarStr is the model b~N(0,Ds^2), and D is diagonal, or on scalar level
    b_i ~ d_i s^2. It is the opposite of the weighted model where b_i ~ s^2 / w_i.
-   diagVarStr is internally used for the rn_cor models running regression on eigenvectors,
-   and D has the eigenvalues. 
+   diagVarStr is also internally used for the rn_cor models running regression on
+   eigenvectors, and D has the eigenvalues. 
 */
 
-// constructor with simpleDblVector (used internally in e.g. kernel model based on evecs)
+// constructor with D passed as simpleDblVector (used internally in e.g. kernel model based on evecs)
 diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar, simpleDblVector & Ddiag)
         : indepVarStr(modeldescr, coefpar) {
     if(coefpar->nelem != Ddiag.nelem) {
@@ -80,16 +80,20 @@ diagVarStr::~diagVarStr() {
     delete par;
 }
 
-// "regular" constructor that gets variance info from the parsed model description
+// "regular" constructor that gets variance info from the parsed model description and D from an RObject
 diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar)
 {
-    // for the moment only handling "simple" DIAG structure where varVariable[0] should have
-    // name, and varObject[0] should have Robject with the diagonal info. 
-    if(modeldescr.varianceStruct!="DIAG")
+    if(modeldescr.varianceStruct!="DIAG")  // varianceStuct DIAG assures there is exactly one element in the
+                                           // allOptions.Vlist(), and it is DIAG
         throw(generalRbayzError("Wrong call to diagVarStr with variance structure "+modeldescr.varianceStruct));
     
+    std::vector<varianceSpec> varlist = modeldescr.allOptions.Vlist();
+    // I still check again there is exactly one varlist element and that is has a 'varname' option
+    if(varlist.size()!=1 || !varlist[0]["varname"].isgiven) {
+        throw(generalRbayzError("ERROR V=DIAG[] is missing variable name in "+modeldescr.shortModelTerm));
+    }
     try {
-        dataCovar tempDiag(modeldescr.varObject[0], false, false);
+        dataCovar tempDiag(varlist[0].varOptions[0].varObject, false, false);
         if(coefpar->nelem != tempDiag.nelem) {
             throw(generalRbayzError("ERROR dimension of DIAG does not fit random effect size"));
         }
@@ -100,7 +104,9 @@ diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indep
     }
     catch(std::exception &err) {
         Rbayz::Messages.push_back(std::string(err.what()));
-        throw(generalRbayzError("Error occured in processing DIAG["+modeldescr.varVariable[0]+"]"));
+        throw generalRbayzError("Error occured in processing DIAG[" + varlist[0].varOptions[0].valstring + 
+            "] - maybe not a numeric vector?");
+        Rbayz::needStop=true;
     }
 }
 
@@ -188,35 +194,25 @@ void lassVarStr::sample() {
 // mixtVarStr is now standard 2-class mixture with pi0, pi1, v0, v1
 
 mixtVarStr::mixtVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
-    // some work to parse options in the MIXT[...] term; there should be 'vars' and 'counts' ...
-    std::vector<std::string> split_options = splitString(modeldescr.varOption[0],",");
-    std::string vars_string="",counts_string="";
-    for(size_t i=0; i<split_options.size(); i++){  // check for correct syntax vars=c(...) and cut out part between (...)
-        if(split_options[i].substr(0,7)=="vars=c(") vars_string=split_options[i].substr(7,(split_options[i].size()-8));
-        if(split_options[i].substr(0,9)=="counts=c(") counts_string=split_options[i].substr(7,(split_options[i].size()-10));
+
+    // This only accepts one variance-structure MIXT, not combinations, and there should be vars and counts options.
+    std::vector<varianceSpec> varlist = modeldescr.allOptions.Vlist();
+    if(varlist.size()!=1 || !varlist[0]["vars"].isgiven || !varlist[0]["counts"].isgiven) {
+        throw generalRbayzError("In "+modeldescr.shortModelTerm+" MIXT[] is missing vars() and/or counts()");
     }
-    if(vars_string=="" || counts_string=="") {
-        throw(generalRbayzError("MIXT["+modeldescr.varOption[0]+"] is missing vars=c() or counts=c() or it is not well formatted/spelled"));
+    optionSpec vars_option = varlist[0]["vars"];
+    optionSpec counts_option = varlist[0]["counts"];
+    if(vars_option.valnumb.size() != counts_option.valnumb.size()) {
+        throw generalRbayzError("In "+modeldescr.shortModelTerm+" MIXT[] has different number of elements in vars() and counts()");
     }
-    std::vector<std::string> vars_values_strings = splitString(vars_string,",");  // the single values split but still as strings
-    std::vector<std::string> counts_values_strings = splitString(counts_string,",");
-    if(vars_values_strings.size() != counts_values_strings.size()) {
-        throw(generalRbayzError("In MIXT["+modeldescr.varOption[0]+"] number of elements in vars and counts are not equal"));
-    }
-    Ncat = vars_values_strings.size();
+    Ncat = vars_option.valnumb.size();
     Vars.resize(Ncat,0.0l);
     Counts.resize(Ncat,0);
     int total_counts=0;
-    try {
-        for(size_t i=0; i<Ncat; i++) {
-            Vars[i]=std::stod(vars_values_strings[i]);
-            Counts[i]=std::stoi(counts_values_strings[i]);
-            total_counts += Counts[i];
-        }
-    }
-    catch(std::exception &err) {
-        Rbayz::Messages.push_back(std::string(err.what()));
-        throw(generalRbayzError("Error in reading vars or counts values from MIXT["+modeldescr.varOption[0]+"]"));
+    for(size_t i=0; i<Ncat; i++) {
+        Vars[i]=vars_option.valnumb[i];
+        Counts[i]=(int)vars_option.valnumb[i];
+        total_counts += Counts[i];
     }
     std::vector<std::string> temp_labels = generateLabels("pi",Ncat);
     temp_labels.insert(temp_labels.begin(),"var");

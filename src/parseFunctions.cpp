@@ -76,6 +76,7 @@ std::vector<std::string> splitString(std::string text, std::string splitchar) {
 std::vector<std::string> splitStringNested(std::string text) {
    std::vector<std::string> parts;
    if (text=="") {
+      Rcpp::Rcout << "In splitStringNested: nothing to do because string to split is empty\n";
       return parts;
    }
    size_t pos1,pos2,pos3;
