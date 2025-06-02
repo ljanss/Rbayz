@@ -110,7 +110,8 @@ private:
       {"KERN","dim",false},
       {"KERN","dimp",false},
       {"rn","alpha_est",false},
-      {"rn","alpha_save",false}
+      {"rn","alpha_save",false},
+      {"rn","idimp",false}
    };
    std::map<std::string, int> option2format
    {
@@ -122,6 +123,7 @@ private:
       std::make_pair("counts",5),
       std::make_pair("dim",3),
       std::make_pair("dimp",3),
+      std::make_pair("idimp",3),
       std::make_pair("alpha_est",4),
       std::make_pair("alpha_save",4)
    };

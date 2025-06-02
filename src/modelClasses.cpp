@@ -30,7 +30,14 @@ model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
    kernelList.push_back(new kernelMatrix(varianceList[0]));
    if (varianceList.size()==2) {  // combine with a second kernel if present
       kernelMatrix* K2 = new kernelMatrix(varianceList[1]);
-      kernelList[0]->addKernel(K2);
+      double var_retain;
+      if(modeldescr.allOptions["idimp"].isgiven) {
+         var_retain = modeldescr.allOptions["idimp"].valnumb[0];
+      }
+      else {
+         var_retain = 90;
+      }
+      kernelList[0]->addKernel(K2, var_retain);
       delete K2;
    }
    if (varianceList.size()>2) {  // need to think if I can keep combining kernels with addKernel()

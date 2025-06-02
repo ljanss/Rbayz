@@ -75,14 +75,14 @@ public:
          else  // no options set: take default
             dim_pct=90;
       }
-      double sumeval = 0.0l;             // the sum of all positive eigenvalues and their count
+      sumEvalues = 0.0l;             // the sum of all positive eigenvalues and their count
       size_t counted_positive_evals=0;
       for (size_t i = 0; i < unsigned(eigvalues.size()) && eigvalues[i] > 0; i++) {
-         sumeval += eigvalues[i];
+         sumEvalues += eigvalues[i];
          counted_positive_evals++;
       }
       if(dim_size==0) {        // need to get a dim_size from dim_pct
-         double eval_cutoff = dim_pct * sumeval / 100.0l;
+         double eval_cutoff = dim_pct * sumEvalues / 100.0l;
          double sum_part = 0.0l;
          while (sum_part < eval_cutoff) sum_part += eigvalues[dim_size++];
       }
@@ -92,7 +92,7 @@ public:
          for (size_t i = 0; i < dim_size; i++) {
             sum_part += eigvalues[i];
          }
-         dim_pct = 100.0 * sum_part / sumeval;
+         dim_pct = 100.0 * sum_part / sumEvalues;
       }
       std::string s = "Note: in " + var_descr.optionText + " for kernel " + var_descr.keyw + " using dimp=" + std::to_string(dim_pct)
                      + " and dim=" + std::to_string(dim_size);
@@ -105,9 +105,12 @@ public:
    }
 
    // Add a kernel (make the kronecker product) to the stored kernel in the object.
-   void addKernel(kernelMatrix* K2) {
+   void addKernel(kernelMatrix* K2, double rrankpct) {
       // make list (and sort it) of all interaction evalues
  	   std::vector<double> evalint(this->ncol*K2->ncol, 0.0l);
+      // Note / [ToDo] this sumeval is a local variable to count the sum of interaction eigenvalues,
+      // the sumEvalues class variable is the sum of evals per kernel. BUT it may not be needed to
+      // compute this sum, the sum of interaction evals is the product of the sums for each kernel ...
       double sumeval = 0.0l;
 	   for (size_t i = 0; i<this->ncol; i++) {
 		  for (size_t j = 0; j<K2->ncol; j++) {
@@ -117,7 +120,6 @@ public:
       }
 	   std::sort(evalint.begin(), evalint.end(), std::greater<double>());
       // Determine cut-off eval to reach rrankpct cumulative sum
-      double rrankpct=90;          // rrankpct not coming correctly from the modelterm now
 	   double eval_sum_cutoff = rrankpct * sumeval / 100.0l;  // this is cut-off on cumulative eval
 	   sumeval = 0.0l;
 	   unsigned long nEvalUsed=0;
@@ -130,11 +132,14 @@ public:
       size_t nLevel2 = K2->nrow;
       simpleMatrix tempEvecs(nLevel1*nLevel2, nEvalUsed);
       simpleDblVector tempEvals(nEvalUsed);
+      std::vector<std::string> tempColnames(nEvalUsed,"");
       size_t k = 0;
       for(size_t i=0; i<this->ncol; i++) {
          for(size_t j=0; j<K2->ncol; j++) {
             if ( this->weights[i]*K2->weights[j] >= eval_min_cutoff ) {
+               if(k>nEvalUsed) throw generalRbayzError ("Evalues counter in kernelMatrix::addKernel is going out of bounds!");
                tempEvals.data[k] = this->weights[i] * K2->weights[j];
+               tempColnames[k]=this->colnames[i]+"."+K2->colnames[j];
                for(size_t rowi=0; rowi<nLevel1; rowi++) {
                   for(size_t rowj=0; rowj<nLevel2; rowj++) {
                      tempEvecs.data[k][i*nLevel2+j] = this->data[i][rowi] * K2->data[j][rowj];
@@ -144,7 +149,7 @@ public:
             }
          }
       }
-      // Make row-colnames for the new combined matrix
+      // Make rownames for the new combined matrix
       std::vector<std::string> tempRownames;
       tempRownames.reserve(nLevel1*nLevel2);
       for(size_t rowi=0; rowi<nLevel1; rowi++) {
@@ -152,8 +157,10 @@ public:
             tempRownames.push_back(this->rownames[rowi]+"."+K2->rownames[rowj]);
          }
       }
-      std::vector<std::string> tempColnames =  generateLabels("col",nEvalUsed);
-      Rcpp::Rcout << "Interaction kernel retains " << nEvalUsed << " eigenvectors\n";
+      Rbayz::Messages.push_back("Interaction kernel retains " + std::to_string(nEvalUsed)
+                                 + " eigenvectors with idimp=" + std::to_string(rrankpct)
+                                 + " with expl.var of interaction matrix of "
+                                 + std::to_string(100*eval_sum_cutoff/(sumEvalues*K2->sumEvalues)));
       // Swap the old data with the new data.
       // Note the old data is removed when tempEvecs, tempEvals and tempLabels here go out of scope.
       this->swap(&tempEvecs);
@@ -165,6 +172,7 @@ public:
    // [ToDo] name weights is not so good, this is a class holding an eigendecomp, it is
    // quite ok to call it eigen values. Weights becomes confusing in other parts of the code.
    simpleDblVector weights;
+   double sumEvalues;
    
 };
 

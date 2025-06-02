@@ -53,7 +53,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.10(.04)\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.10(.07)\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
