@@ -46,7 +46,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::needStop=false;
    Rbayz::mainData=inputData;
 
-   // rbayz retains a small string of last executed code that is sometimes added in errors
+   // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
 
    // some variable are outside try{} because associated memory alloc needs to be cleaned up in catch{}
