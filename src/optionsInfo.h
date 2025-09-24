@@ -123,7 +123,7 @@ private:
       std::make_pair("counts",5),
       std::make_pair("dim",3),
       std::make_pair("dimp",3),
-      std::make_pair("idimp",3),
+      std::make_pair("vdimp",3),
       std::make_pair("alpha_est",4),
       std::make_pair("alpha_save",4)
    };

@@ -11,8 +11,9 @@
 
 // ---- model_ran_cor_k0
 
-// rn_cor_k0 can run 1 kernel or multiple kennels with "mergedKernel" appraoach - however, at the
-// moment no option in the interface to toggle merging kernels or not.
+// rn_cor_k0 runs models with 1 kernel or multiple kernels.
+// With "mergedKernel", multiple kernels are merged into one and the code runs on one kernel,
+// otherwise it will apply the 'on the fly' construction of the kernel kronecker products. 
 model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
       : modelFactor(modeldescr, rmod)
 {
@@ -23,11 +24,57 @@ model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
          throw(generalRbayzError("Attempting to run rn_cor_k0 with parameterised kernels"));
       }
    }
-   // check if the model-term has set dim and dimp options ...
-   // ... then pass to kernelMatrix building, but depends on 1 kernel or >1 kernels how to use it ...
+
+   // Check model term vdimp option; this is used to reset the default dimp=90 to select evecs in each kernel.
+   // Note: I was consdidering to also allow a vdim, but that's not yet implemented, and the current kernelMatrix
+   // constructor can only be tuned on 'dimp' but not on 'dim'.
+   if(modeldescr.allOptions["vdimp"].isgiven) {
+      var_retain = modeldescr.allOptions["vdimp"].valnumb[0];
+      if(var_retain < 10 || var_retain > 100.0)
+         throw(generalRbayzError("vdimp option should be between 10 and 100"));
+      var_retain = pow(var_retain/100.0, (1.0/double(varianceList.size())))*100.0; // convert to per-kernel pct
+   }
+   else {
+      var_retain = 90;
+   }
+
+   // Store all kernels in the kernelList vector; this includes doing the eigen-decomposition
+   // and selecting number of eigenvectors to retain in each. 
+   for(size_t i=0; i<varianceList.size(); i++) {
+      kernelList.push_back(new kernelMatrix(varianceList[i], var_retain));
+   }
+
+   // Check to merge kernels; for now only do this when indicated by the user.
+   if (modeldescr.allOptions["mergeKernels"].isgiven && modeldescr.allOptions["mergeKernels"].valbool) {
+      // check size of merged kernel; the row size becomes product of individual kernel Levels (row size);
+      // the column size becomes product of individual kernel evecs retained (column size).
+      size_t merged_nrow=1, merged_ncol=1;
+      for(size_t i=0; i< kernelList.size(); i++) {
+         merged_nrow *= kernelList[i]->nrow;
+         merged_ncol *= kernelList[i]->ncol;
+      }
+      size_t mem_needed = merged_nrow * merged_ncol * 8; // in bytes, double = 8 bytes
+      if (modeldescr.allOptions["maxmem"].isgiven) {
+         size_t maxmem = (size_t) modeldescr.allOptions["maxmem"].valnumb[0];
+      }
+      else
+         size_t maxmem = 8e9;  // default maxmem = 1 billion doubles = 8 GB
+      if( mem_needed > maxmem ) {
+         throw(generalRbayzError("Merging kernels needs " + std::to_string((size_t)(mem_needed/1e9)+1) + "GB, increase maxmem or do not merge kernels"));
+      }
+      // if here, memory is OK, so merge all kernels into the first one in the list
+
+         if(varianceList.size() > 1) {
+         // merge all kernels into the first one in the list
+         for(size_t i=1; i< kernelList.size(); i++) {
+            kernelList[0]->addKernel(kernelList[i], var_retain);
+            delete kernelList[i];
+         }
+         kernelList.resize(1);  // keep only the merged kernel
+      }
+   }
 
    // Get the first kernel and then add (making kronecker products) with second etc., if available
-   kernelList.push_back(new kernelMatrix(varianceList[0]));
    if (varianceList.size()==2) {  // combine with a second kernel if present
       kernelMatrix* K2 = new kernelMatrix(varianceList[1]);
       double var_retain;

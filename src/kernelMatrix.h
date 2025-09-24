@@ -31,7 +31,7 @@ public:
    }
 
    // Add a kernel (make the kronecker product) to the stored kernel in the object.
-   void addKernel(kernelMatrix* K2, double rrankpct)
+   void addKernel(kernelMatrix* K2);
 
    // [ToDo] name weights is not so good, this is a class holding an eigendecomp, it is
    // quite ok to call it eigen values. Weights becomes confusing in other parts of the code.
