@@ -10,6 +10,8 @@
 //     initialise it with inpput from an Rcpp vector.
 //  To access the vector elements use .data[i] or ->data[i], size is stored as member variable nelem.
 //
+// NOTE: the int version uses 'int', the regular 4-byte signed version. This has limit of 2 billion.
+//
 //  Created by Luc Janss on 23/10/2020.
 //
 

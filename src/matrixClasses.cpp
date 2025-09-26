@@ -56,12 +56,13 @@ void labeledMatrix::initWith(Rcpp::NumericMatrix & M, std::string & name, size_t
 
 // ----------------- kernelMatrix class --------------------
 
-// kernelMatrix constructor with no dim_pct setting, this calls the other constructor
+// kernelMatrix constructor with no dim_pct setting, this calls the other constructor,
 // setting the default dim_pct = 90
 kernelMatrix::kernelMatrix(varianceSpec var_descr) : kernelMatrix(var_descr, 90.0) {
 }
 
-// kernelMatrix constructor
+// kernelMatrix constructor. The dim_pct is used as a default; when there are options dim or dimp
+// in the kernel specification, these are used instead of the default dim_pct.
 kernelMatrix::kernelMatrix(varianceSpec var_descr, double dim_pct) : labeledMatrix(), weights() {
 
 // note: kernelMatrix starts with an empty labeledMatrix, parent constructors have not done anything,
@@ -136,8 +137,9 @@ kernelMatrix::kernelMatrix(varianceSpec var_descr, double dim_pct) : labeledMatr
 }
 
 /*
-'mergeKernels': make kronecker product of two kernels and replace the first kernel with the merged one.
-This also updates the factor indexing and labels to match the interactions of the two kernels.
+'mergeKernels': make kronecker product of 'this' object kernel and a second one, and replace 'this'
+with the merged one. This also updates the factor indexing and labels to match the interactions of the
+two kernels.
 I'd say the code should work to repeat this for multiple kernels, but I have not tested that yet.
 An older version was making a selection of evecs to keep (see oldcode folder), but now it simply uses
 all combinations! Therefore it should be used with caution, as the merged kernel can become very large;
@@ -155,16 +157,13 @@ void kernelMatrix::addKernel(kernelMatrix* K2) {
    size_t k = 0;
    for(size_t i=0; i<this->ncol; i++) {
       for(size_t j=0; j<K2->ncol; j++) {
-         if ( this->weights[i]*K2->weights[j] >= eval_min_cutoff ) {
-            if(k>nEvalUsed) throw generalRbayzError ("Evalues counter in kernelMatrix::addKernel is going out of bounds!");
-            tempEvals.data[k] = this->weights[i] * K2->weights[j];
-            tempColnames[k]=this->colnames[i]+"."+K2->colnames[j];
-            for(size_t rowi=0; rowi<nLevel1; rowi++) {
-               for(size_t rowj=0; rowj<nLevel2; rowj++) {
-                  tempEvecs.data[k][i*nLevel2+j] = this->data[i][rowi] * K2->data[j][rowj];
-               }
+         k = i*nColumn2 + j; // map column i,j to new column k
+         tempEvals.data[k] = this->weights[i] * K2->weights[j];
+         tempColnames[k]=this->colnames[i]+"."+K2->colnames[j];
+         for(size_t rowi=0; rowi<nLevel1; rowi++) {
+            for(size_t rowj=0; rowj<nLevel2; rowj++) {
+               tempEvecs.data[k][i*nLevel2+j] = this->data[i][rowi] * K2->data[j][rowj];
             }
-            k++;
          }
       }
    }
@@ -176,12 +175,9 @@ void kernelMatrix::addKernel(kernelMatrix* K2) {
          tempRownames.push_back(this->rownames[rowi]+"."+K2->rownames[rowj]);
       }
    }
-   Rbayz::Messages.push_back("Interaction kernel retains " + std::to_string(nEvalUsed)
-                              + " eigenvectors with idimp=" + std::to_string(rrankpct)
-                              + " with expl.var of interaction matrix of "
-                              + std::to_string(100*eval_sum_cutoff/(sumEvalues*K2->sumEvalues)));
-   // Swap the old data with the new data.
-   // Note the old data is removed when tempEvecs, tempEvals and tempLabels here go out of scope.
+   // Swap the old 'this' data with the new data; the old data in 'this' kernel is then in the temp
+   // objects and will be deleted when the temps go out of scope at the end of this function.
+   // The data that was in K2 must be deleted by the calling code.
    this->swap(&tempEvecs);
    weights.swap(&tempEvals);
    std::swap(rownames,tempRownames);

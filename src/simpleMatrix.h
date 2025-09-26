@@ -43,4 +43,32 @@ private:
 
 };
 
+// an integer version - but there are many kinds of integers, signed, unsigned, regular, long,
+// size_t? -> decided for int.
+
+class simpleIntMatrix {
+
+public:
+   // 'empty' constructor, to be used with one of the initWith() versions   
+   simpleMatrix() {   }
+   // other constructors
+   simpleIntMatrix(size_t nr, size_t nc);
+   simpleIntMatrix(Rcpp::RObject X);
+   
+   void initWith(Rcpp::IntegerMatrix M, size_t useCol);
+   void initWith(Rcpp::IntegerMatrix M);
+
+   void swap(simpleIntMatrix* other);
+
+   virtual ~simpleIntMatrix();
+
+   int* data0;
+   int** data;
+   size_t nrow=0,ncol=0;
+
+private:
+   void doalloc(size_t nr, size_t nc);
+
+};
+
 #endif /* simpleMatrix_h */
