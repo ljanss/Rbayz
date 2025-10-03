@@ -16,6 +16,7 @@
 #include "kernelMatrix.h"
 #include "priorClasses.h"
 #include "parsedModelTerm.h"
+#include "simpleMatrix.h"
 
 // update: ranfcor now also derive from modelFactor?
 // the matrix data here was eigenvector data, it needs to come from a variance model now.
@@ -35,6 +36,7 @@ public:
    parVector *regcoeff;
    std::vector<size_t> obsIndex;
    indepVarStr* varmodel;
+   simpleIntMatrix alpha2levels;
 
 };
 

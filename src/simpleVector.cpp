@@ -10,11 +10,13 @@ simpleIntVector::simpleIntVector(size_t n) {
    doalloc(n);
    std::fill_n(data, n, 0);
 }
-simpleIntVector::~simpleIntVector() {
-   if (nelem>0) {
-      delete[] data;
-   }
-}
+
+simpleIntVector::~simpleIntVector() {      // it could make more sense to detect if data was allocated
+   if (nelem>0) {                          // by properly initialising data with a nullprt and then
+      delete[] data;                       // checking for data==nullptr here. But there is at least one place
+   }                                       // in the code (in dataFactor) where levcode.nelem is set to 0
+}                                          // to avoid clean-up, so that would need to be changed too.
+                                           // Even better, make a member variabe IsAllocated.
 
 int& simpleIntVector::operator[](size_t i) {
    return(data[i]);

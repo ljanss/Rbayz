@@ -12,8 +12,8 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntV
       processing and handling NAs differs somewhat dependent on input type. I always
       keep NA as the last level.
       - if input is R factor, it is directly convertable to integer vector that can be
-        copied in the 'data' using initWith, but NAs become a large negative number and are
-        repaired later.
+        copied in the 'data' using initWith, but R starts coding from 1 so it needs to
+        subtract 1 to code from 0, and NAs will be large negative number and are repaired later.
       - if input is an R character vector, converting to strings would convert NAs to string "NA",
         but I avoid that by building a map with the input strings that are not NA. Then later
         NA is added as last level, and it's level-codes are inserted as the last 'lev' value.
