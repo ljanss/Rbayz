@@ -5,41 +5,79 @@
 #include "dataFactor.h"
 #include "nameTools.h"
 #include "rbayzExceptions.h"
+#include "optionsInfo.h"
+#include <map>
 
 dataFactor::dataFactor(Rcpp::RObject oneVarObject, std::string OneVarName) :
       levcode() {
    std::vector<Rcpp::RObject> temp_var_objects = {oneVarObject};
    std::vector<std::string> temp_var_names = {OneVarName};
-   run_constructor(temp_var_objects, temp_var_names);
+   std::vector<varianceSpec> temp_varlist(1); // empty varianceSpec object
+   run_constructor(temp_var_objects, temp_var_names, temp_varlist);
 }
 
 dataFactor::dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames) :
       levcode() {
-   run_constructor(variableObjects, variableNames);
+   std::vector<varianceSpec> temp_varlist(variableObjects.size()); // empty varianceSpec objects
+   run_constructor(variableObjects, variableNames, temp_varlist);
 }
 
-void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames) {
-   if(variableObjects.size()==1) {                                         // for only one factor use 'onefactor' to allocate a
-      onefactor = new simpleFactor(variableObjects[0],variableNames[0]);   // simpleFactor object and make levcode a wrapper.
-      levcode.data = onefactor->data;                                      //  ... but it's tricky for clean-up (see destructor)
+dataFactor::dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames,
+         std::vector<varianceSpec> varlist) : levcode() {
+   run_constructor(variableObjects, variableNames, varlist);
+}
+
+
+// Note: run_constructor always gets a variance-list, but it can be empty objects. This will work fine,
+// because empty varianceSpec objects have iskernel=false and kernObject=R_NilValue.
+// The varianceSpec object is used to use the levels from a kernel for coding the factor if iskernel==true.
+
+/* working notes: 
+   - I think can remove the use of onefactor, that simplifies code to always use the factorList, also for
+     one factor;
+   - the use of 'onefactor' was to avoid storing the same levcode and labels once in the factor in the
+     factorlist, and once in the 'overall' levcode and labels (used to code interactions for >1 factors).
+     Modeling objects will use the 'overall' codes. Without 'onefactor', avoiding storing the same info twice
+     can still be done with the same (dangerous) copying of pointers.
+   - add new constructor for simpleFactor to use labels from a kernel
+   - the real coding work to do for using the kernel labels will then be in simpleFactor
+This was some old code for 1 factor:
+      levcode.data = onefactor->data;
       levcode.nelem = onefactor->nelem;
-      labels = onefactor->labels;                                          // this make a copy? - so here some double memory use
+      labels = onefactor->labels;  // this make a copy? - so here some double memory use
       Nvar = 1;
       nelem = levcode.nelem;
+*/
+void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects, 
+          std::vector<std::string> variableNames, std::vector<varianceSpec> varlist) {
+   bool canUseVarlist = true;
+   if(variableObjects.size() != variableNames.size()) {
+      throw generalRbayzError("Something wrong in building factor: size of objects and names do not match");
    }
-   else {         // multiple interacting factors
-      for(size_t i=0; i<variableObjects.size(); i++)
-         factorList.push_back(new simpleFactor(variableObjects[i],variableNames[i]));
-      size_t Ndata=factorList[0]->nelem;
-      for(size_t i=1; i<factorList.size(); i++) {  // double check that the sizes of the factors are identical
-         if( factorList[i]->nelem != Ndata) {
-            std::string s="Interacting factors do not have the same length:";
-            for (size_t j=0; j<factorList.size(); j++) {
-               s += " " + variableNames[j] + "(" + std::to_string(factorList[j]->nelem) + ")";
-            }
-            throw generalRbayzError(s);
+   if(varlist.size() != variableObjects.size()) {
+      // this is also checked in the model_rn_cor constructors, where there is more context for reporting
+      // the error. Therefore here just ignore it, but set needStop and don't use the varlist.
+      canUseVarlist = false;
+      Rbayz::needStop = true;
+   }
+   for(size_t i=0; i<variableObjects.size(); i++) {
+      // check varlist to see if labels from kernel should be used in coding factor
+      factorList.push_back(new simpleFactor(variableObjects[i],variableNames[i]));
+   }
+   size_t Ndata=factorList[0]->nelem;
+   for(size_t i=1; i<factorList.size(); i++) {  // double check that the sizes of the factors are identical
+      if( factorList[i]->nelem != Ndata) {
+         std::string s="Interacting factors do not have the same length:";
+         for (size_t j=0; j<factorList.size(); j++) {
+            s += " " + variableNames[j] + "(" + std::to_string(factorList[j]->nelem) + ")";
          }
+         throw generalRbayzError(s);
       }
+   }
+   if(variableObjects.size()==1) {
+      // can copy levcode and labels from factorList[0] in 'main' levcode and labels
+   }
+   else { // multiple factors: main levcode and labels are for the interaction
       // first build vector of combined labels matching the data
       std::vector<std::string> new_data_labels(factorList[0]->back2vecstring());
       for(size_t i=1; i<factorList.size(); i++) {
@@ -65,6 +103,7 @@ void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects, std
       Nvar=factorList.size();
       nelem=Ndata;
    }
+   Nvar = factorList.size();
 }
 
 dataFactor::~dataFactor() {

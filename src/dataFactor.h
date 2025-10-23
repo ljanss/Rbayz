@@ -15,12 +15,19 @@
 #include <vector>
 #include <string>
 #include "simpleFactor.h"
+#include "optionsInfo.h"
 
 class dataFactor {
 public:
+   /* Constructors with and without a variance-list, and for one Robject or vector<Robjects>;
+      As far as I can see there is no need for the combination of one Robject and one variance-object,
+      so that combination is not made ... */
    dataFactor(Rcpp::RObject variableObject, std::string variableName);
    dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames);
-   void run_constructor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames);
+   dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, 
+               std::vector<varianceSpec> varlist);
+   void run_constructor(std::vector<Rcpp::RObject> variableObjects, 
+         std::vector<std::string> variableNames, std::vector<varianceSpec> varlist);
    ~dataFactor();
    simpleIntVector levcode;  // coded level info
    std::vector<std::string> labels;

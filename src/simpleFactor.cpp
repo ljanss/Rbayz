@@ -5,6 +5,22 @@
 #include "nameTools.h"
 #include "rbayzExceptions.h"
 
+// ----------------- simpleFactor class --------------------
+
+/* [ToDo]?
+   Missing levels in a factor now can go through and become a separate "NA" level.
+   This may not always make sense or be desired.
+   In the version with levelLabels from a kernel, "NA" will go through if "NA" is
+   also in the levelLabels (is a rowname of the kernel), otherwise it will be an error
+   of "unmatched levels" because "NA" will not be found in levelLabels.
+*/
+
+// comparison function for lower_bound on pair<string,int> by first element, used in the
+// second contrusctor with levelLabels.
+bool search_key_in_pair(const pair<std::string, int> & p, const std::string & key) {
+    return p.a < key;
+}
+
 simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntVector()
 {
 
@@ -137,7 +153,103 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntV
    }
 }
 
-// Convert stored factor data back to the 'full' vector of strings.
+// Constructor version with supplied level labels - so far the levels / labels coming from a kernel.
+// This uses a bit different strategy to first get all factor data as strings, then code according to levelLabels.
+// The coding will be in the order of levelLabels.
+simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std::string> levelLabels, std::string kernel_name) {
+
+   // get the factor from the data as vector<string> for all input types (except boolean?)
+   std::vector<std::string> temp_fac_strings;
+   if (Rf_isFactor(col))
+   {
+      Rcpp::IntegerVector temp_fac_Rlevs = Rcpp::as<Rcpp::IntegerVector>(col);
+      Rcpp::LogicalVector missing = Rcpp::is_na(temp_fac_Rlevs);
+      Rcpp::CharacterVector templabels = col.attr("levels");
+      temp_fac_strings.resize(temp_fac_Rlevs.size());
+      for (size_t row = 0; row < unsigned(temp_fac_Rlevs.size(); row++) {
+         if (missing[row])
+            temp_fac_strings[row] = "NA";
+         else
+            temp_fac_strings[row] = Rcpp::as<std::string>(templabels[temp_fac_Rlevs[row] - 1]); // R factor levels from 1! 
+      }
+   }
+   // I think IntegerVector and CharacterVector can be treated the same way here because the
+   // Rcpp::as<Rcpp:CharacterVector> will convert integers to strings automatically.
+   else if ( (Rcpp::is<Rcpp::IntegerVector>(col) || Rcpp::is<Rcpp::CharacterVector>(col) ) && !Rf_isMatrix(col)) {
+      Rcpp::CharacterVector Rcpp_strings = Rcpp::as<Rcpp::CharacterVector>(col);
+      Rcpp::LogicalVector missing = Rcpp::is_na(Rcpp_strings);
+      temp_fac_strings.resize(Rcpp_strings.size());
+      for (size_t row = 0; row < unsigned(Rcpp_strings.size()); row++) {
+         if (missing[row])
+            temp_fac_strings[row] = "NA";
+         else
+            temp_fac_strings[row] = Rcpp::as<std::string>(Rcpp_strings[row]);
+      }
+   }
+   else if (Rcpp::is<Rcpp::LogicalVector>(col) && !Rf_isMatrix(col)) {
+      Rcpp::IntegerVector Rtempvec = Rcpp::as<Rcpp::IntegerVector>(col);
+      Rcpp::LogicalVector missing = Rcpp::is_na(Rtempvec);
+      temp_fac_strings.resize(Rtempvec.size());
+      for (size_t row = 0; row < unsigned(Rtempvec.size()); row++) {
+         if (missing[row])
+            temp_fac_strings[row] = "NA";
+         else if (Rtempvec[row] == 0)
+            temp_fac_strings[row] = "FALSE";
+         else
+            temp_fac_strings[row] = "TRUE";
+      }
+   }
+   else {
+      throw generalRbayzError("Variable/data column is not convertable to a factor: " + name);
+   }
+
+   // Now code the factor data according to the supplied levelLabels. Here instead of a map
+   // use a sorted vector and lower_bound to find levels. The map was useful when expecting
+   // (maybe many) duplicates, but the levelLabels should be unique already. Then it is easy
+   // to just make a sorted version for searching.
+   // Note: the final coding remains in the levelLabels order, not the sorted order.
+   // Note: to find back the entry in levelLabels, a vector of pairs is needed which holds the
+   // label and the original index. 
+   std::vector< std::pair<std::string,int> > sorted_levels_pairs(levelLabels.size());
+   for (size_t i = 0; i < levelLabels.size(); i++) {
+      sorted_levels_pairs[i] = std::make_pair(levelLabels[i], i);
+   }
+   std::sort(sorted_levels_pairs.begin(), sorted_levels_pairs.end());
+   std::vector<std::string> unmatched_levels; // to store any unmatched levels
+   for(size_t i=0; i< temp_fac_strings.size(); i++) {
+      std::vector< std::pair<std::string,int> >::iterator it;
+      it = std::lower_bound(sorted_levels_pairs.begin(), sorted_levels_pairs.end(),
+                            temp_fac_strings[i], search_key_in_pair);
+      if( it == sorted_levels_pairs.end() || it->first != temp_fac_strings[i] ) {
+         unmatched_levels.push_back( temp_fac_strings[i] );
+      }
+      else {
+         data[i] = it->second;  // code according to original levelLabels order
+      }
+   }
+
+
+   // if any unmatched levels, throw error
+   if( unmatched_levels.size() > 0 ) {
+      Rbayz::Messages.push_back("There are levels in factor " + name +
+         " that cannot be matched to rownames of the kernel " + kernel_name + ":");
+      size_t nshow = std::min( unmatched_levels.size(), (size_t)10 );
+      std::string s;
+      for(size_t i=0; i< nshow; i++) {
+         s += unmatched_levels[i] + " ";
+      }
+      if ( unmatched_levels.size() > nshow ) {
+         s += " [+ " + std::to_string(unmatched_levels.size() - nshow) + " more]";
+      }
+      Rbayz::Messages.push_back(s);
+      Rbayz::needStop = true;
+      throw generalRbayzError("Error matching kernel to factor levels - see messages output");
+   }
+
+
+}
+
+// Convert stored factor data back to a vector of strings - same as R as.character(factor).
 std::vector<std::string> simpleFactor::back2vecstring()
 {
    std::vector<std::string> result(nelem);
