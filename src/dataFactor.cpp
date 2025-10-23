@@ -50,9 +50,10 @@ This was some old code for 1 factor:
 */
 void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects, 
           std::vector<std::string> variableNames, std::vector<varianceSpec> varlist) {
+
    bool canUseVarlist = true;
    if(variableObjects.size() != variableNames.size()) {
-      throw generalRbayzError("Something wrong in building factor: size of objects and names do not match");
+      throw generalRbayzError("Something wrong in building factor: number of objects and names do not match");
    }
    if(varlist.size() != variableObjects.size()) {
       // this is also checked in the model_rn_cor constructors, where there is more context for reporting
@@ -60,12 +61,28 @@ void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects,
       canUseVarlist = false;
       Rbayz::needStop = true;
    }
+
+   // Load and code the individual factors in the factorList.
    for(size_t i=0; i<variableObjects.size(); i++) {
-      // check varlist to see if labels from kernel should be used in coding factor
-      factorList.push_back(new simpleFactor(variableObjects[i],variableNames[i]));
+      // If a factor has an associated kernel, the levels from the kernel are used in coding the factor - this
+      // prepares to predict levels in the kernel that are not present in the data.
+      if( canUseVarlist && varlist[i].iskernel ) {
+         Rcpp::NumericMatrix temp_kernel = Rcpp::as<Rcpp::NumericMatrix>(varlist[i].kernObject);
+         std::vector<std::string> temp_rownames = getMatrixNames(temp_kernel, 1);
+         if(temp_rownames.size()>0) {
+            factorList.push_back(new simpleFactor(variableObjects[i], variableNames[i], temp_rownames, varlist[i].keyw));
+         }
+         else { // ignore rownames? It will create an error later, but need to check if it will not cause problems in coding here.
+            factorList.push_back(new simpleFactor(variableObjects[i],variableNames[i]));
+            Rbayz::Messages.push_back("Warning: cannot retrieve row names for kernel [" + varlist[i].keyw + "]");
+            Rbayz::needStop = true;
+         }
+      }
+      else // simpler type of factor without kernel
+         factorList.push_back(new simpleFactor(variableObjects[i],variableNames[i]));
    }
    size_t Ndata=factorList[0]->nelem;
-   for(size_t i=1; i<factorList.size(); i++) {  // double check that the sizes of the factors are identical
+   for(size_t i=1; i<factorList.size(); i++) {  // double check that the row-sizes of the factors are identical
       if( factorList[i]->nelem != Ndata) {
          std::string s="Interacting factors do not have the same length:";
          for (size_t j=0; j<factorList.size(); j++) {

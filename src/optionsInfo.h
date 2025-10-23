@@ -52,7 +52,7 @@ public:
 class varianceSpec {
 public:
    std::string optionText; // the original complete vartruct as text, used for error reporting
-   std::string keyw;
+   std::string keyw;       // this is the kernel name or reserved varstruct names like VCOV etc.
    bool haserror;
    bool iskernel;          // extend to: is kernel, is reserved structure, is number?
    Rcpp::RObject kernObject;

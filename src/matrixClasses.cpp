@@ -81,7 +81,7 @@ kernelMatrix::kernelMatrix(varianceSpec var_descr, double dim_pct) : labeledMatr
 	}
 	Rcpp::NumericVector eigvalues = eigdecomp["values"];
    Rcpp::NumericMatrix eigvectors = eigdecomp["vectors"];
-   // re-attach the dimnames again to the eigvectors matrix for correct further processing
+   // re-attach the dimnames again - it gets lost in the eigen() call
    if (kerneldata.hasAttribute("dimnames")) {
       Rcpp::List dimnames = Rcpp::as<Rcpp::List>(kerneldata.attr("dimnames"));
       eigvectors.attr("dimnames") = dimnames;

@@ -18,6 +18,7 @@
 class simpleFactor : public simpleIntVector {
 public:
    simpleFactor(Rcpp::RObject col, std::string name);
+   simpleFactor(Rcpp::RObject col, std::string name, std::vector<std::string> levelLabels, std::string kernel_name);
    ~simpleFactor() {
    } ;
    std::vector<std::string> labels;
