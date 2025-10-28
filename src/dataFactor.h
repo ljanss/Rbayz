@@ -1,9 +1,19 @@
 //  R/bayz
 //  dataFactor.h - storing one or multiple interacting factors with coding of the interaction levels
 //     and making merged labels like "A1.B1.C1". 
-//     Makes use of simpleFactor to code and store the single factors, the single factors are also kept
-//     because some models make use of that (but for others it could be dropped ...).
-//     If there is only one factor, dataFactor is basically a wrapper around one simpleFactor.
+//     Derives from simpleFactor and can also store the individual factors in a vector<simpleFactor*>
+//     factorList.
+//     This class is a bit more complex because it can handle several cases in the background and make
+//     it useable for different model types:
+//      - for objects like modelFixf, the factorList is temporarily used, then interactions are recoced
+//       in the main object member variables data, nelem, labels (member variables deriving from simpleFactor)
+//      - model objects like model_rn_cor, can use the factorList, without recoded interactions,
+//        then the main member variables like data, labels remain uninitialised!
+//     The setup is therefore somewhat dangerous if not used consistently. Model object constructors can
+//     toggle the collapsing with the collapseInteractions argument, and the object then sets 'collapsed'
+//     true. In that case the main member variables are initialised and should be used; if collapsed==false,
+//     the factorList should be used. Rbayz does not have a high level of protection around all the member
+//     variables, so if this is not used consistently you can make the code crash.
 //
 //  Created by Luc Janss on 03/08/2018.
 //
@@ -17,7 +27,7 @@
 #include "simpleFactor.h"
 #include "optionsInfo.h"
 
-class dataFactor {
+class dataFactor : public simpleFactor {
 public:
    /* Constructors with and without a variance-list, and for one Robject or vector<Robjects>;
       As far as I can see there is no need for the combination of one Robject and one variance-object,
@@ -27,14 +37,11 @@ public:
    dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, 
                std::vector<varianceSpec> varlist, bool collapseInteractions);
    void run_constructor(std::vector<Rcpp::RObject> variableObjects, 
-         std::vector<std::string> variableNames, std::vector<varianceSpec> varlist);
+         std::vector<std::string> variableNames, std::vector<varianceSpec> varlist, bool collapseInteractions);
    ~dataFactor();
-   simpleIntVector levcode;  // coded level info
-   std::vector<std::string> labels;
    int Nvar;  // The number of variables (interactions) in this factor
    std::vector<simpleFactor *> factorList;
-   simpleFactor* onefactor=0;
-   size_t nelem;
+   bool collapsed;  // whether interactions are collapsed into levcode and labels
 };
 
 #endif /* dataFactor_h */

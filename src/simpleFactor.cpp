@@ -156,7 +156,9 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntV
 // Constructor version with supplied level labels - so far the levels / labels coming from a kernel.
 // This uses a bit different strategy to first get all factor data as strings, then code according to levelLabels.
 // The coding will be in the order of levelLabels.
-simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std::string> levelLabels, std::string kernel_name) {
+simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std::string> levelLabels, 
+      std::string kernel_name) : simpleIntVector()
+   {
 
    // get the factor from the data as vector<string> for all input types (except boolean?)
    std::vector<std::string> temp_fac_strings;
