@@ -18,7 +18,7 @@ class model_rn_ind : public modelFactor {
 public:
 
    model_rn_ind(parsedModelTerm & modeldescr, modelResp * rmod)
-      : modelFactor(modeldescr, rmod) {
+      : modelFactor(modeldescr, rmod, true) {   // the true is for collapseInteractions
    }
 
    ~model_rn_ind() {

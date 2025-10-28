@@ -36,7 +36,7 @@ public:
       valstring="";
       valbool=false;
    }
-   optionSpec(bool b) {
+   optionSpec(bool b) {   // constructor with a bool to set isgiven
       isgiven=b;
       haserror=false;
       varObject = R_NilValue;

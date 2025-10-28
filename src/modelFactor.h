@@ -23,13 +23,13 @@
 //#include <unistd.h>
 
 class modelFactor : public modelCoeff {
-   
+
 public:
    
-   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod)
+   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, bool collapseInteractions)
          : modelCoeff(modeldescr, rmod)
    {
-      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames);
+      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, collapseInteractions);
       par = new parVector(modeldescr, 0.0l, F->labels);
       lhs.resize(F->labels.size(),0);
       rhs.resize(F->labels.size(),0);
@@ -37,10 +37,10 @@ public:
 
    // constructor with a variance list used by (some) random effect models; it is used to
    // take labels for the factors if there are kernels in the variance list.
-   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, std::vector<varianceSpec> varlist)
+   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, std::vector<varianceSpec> varlist,  bool collapseInteractions)
          : modelCoeff(modeldescr, rmod)
    {
-      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, varlist);
+      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, varlist, collapseInteractions);
       par = new parVector(modeldescr, 0.0l, F->labels);
       lhs.resize(F->labels.size(),0);
       rhs.resize(F->labels.size(),0);

@@ -15,7 +15,7 @@
 // With "mergedKernel", multiple kernels are merged into one and the code runs on one kernel,
 // otherwise it will apply the 'on the fly' construction of the kernel kronecker products. 
 model_rn_cor_k0::model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod)
-      : modelFactor(modeldescr, rmod, modeldescr.allOptions.Vlist()), 
+      : modelFactor(modeldescr, rmod, modeldescr.allOptions.Vlist(), modeldescr.allOptions["mergeKernels"].valbool), 
         alpha2levels(), regcoeff(nullptr), varmodel(nullptr)
 {
 

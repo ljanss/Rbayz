@@ -22,10 +22,10 @@ public:
    /* Constructors with and without a variance-list, and for one Robject or vector<Robjects>;
       As far as I can see there is no need for the combination of one Robject and one variance-object,
       so that combination is not made ... */
-   dataFactor(Rcpp::RObject variableObject, std::string variableName);
-   dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames);
+   dataFactor(Rcpp::RObject variableObject, std::string variableName, bool collapseInteractions);
+   dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, bool collapseInteractions);
    dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, 
-               std::vector<varianceSpec> varlist);
+               std::vector<varianceSpec> varlist, bool collapseInteractions);
    void run_constructor(std::vector<Rcpp::RObject> variableObjects, 
          std::vector<std::string> variableNames, std::vector<varianceSpec> varlist);
    ~dataFactor();

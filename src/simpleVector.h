@@ -28,6 +28,8 @@ public:
    int& operator[](size_t i);    // retrieving and setting value using []
    void initWith(Rcpp::IntegerVector v);
    void initWith(size_t n, int initvalue);
+   // [ToDo] The Int version does not have an initWith(another simpleIntVector),
+   // this could simplify some code in dataFactor.
    int *data;
    size_t nelem=0;
 private:

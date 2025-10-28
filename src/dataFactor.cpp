@@ -8,37 +8,30 @@
 #include "optionsInfo.h"
 #include <map>
 
-dataFactor::dataFactor(Rcpp::RObject oneVarObject, std::string OneVarName) :
-      levcode() {
+dataFactor::dataFactor(Rcpp::RObject oneVarObject, std::string OneVarName, bool collapseInteractions) :
+      simpleFactor() {
    std::vector<Rcpp::RObject> temp_var_objects = {oneVarObject};
    std::vector<std::string> temp_var_names = {OneVarName};
    std::vector<varianceSpec> temp_varlist(1); // empty varianceSpec object
-   run_constructor(temp_var_objects, temp_var_names, temp_varlist);
+   run_constructor(temp_var_objects, temp_var_names, temp_varlist, collapseInteractions);
 }
 
-dataFactor::dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames) :
-      levcode() {
+dataFactor::dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, bool collapseInteractions) :
+      simpleFactor() {
    std::vector<varianceSpec> temp_varlist(variableObjects.size()); // empty varianceSpec objects
-   run_constructor(variableObjects, variableNames, temp_varlist);
+   run_constructor(variableObjects, variableNames, temp_varlist, collapseInteractions);
 }
 
 dataFactor::dataFactor(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames,
-         std::vector<varianceSpec> varlist) : levcode() {
-   run_constructor(variableObjects, variableNames, varlist);
+         std::vector<varianceSpec> varlist, bool collapseInteractions) : simpleFactor() {
+   run_constructor(variableObjects, variableNames, varlist, collapseInteractions);
 }
 
 
 // Note: run_constructor always gets a variance-list, but it can be empty objects. This will work fine,
 // because empty varianceSpec objects have iskernel=false and kernObject=R_NilValue.
 // The varianceSpec object is used to use the levels from a kernel for coding the factor if iskernel==true.
-
-/* working notes: 
-   - I think can remove the use of onefactor, that simplifies code to always use the factorList, also for
-     one factor;
-   - the use of 'onefactor' was to avoid storing the same levcode and labels once in the factor in the
-     factorlist, and once in the 'overall' levcode and labels (used to code interactions for >1 factors).
-     Modeling objects will use the 'overall' codes. Without 'onefactor', avoiding storing the same info twice
-     can still be done with the same (dangerous) copying of pointers.
+/*
    - add new constructor for simpleFactor to use labels from a kernel
    - the real coding work to do for using the kernel labels will then be in simpleFactor
 This was some old code for 1 factor:
@@ -49,8 +42,8 @@ This was some old code for 1 factor:
       nelem = levcode.nelem;
 */
 void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects, 
-          std::vector<std::string> variableNames, std::vector<varianceSpec> varlist) {
-
+          std::vector<std::string> variableNames, std::vector<varianceSpec> varlist, bool collapseInteractions)
+   {
    bool canUseVarlist = true;
    if(variableObjects.size() != variableNames.size()) {
       throw generalRbayzError("Something wrong in building factor: number of objects and names do not match");
@@ -81,8 +74,11 @@ void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects,
       else // simpler type of factor without kernel
          factorList.push_back(new simpleFactor(variableObjects[i],variableNames[i]));
    }
+   Nvar = factorList.size();
+
+   // double check that the row-sizes of the factors are identical
    size_t Ndata=factorList[0]->nelem;
-   for(size_t i=1; i<factorList.size(); i++) {  // double check that the row-sizes of the factors are identical
+   for(size_t i=1; i<factorList.size(); i++) {  
       if( factorList[i]->nelem != Ndata) {
          std::string s="Interacting factors do not have the same length:";
          for (size_t j=0; j<factorList.size(); j++) {
@@ -91,44 +87,56 @@ void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects,
          throw generalRbayzError(s);
       }
    }
-   if(variableObjects.size()==1) {
-      // can copy levcode and labels from factorList[0] in 'main' levcode and labels
-   }
-   else { // multiple factors: main levcode and labels are for the interaction
-      // first build vector of combined labels matching the data
-      std::vector<std::string> new_data_labels(factorList[0]->back2vecstring());
-      for(size_t i=1; i<factorList.size(); i++) {
-         std::vector<std::string> next_strings(factorList[i]->back2vecstring());
-         for(size_t j=0; j<Ndata; j++)
-            new_data_labels[j] += "." + next_strings[j];
+
+   if (collapseInteractions) {
+      if(variableObjects.size()==1) {
+         // can copy levcode and labels from factorList[0] in 'main' data and labels.
+         // Note: the initWith versions from simpleIntVector are a bit limited, can only use
+         // initWith(size, scalar-value), then copy contents in data, improve? [ToDo]?.
+         initWith(factorList[0]->nelem, 0);
+         for(size_t i=0; i<nelem; i++)
+            data[i] = factorList[0]->data[i];
+         labels = factorList[0]->labels;  // instead of copying, it could also 'move' contents ...?
       }
-      // build map to find and code unique labels
-      std::map<std::string, int> new_unique_labels;
-      for(size_t i=0; i<new_data_labels.size(); i++)
-            new_unique_labels[new_data_labels[i]];
-      std::map<std::string, int>::iterator p;
-      size_t lev=0;        // Code the merged levels in the map
-      for(p=new_unique_labels.begin(); p != new_unique_labels.end(); p++) p->second = lev++;
-      levcode.initWith(Ndata, 0);
-      for(size_t i=0; i<Ndata; i++) {  // code the data
-         p = new_unique_labels.find(new_data_labels[i]);
-         levcode[i] = p->second;
+      else { // multiple factors to collapse: recode interaction levels
+         // first build vector of combined labels matching the data
+         size_t Ndata = factorList[0]->nelem;
+         std::vector<std::string> new_data_labels(factorList[0]->back2vecstring());
+         for(size_t i=1; i<factorList.size(); i++) {
+            std::vector<std::string> next_strings(factorList[i]->back2vecstring());
+            for(size_t j=0; j<Ndata; j++)
+               new_data_labels[j] += "." + next_strings[j];
+         }
+         // build map to find and code unique labels
+         std::map<std::string, int> new_unique_labels;
+         for(size_t i=0; i<new_data_labels.size(); i++)
+               new_unique_labels[new_data_labels[i]];
+         std::map<std::string, int>::iterator p;
+         size_t lev=0;        // Code the merged levels in the map
+         for(p=new_unique_labels.begin(); p != new_unique_labels.end(); p++) p->second = lev++;
+         initWith(Ndata, 0);
+         for(size_t i=0; i<Ndata; i++) {  // code the data
+            p = new_unique_labels.find(new_data_labels[i]);
+            data[i] = p->second;
+         }
+         // fill labels vector
+         labels.reserve(lev);
+         for(p=new_unique_labels.begin(); p != new_unique_labels.end(); p++) labels.push_back(p->first);
       }
-      // fill labels vector
-      labels.reserve(lev);
-      for(p=new_unique_labels.begin(); p != new_unique_labels.end(); p++) labels.push_back(p->first);
-      Nvar=factorList.size();
-      nelem=Ndata;
+      collapsed = true;
+      // remove the factorList!
+      for(size_t i=0; i<factorList.size(); i++)
+         delete factorList[i];
+      factorList.clear();
    }
-   Nvar = factorList.size();
+   else {   // not collapsing: leave the factorList as is; data and labels are not used, nelem remains 0.
+      collapsed = false;
+   }
+
 }
 
 dataFactor::~dataFactor() {
-   if(Nvar==1) {                   // levcode vector was used as 'wrapper'
-      delete onefactor;
-      levcode.nelem=0;             // this avoids triggering clean-up in levcode
-   }
-   else {
+   if(!collapsed) {
       for(size_t i=0; i<factorList.size(); i++)
          delete factorList[i];
    }
