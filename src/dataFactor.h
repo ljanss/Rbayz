@@ -4,25 +4,14 @@
 //   - dataFactor: derives from simpleFactor and recodes interactions so it is again presented as a 
 //     regular factor using the simpleFactor setup but with new level coding and labels that have the
 //     combinations of all levels in the different factors. 
-//   - dataFactorNC (not collapsed version): does NOT derive from simplefFacor and does not recode
-//     interactions, instead it keeps holding multiple factors in a vector<simpleFactor *>.
+//   - dataFactorNC (Not Collapsed / recoded version): does NOT derive from simplefFacor and does not
+//     recode interactions, instead it keeps holding multiple factors in a vector<simpleFactor *>.
 //     The rn_cor models without mergeKernels can work with this vector of factors.
-//
-// storing one or multiple interacting factors with coding of the interaction levels
-//     and making merged labels like "A1.B1.C1". 
-//     Derives from simpleFactor and can also store the individual factors in a vector<simpleFactor*>
-//     factorList.
-//     This class is a bit more complex because it can handle several cases in the background and make
-//     it useable for different model types:
-//      - for objects like modelFixf, the factorList is temporarily used, then interactions are recoced
-//       in the main object member variables data, nelem, labels (member variables deriving from simpleFactor)
-//      - model objects like model_rn_cor, can use the factorList, without recoded interactions,
-//        then the main member variables like data, labels remain uninitialised!
-//     The setup is therefore somewhat dangerous if not used consistently. Model object constructors can
-//     toggle the collapsing with the collapseInteractions argument, and the object then sets 'collapsed'
-//     true. In that case the main member variables are initialised and should be used; if collapsed==false,
-//     the factorList should be used. Rbayz does not have a high level of protection around all the member
-//     variables, so if this is not used consistently you can make the code crash.
+// If a model term has a single variable only (no interaction), this is handle with the standard
+// dataFactor.
+// Both versions can handle using levels from a kernel or multiple kernels where the factor is coded
+// according to the kernel levels - this prepares to predict levels in the kernel that are not present
+// in the data. This will also keep the levels ordered as they were given in the kernel.
 //
 //  Created by Luc Janss on 03/08/2018.
 //

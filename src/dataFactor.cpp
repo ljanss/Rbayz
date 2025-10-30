@@ -53,8 +53,7 @@ void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects,
 
    // Load and code the individual factors in the factorList.
    for(size_t i=0; i<variableObjects.size(); i++) {
-      // If a factor has an associated kernel, the levels from the kernel are used in coding the factor - this
-      // prepares to predict levels in the kernel that are not present in the data.
+      // If a factor has an associated kernel, the levels from the kernel are used in coding the factor
       if( canUseVarlist && varlist[i].iskernel ) {
          Rcpp::NumericMatrix temp_kernel = Rcpp::as<Rcpp::NumericMatrix>(varlist[i].kernObject);
          std::vector<std::string> temp_rownames = getMatrixNames(temp_kernel, 1);
