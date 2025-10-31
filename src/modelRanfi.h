@@ -1,28 +1,29 @@
-// BayzR -- model_rn_ind.h
+// BayzR -- modelRanfi.h
 // Model class for RANdom Factor with Indep variance structures.
 // Derives from modelFactor and has pointer to IndepVarStr object to model the variance.
 //
 //  Created by Luc Janss on 03/08/2018.
 //
 
-#ifndef model_rn_ind_h
-#define model_rn_ind_h
+#ifndef modelRanfi_h
+#define modelRanfi_h
 
 #include <Rcpp.h>
 #include "modelFactor.h"
 #include "indepVarStr.h"
 //#include <unistd.h>
 
-class model_rn_ind : public modelFactor {
+class modelRanfi : public modelFactor {
 
 public:
 
-   model_rn_ind(parsedModelTerm & modeldescr, modelResp * rmod)
+   modelRanfi(parsedModelTerm & modeldescr, modelResp * rmod)
       : modelFactor(modeldescr, rmod, true) {   // the true is for collapseInteractions
    }
 
-   ~model_rn_ind() {
-      delete varmodel;
+   ~modelRanfi() {                 // the varmodels get allocated in the derived classes, but
+      if (varmodel != 0)           // by putting destructor here it does not have to repeat
+         delete varmodel;          // the same destructor in each derived class
    }
 
    void sample() {
@@ -46,18 +47,22 @@ public:
       varmodel->restart();
    }
 
-   indepVarStr* varmodel;
+   indepVarStr* varmodel=0;
 
 };
 
-class model_rn_ind_iden : public model_rn_ind {
+// Implementation for IDEN variance structure
+// Note: all implementations with different INDEP variance structures can use methods from
+// the modelRanfi parent class, there is only need for allocating the right varmodel object.
+// Futher extensions with indep structures can include diag, weighted, loglin, mixed?
+
+class modelRanfi_iden : public modelRanfi {
 public:
-   model_rn_ind_iden(parsedModelTerm & pmdescr, modelResp * rmod)
-      : model_rn_ind(pmdescr, rmod) {
+   modelRanfi_iden(parsedModelTerm & pmdescr, modelResp * rmod)
+      : modelRanfi(pmdescr, rmod) {
       varmodel = new idenVarStr(pmdescr, this->par);
    }
 };
 
-// futher extensions with indep structures can inclue diag, weighted, mixed?
 
-#endif /* model_rn_ind_h */
+#endif /* modelRanfi_h */
