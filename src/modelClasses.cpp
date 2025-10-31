@@ -21,7 +21,7 @@
 // otherwise it will apply the 'on the fly' construction of the kernel kronecker products. 
 modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       : modelFactor(modeldescr, rmod, modeldescr.allOptions.Vlist()), 
-        alpha2levels(), regcoeff(nullptr), varmodel(nullptr)
+        regcoeff(nullptr), varmodel(nullptr)
 {
 
    std::vector<varianceSpec> varianceList = modeldescr.allOptions.Vlist();
@@ -49,6 +49,7 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // Check model term vdimp option; this is used to reset the default dimp=90 to select evecs in each kernel.
    // Note: I was consdidering to also allow a vdim, but that's not yet implemented, and the current kernelMatrix
    // constructor can only be tuned on 'dimp' but not on 'dim'.
+   double var_retain;
    if(modeldescr.allOptions["vdimp"].isgiven) {
       var_retain = modeldescr.allOptions["vdimp"].valnumb[0];
       if(var_retain < 10 || var_retain > 100.0)
@@ -137,10 +138,11 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // in the sample code it is already removed.
    builObsIndex(obsIndex,F,kernelList[0]);
 
-   // [ToDo] create the variance object - may need to move out as in ranfi
+   // [ToDo] create the variance object - may need to move out as in ranfi when allowing for
+   // different variance structures. But this is the variance structure for the alpha coefficients,
+   // and there is no interface yet to allow different structures here...
    varmodel = new diagVarStr(modeldescr, this->regcoeff, kernelList[0]->weights);
 }
-
 
 modelRanfc1::~modelRanfc1() {
    for(size_t i=0; i< kernelList.size(); i++)
@@ -149,12 +151,7 @@ modelRanfc1::~modelRanfc1() {
    delete varmodel;
 }
 
-
 void modelRanfc1::sample() {
-
-   // [ToDo]: sample() needs to be updated with separate code to run on one or on multiple kernels.
-   // For one kernel, a variable like alpha2levels is not initialised and should not be used!
-
    // Update regressions on the eigenvectors
    double lhsl, rhsl;
    size_t matrixrow;
@@ -199,7 +196,6 @@ void modelRanfc1::fillFit() { }
 // [!] this now only for 1, or 1 merged, kernel.
 // Also: is this not the same as the fitted value??
 void modelRanfc1::prepForOutput() {
-   kernelMatrix* K = kernelList[0];                  // kernelList is a std::vector<kernelMatrix*>
    for(size_t row=0; row< K->nrow; row++) {
       par->val[row]=0.0l;
       for(size_t col=0; col<K->ncol; col++) {
@@ -208,10 +204,15 @@ void modelRanfc1::prepForOutput() {
    }
 };
 
-// ----- model_ran_cor_k1
+// ------------------------- modelRanfck ----------------------------
 
-modelRanfck::modelRanfcK(parsedModelTerm & modeldescr, modelResp * rmod)
-           : modelCoeff(modeldescr, rmod), regcoeff(nullptr), fitval(), gprior(modeldescr.allOptions["prior"]) {
+/* Ranfck is the class that handles multiple kernels, and only kernels (no US or other included).
+   Cases with a single kernel (including 'merged' kernels) should have been sent
+   by rbayz main to the Ranfc1 class.
+*/
+
+modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
+           : modelCoeff(modeldescr, rmod), regcoeff(nullptr), gprior(modeldescr.allOptions["prior"]) {
    // For the moment all variance objects must be kernels
    for(size_t i=0; i<modeldescr.varObject.size(); i++) {
       if (modeldescr.varObject[i]==R_NilValue) {

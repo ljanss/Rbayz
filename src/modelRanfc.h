@@ -27,21 +27,21 @@ public:
 
    modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod);
    ~modelRanfc1();
-   void sample();
-   void sampleHpars();
-   void restart();
-   void fillFit();
-   void prepForOutput();
    kernelMatrix* K;
-//   std::vector<kernelMatrix*> kernelList;
    parVector *regcoeff;
    std::vector<size_t> obsIndex;
    indepVarStr* varmodel;
-   simpleIntMatrix alpha2levels;
 
 };
 
 class modelRanfck : public modelCoeff {
+
+   modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod);
+   ~modelRanfck();
+   std::vector<kernelMatrix*> kernelList;
+   parVector *regcoeff;
+   indepVarStr* varmodel;
+   simpleIntMatrix alpha2levels;
 
 }
 
