@@ -1,15 +1,18 @@
-//  BayzR --- model_rn_cor.h
-//  Computational classes to model random effect with correlations (from using rn(..., V=K)).
-//  Now also works with interactions and multiple kernels, but code now accepting ony max two kernels. 
-//  Derives from modelFactor which sets-up the (interacting) factor data, the computational methods
-//  though are more like modelMatrix and therefore parts of code are now same between modelMatrix and
-//  ranfc. It would need multiple and virtual inheritance to re-use the modelMatrix methods here too.
+//  BayzR --- modelRanfc.h
+//  Computational classes to model RANdom Factors with Correlations (from using rn(..., V=K)).
+//   - Ranfc1: for one kernel, or 'mergedKernel' and recoded interactions (so it computes again as if
+//     one random effect with one kernel). This derives from modelFactor that can do the data management
+//     of recoding interaction to one factor, but methods from modelFactor cannot be used and are redone.
+//   - Ranfck: for multiple kernels that are not recoded into one factor and one merged kernel. This
+//     one does not derive from modelFactor (but directly from modelCoeff) and uses a dataFactorNC to
+//     manage the factor data as a vector of factors.
+// Note: implementations are in modelClasses.cpp.
 //
 //  Created by Luc Janss on 03/08/2018.
 //
 
-#ifndef model_rn_cor_h
-#define model_rn_cor_h
+#ifndef modelRanfc_h
+#define modelRanfc_h
 
 #include <Rcpp.h>
 #include "modelFactor.h"
@@ -18,15 +21,12 @@
 #include "parsedModelTerm.h"
 #include "simpleMatrix.h"
 
-// update: ranfcor now also derive from modelFactor?
-// the matrix data here was eigenvector data, it needs to come from a variance model now.
-
-class model_rn_cor_k0 : public modelFactor {
+class modelRanfc1 : public modelFactor {
 
 public:
 
-   model_rn_cor_k0(parsedModelTerm & modeldescr, modelResp * rmod);
-   ~model_rn_cor_k0();
+   modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod);
+   ~modelRanfc1();
    void sample();
    void sampleHpars();
    void restart();
@@ -40,6 +40,9 @@ public:
 
 };
 
+class modelRanfck : public modelCoeff {
+
+}
 
 
-#endif /* model_rn_cor_h */
+#endif /* modelRanfc_h */
