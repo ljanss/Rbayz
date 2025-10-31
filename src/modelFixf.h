@@ -19,7 +19,7 @@ class modelFixf : public modelFactor {
 public:
    
    modelFixf(parsedModelTerm & modeldescr, modelResp * rmod)
-      : modelFactor(modeldescr, rmod, true) {   // the true is for collapseInteractions
+      : modelFactor(modeldescr, rmod) {
          if(par->nelem < 5) par->traced=1;
    }
 

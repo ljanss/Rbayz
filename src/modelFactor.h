@@ -1,13 +1,10 @@
 //
 //  rbayz -- modelFactor.h
-//  Computational methods to work on one factor that is modelled fixed, or random without
-//  correlations (modelFixf and modelRanf derive from this and only use small modifications
-//  to use common code from modelFactor).
-//  - declares and initialises a modelFactor object
-//  - sets sizes and names of parameter vectors - but not hpar, because that one differs
-//    for derived classes (fixf has no hpar)
-//  - now sets up factor with any number of interactions using new features from dataFactor
-//  This is still not a concrete class -> see derived classes modelFixf and modelRanf.
+//  Computational methods to work on one factor, but that can be coming from a model-term with interaction
+//  that is recoded in dataFactor to be stored again as one factor.
+//  All modelFixf and modelRanfi use this set-up and the methods in this class for sampling / udpating.
+//  From the correlated random models, Ranfc1 uses the data set-up form this class, but not the methods.
+//  This is still not a concrete class! (Has no sample() implemented).
 //
 //  Created by Luc Janss on 03/08/2018.
 //
@@ -26,10 +23,10 @@ class modelFactor : public modelCoeff {
 
 public:
    
-   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, bool collapseInteractions)
+   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod)
          : modelCoeff(modeldescr, rmod)
    {
-      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, collapseInteractions);
+      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames);
       par = new parVector(modeldescr, 0.0l, F->labels);
       lhs.resize(F->labels.size(),0);
       rhs.resize(F->labels.size(),0);
@@ -37,10 +34,10 @@ public:
 
    // constructor with a variance list used by (some) random effect models; it is used to
    // take labels for the factors if there are kernels in the variance list.
-   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, std::vector<varianceSpec> varlist,  bool collapseInteractions)
+   modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, std::vector<varianceSpec> varlist)
          : modelCoeff(modeldescr, rmod)
    {
-      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, varlist, collapseInteractions);
+      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, varlist);
       par = new parVector(modeldescr, 0.0l, F->labels);
       lhs.resize(F->labels.size(),0);
       rhs.resize(F->labels.size(),0);
@@ -53,7 +50,7 @@ public:
 
    void fillFit() {
       for (size_t obs=0; obs < F->nelem; obs++)
-        fit[obs] = par->val[F->levcode[obs]];
+        fit[obs] = par->val[F->data[obs]];
    }
 
    
@@ -61,12 +58,12 @@ protected:
 
    void resid_correct() {
       for (size_t obs=0; obs < F->nelem; obs++)
-        resid[obs] -= par->val[F->levcode[obs]];
+        resid[obs] -= par->val[F->data[obs]];
    }
 
    void resid_decorrect() {
       for (size_t obs=0; obs < F->nelem; obs++)
-        resid[obs] += par->val[F->levcode[obs]];
+        resid[obs] += par->val[F->data[obs]];
    }
 
    void collect_lhs_rhs() {
@@ -76,7 +73,7 @@ protected:
          lhs[k] = 0.0;
       }
       for (size_t obs=0; obs < F->nelem; obs++) {
-         k=F->levcode[obs];
+         k=F->data[obs];
          rhs[k] += residPrec[obs] * resid[obs];
          lhs[k] += residPrec[obs];
       }
