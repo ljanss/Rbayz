@@ -124,6 +124,14 @@ void simpleIntMatrix::initWith(Rcpp::IntegerMatrix M) {
    initWith(M, M.ncol());
 }
 
+void simpleIntMatrix::initWith(size_t nr, size_t nc) {
+   if (nrow> 0 || ncol>0 ) {    // oops this matrix is already allocated
+      throw(generalRbayzError("Attempted re-init or re-alloc in simpleIntMatrix"));
+   }
+   doalloc(nr, nc);
+   std::fill_n(data0, nr*nc, 0);
+}  
+
 // Swap contents of two matrices: the contents of this-> (object itself) are
 // swapped with content of matrix pointed to by other->. 
 void simpleIntMatrix::swap(simpleIntMatrix* other) {

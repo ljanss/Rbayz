@@ -57,6 +57,7 @@ public:
    
    void initWith(Rcpp::IntegerMatrix M, size_t useCol);
    void initWith(Rcpp::IntegerMatrix M);
+   void initWith(size_t nr, size_t nc);
 
    void swap(simpleIntMatrix* other);
 

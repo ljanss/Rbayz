@@ -41,7 +41,7 @@ class modelRanfck : public modelCoeff {
    std::vector<kernelMatrix*> kernelList;
    parVector *regcoeff;
    indepVarStr* varmodel;
-   simpleIntMatrix alpha2levels;
+   simpleIntMatrix alpha2evecs;  // mapping of alpha's to evec columns in each kernel
 
 }
 
