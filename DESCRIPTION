@@ -1,6 +1,6 @@
 Package: Rbayz
 Title: R package for bayz
-Version: 0.10
+Version: 0.11
 Authors@R: c(person("Luc", "Janss", email = "luc.janss@qgg.au.dk", role = c("cre")),
              person("Marni", "Tausen", email = "marni@birc.au.dk", role = c("aut")),
              person("Maria Izabel", "Cavassim Alves", email = "mica@birc.au.dk", role = c("edt")))

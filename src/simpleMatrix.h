@@ -34,8 +34,8 @@ public:
 
    virtual ~simpleMatrix();
 
-   double* data0;
-   double** data;
+   double* data0=0;
+   double** data=0;
    size_t nrow=0,ncol=0;
 
 private:
@@ -62,8 +62,8 @@ public:
 
    virtual ~simpleIntMatrix();
 
-   int* data0;
-   int** data;
+   int* data0=0;
+   int** data=0;
    size_t nrow=0,ncol=0;
 
 private:

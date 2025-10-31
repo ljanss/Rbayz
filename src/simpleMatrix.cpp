@@ -64,7 +64,7 @@ void simpleMatrix::swap(simpleMatrix* other) {
 }
 
 simpleMatrix::~simpleMatrix() {
-   if(nrow>0 && ncol>0) {
+   if(nrow>0 && ncol>0) { // or check for data and data0 to be zero
       delete[] data;
       delete[] data0;
    }

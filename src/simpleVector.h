@@ -30,7 +30,7 @@ public:
    void initWith(size_t n, int initvalue);
    // [ToDo] The Int version does not have an initWith(another simpleIntVector),
    // this could simplify some code in dataFactor.
-   int *data;
+   int *data=0;
    size_t nelem=0;
 private:
    void doalloc(size_t n);
@@ -47,7 +47,7 @@ public:
    void initWith(size_t n, double initvalue);
    void initWith(simpleDblVector & X);
    void swap(simpleDblVector* other);
-   double *data;
+   double *data=0;
    size_t nelem=0;
 private:
    void doalloc(size_t n);

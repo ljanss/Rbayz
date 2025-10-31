@@ -32,7 +32,8 @@ public:
    void restart();
    void fillFit();
    void prepForOutput();
-   std::vector<kernelMatrix*> kernelList;
+   kernelMatrix* K;
+//   std::vector<kernelMatrix*> kernelList;
    parVector *regcoeff;
    std::vector<size_t> obsIndex;
    indepVarStr* varmodel;
