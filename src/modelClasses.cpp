@@ -32,7 +32,7 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // for Ranfc1 all variance objects must be kernels (with an attached RObject)
    for(size_t i=0; i<varianceList.size(); i++) {
       if (! varianceList[i].iskernel ) {   // iskernel true guarantees there is an RObject
-         throw(generalRbayzError("Error: running Ranfc1 with parameterised kernels - pls report to developers"));
+         throw(generalRbayzError("Error: running Ranfc1 with parameterised kernels; pls report to developers"));
       }
    }
 
@@ -42,7 +42,7 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // mergeKernels options is a programming bug.
    if (varianceList.size() > 1) {
       if (!(modeldescr.allOptions["mergeKernels"].isgiven && modeldescr.allOptions["mergeKernels"].valbool)) {
-         throw generalRbayzError("Error: running Ranfc1 without merging kernels - pls report to developers");
+         throw generalRbayzError("Error: running Ranfc1 without merging kernels; pls report to developers");
       }
    }
 
@@ -212,22 +212,31 @@ void modelRanfc1::prepForOutput() {
 */
 
 modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
-           : modelCoeff(modeldescr, rmod), regcoeff(nullptr), gprior(modeldescr.allOptions["prior"]) {
-   // For the moment all variance objects must be kernels
+           : modelCoeff(modeldescr, rmod), regcoeff(nullptr) {
+
+   // Not OK if this is used for only one kernel
+   if (modeldescr.varObject.size() < 2) {
+      throw(generalRbayzError("Error: calling modelRanfck with one kernel; pls report to developers"));
+   }
+
+   // Not OK unless all variance objects are kernels
    for(size_t i=0; i<modeldescr.varObject.size(); i++) {
       if (modeldescr.varObject[i]==R_NilValue) {
-         throw(generalRbayzError("Mixing kernels with IDEN or other indep structures not yet possible"));
+         throw(generalRbayzError("Error: calling modelRanfck with non-kernels; pls report to developers"));
       }
    }
+
+
+
    for(size_t i=0; i<modeldescr.varObject.size(); i++) {
       kernelList.push_back(new kernelMatrix(modeldescr.varObject[i], modeldescr.varName[i]));
    }
 
    // If multiple kernels are not merged, we need some mapping of combinations of evecs in the kernels
-   // to elements in the regcoeff vector. This is done in the alpha2levels matrix.
+   // to elements in the regcoeff vector. This is done in the alpha2evecs matrix.
    // Note: the factors in the interaction model is put on rows, the alpha's on columns.
    if (kernelList.size() > 1) {
-      alpha2levels = simpleIntMatrix(kernelList.size(), merged_ncol);
+      alpha2evecs.initWith(kernelList.size(), merged_ncol);
       size_t prev_levs, this_levs, next_levs;
       for(size_t i=0; i< kernelList.size(); i++) {
          this_levs = F->factorList[i]->nlevels;
@@ -240,7 +249,7 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
             for(size_t k2=0; k2< this_levs; k2++) {
                for(size_t k3=0; k3< next_levs; k3++) {
                   size_t col = k1*this_levs*next_levs + k2*next_levs + k3;
-                  alpha2levels.data[i][col] = k2;
+                  alpha2evecs.data[i][col] = k2;
                }
             }
          }
