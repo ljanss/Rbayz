@@ -1,14 +1,14 @@
 //  R/bayz
 //  dataFactor.h - classes to store factor data with possible interactions, from model terms like A:B:C.
-//  There are two versions:
-//   - dataFactor: derives from simpleFactor and recodes interactions so it is again presented as a 
-//     regular factor using the simpleFactor setup but with new level coding and labels that have the
-//     combinations of all levels in the different factors. 
-//   - dataFactorNC (Not Collapsed / recoded version): does NOT derive from simplefFacor and does not
-//     recode interactions, instead it keeps holding multiple factors in a vector<simpleFactor *>.
-//     The rn_cor models without mergeKernels can work with this vector of factors.
-// If a model term has a single variable only (no interaction), this is handle with the standard
-// dataFactor.
+//  There are two classes, dataFactor and dataFactorNC which have subtle differences,
+//  and are intended for different use by different model classes:
+//   - dataFactor: recodes interactions and presents it as a regular single factor with new level coding and
+//     labels; it does not keep the list of individual factors once the recoding is done. Used in Fixf, Ranfi,
+//     Ranfc1 model classes.
+//   - dataFactorNC (Not Collapsed version): this one keeps storing multiple factors in a vector<simpleFactor *>,
+//     but also stores the recoded 'single factor' information, as well as a 'firstOccurence' vector. This
+//     one is used by model classes working on the vector of factors, the single factor and firstOccurence info
+//     is used in the backtransform. dataFactorNC is not intended for use for a single factor.
 // Both versions can handle using levels from a kernel or multiple kernels where the factor is coded
 // according to the kernel levels - this prepares to predict levels in the kernel that are not present
 // in the data. This will also keep the levels ordered as they were given in the kernel.
@@ -40,17 +40,16 @@ public:
    int Nvar;  // The number of variables (interactions) in this factor
 };
 
-class dataFactorNC {
+class dataFactorNC : public simpleFactor {
 public:
    dataFactorNC(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, 
                std::vector<varianceSpec> varlist);
    ~dataFactorNC();
    int Nvar;
-   size_t nelem; // number of observations (rows)
    std::vector<simpleFactor *> factorList;
-
-   // return a label for the combination of factor levels at observation index i
-   std::string getLevelCombinationLabel(size_t i);
+   simpleIntVector firstOccurence; // similar as R duplicate() function, but opposite interpretation.
 };
+
+void paste_data_labels(std::vector<std::string> & pasted_labels, const std::vector<simpleFactor *> & factorList);
 
 #endif /* dataFactor_h */
