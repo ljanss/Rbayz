@@ -34,7 +34,7 @@ public:
    void addKernel(kernelMatrix* K2);
 
    // [ToDo] name weights is not so good, this is a class holding an eigendecomp, it is
-   // quite ok to call it eigen values. Weights becomes confusing in other parts of the code.
+   // quite ok to call it eigenvalues. Weights becomes confusing in other parts of the code.
    simpleDblVector weights;
    double sumEvalues;
    

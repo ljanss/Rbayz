@@ -41,13 +41,16 @@ public:
 };
 
 class dataFactorNC {
-
+public:
    dataFactorNC(std::vector<Rcpp::RObject> variableObjects, std::vector<std::string> variableNames, 
                std::vector<varianceSpec> varlist);
    ~dataFactorNC();
    int Nvar;
+   size_t nelem; // number of observations (rows)
    std::vector<simpleFactor *> factorList;
 
+   // return a label for the combination of factor levels at observation index i
+   std::string getLevelCombinationLabel(size_t i);
 };
 
 #endif /* dataFactor_h */

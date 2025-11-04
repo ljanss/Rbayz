@@ -192,6 +192,7 @@ dataFactorNC::dataFactorNC(std::vector<Rcpp::RObject> variableObjects, std::vect
          throw generalRbayzError(s);
       }
    }
+   nelem = Ndata;
 
 }
 
@@ -199,6 +200,20 @@ dataFactorNC::dataFactorNC(std::vector<Rcpp::RObject> variableObjects, std::vect
 dataFactorNC::~dataFactorNC() {
    for(size_t i=0; i<factorList.size(); i++)
       delete factorList[i];
+}
+
+// Return the combined level label for observation 'idx', joining each factor's label with dots.
+std::string dataFactorNC::getLevelCombinationLabel(size_t idx) {
+   if (idx >= this->nelem) {
+      throw generalRbayzError("Index out of range in getLevelCombinationLabel");
+   }
+   std::string res;
+   for(size_t i=0; i< factorList.size(); i++) {
+      int code = factorList[i]->data[idx];
+      if (i==0) res = factorList[i]->labels[code];
+      else res += "." + factorList[i]->labels[code];
+   }
+   return res;
 }
 
 

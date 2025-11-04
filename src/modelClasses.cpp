@@ -7,6 +7,38 @@
 #include "indexTools.h"
 #include "optionsInfo.h"
 
+/* ------------- some helper functions --------------------- 
+   Used by multiple modelRanfc classes
+*/
+
+// get_var_retain: get vdimp option from modeldescr, if given, or set default of 90%;
+// if multiple kernels, convert to per-kernel percentage based on nKernels parameter.
+double get_var_retain(const parsedModelTerm & modeldescr, size_t nKernels) {
+   double var_retain;
+   if(modeldescr.allOptions["vdimp"].isgiven) {
+      var_retain = modeldescr.allOptions["vdimp"].valnumb[0];
+      if(var_retain < 10 || var_retain > 100.0)           // [ToDo] there is no good contex here!
+         throw(generalRbayzError("vdimp option should be between 10 and 100"));
+      if (nKernels > 1)
+         var_retain = pow(var_retain/100.0, (1.0/double(nKernels)))*100.0; // convert to per-kernel pct
+   }
+   else {
+      var_retain = 90;
+   }
+   return var_retain;
+}
+
+// get maxmem option from modeldescr, if given, or set default of 4GB.
+size_t get_maxmem(const parsedModelTerm & modeldescr) {
+   size_t maxmem;
+   if (modeldescr.allOptions["maxmem"].isgiven) {
+      maxmem = (size_t) (1e9 * modeldescr.allOptions["maxmem"].valnumb[0] );
+   }
+   else
+      maxmem = 4e9;  // default maxmem = 500 million doubles = 4 GB
+   return maxmem;
+}
+
 /* ****************** modelRanfc classes ***************************/
 
 // --------------------- modelRanfc1 ------------------------------
@@ -36,10 +68,9 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       }
    }
 
-   // If there are multiple kernels, the model should have 'mergeKernels' option.
-   // The default is now NOT merging. To merge, the option should be given, and should be true.
-   // Note: the right triage should have been done in rbayz main, so ending up here without
-   // mergeKernels options is a programming bug.
+   // Kernels should be merged, if there were multiple kernels. This should have been sorted in 
+   // rbayz main when building the model term objects.
+   // Note: the default is not merging, so merging can only be specified by the user, it must be given and true.
    if (varianceList.size() > 1) {
       if (!(modeldescr.allOptions["mergeKernels"].isgiven && modeldescr.allOptions["mergeKernels"].valbool)) {
          throw generalRbayzError("Error: running Ranfc1 without merging kernels; pls report to developers");
@@ -49,26 +80,12 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // Check model term vdimp option; this is used to reset the default dimp=90 to select evecs in each kernel.
    // Note: I was consdidering to also allow a vdim, but that's not yet implemented, and the current kernelMatrix
    // constructor can only be tuned on 'dimp' but not on 'dim'.
-   double var_retain;
-   if(modeldescr.allOptions["vdimp"].isgiven) {
-      var_retain = modeldescr.allOptions["vdimp"].valnumb[0];
-      if(var_retain < 10 || var_retain > 100.0)
-         throw(generalRbayzError("vdimp option should be between 10 and 100"));
-      if (varianceList.size() > 1)
-         var_retain = pow(var_retain/100.0, (1.0/double(varianceList.size())))*100.0; // convert to per-kernel pct
-   }
-   else {
-      var_retain = 90;
-   }
+   double var_retain = get_var_retain(modeldescr, varianceList.size());
 
-   // set maxmen: max memory to use for large matrices. If there is no setting in the model-term, set to 4GB.
-   // A maxmem option from the model-term should be in GB, so multiply by 1e9 to get bytes.
-   size_t maxmem;
-   if (modeldescr.allOptions["maxmem"].isgiven) {
-      maxmem = (size_t) (1e9 * modeldescr.allOptions["maxmem"].valnumb[0] );
-   }
-   else
-      maxmem = 4e9;  // default maxmem = 500 million doubles = 4 GB
+   // get maxmem to use for allocating large matrices (function returns default of 4GB if not given).
+   // [ToDo] maxmem is now only used when merging kernels to put a limit on memory use, but use could
+   // be extended to other places where large matrices are allocated, like in kernelMatrix constructor.
+   size_t maxmem = get_maxmem(modeldescr);
 
    if (varianceList.size() == 1) { // one kernel, allocate directly to the 'kernel' member variable
       K = new kernelMatrix(varianceList[0], var_retain);
@@ -121,6 +138,8 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       for(size_t i=0; i< kernelList.size(); i++)
          delete kernelList[i];
    }
+
+   // note: par is already set up in modelFactor constructor called above.
 
    // Set-up / initialize 'regcoeff' (alpha) regression vector
    regcoeff = new parVector(modeldescr, 0.0l, K->colnames);
@@ -209,6 +228,9 @@ void modelRanfc1::prepForOutput() {
 /* Ranfck is the class that handles multiple kernels, and only kernels (no US or other included).
    Cases with a single kernel (including 'merged' kernels) should have been sent
    by rbayz main to the Ranfc1 class.
+   With not merging kernels, set-up is different from Ranfc1:
+   - does not derive from modelFator, needs to set up factor data, par vector, helping vectors, itself.
+   - ranfc1 will produce random effects for all rows in the kernel, here only for the factor levels in the data.
 */
 
 modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
@@ -226,62 +248,78 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
       }
    }
 
+   // get the factor data in a dataFactorNC object
+   Fnc = new dataFactorNC(modeldescr.variableObjects, modeldescr.variableNames, modeldescr.allOptions.Vlist());
 
+   // find the unique combinations of factor levels in the data to define the par vector size (the random effects modeled).
+   std::vector< std::string> temp_par_labels(Fnc->nelem);
+   for(size_t i=0; i< Fnc->nelem; i++) {
+      temp_par_labels[i] = Fnc->getLevelCombinationLabel(i);
+   }
+   std::sort(temp_par_labels.begin(), temp_par_labels.end());
+   std::vector< std::string>::iterator last = std::unique (temp_par_labels.begin(), temp_par_labels.end());
+   temp_par_labels.erase(last, temp_par_labels.end());
 
+   // set up all kernels in a list
    for(size_t i=0; i<modeldescr.varObject.size(); i++) {
       kernelList.push_back(new kernelMatrix(modeldescr.varObject[i], modeldescr.varName[i]));
    }
 
-   // If multiple kernels are not merged, we need some mapping of combinations of evecs in the kernels
-   // to elements in the regcoeff vector. This is done in the alpha2evecs matrix.
+   // Setup alpha2eves that maps combinations of evecs in the kernels to the alpha (regcoeff) vector.
    // Note: the factors in the interaction model is put on rows, the alpha's on columns.
-   if (kernelList.size() > 1) {
-      alpha2evecs.initWith(kernelList.size(), merged_ncol);
-      size_t prev_levs, this_levs, next_levs;
-      for(size_t i=0; i< kernelList.size(); i++) {
-         this_levs = F->factorList[i]->nlevels;
-         prev_levs = 1; next_levs = 1;
-         for(size_t j=0; j<i; j++)
-            prev_levs *= F->factorList[j]->nlevels;
-         for(size_t j=i+1; j< kernelList.size(); j++)
-            next_levs *= F->factorList[j]->nlevels;
-         for(size_t k1=0; k1< prev_levs; k1++) {
-            for(size_t k2=0; k2< this_levs; k2++) {
-               for(size_t k3=0; k3< next_levs; k3++) {
-                  size_t col = k1*this_levs*next_levs + k2*next_levs + k3;
-                  alpha2evecs.data[i][col] = k2;
-               }
+   alpha2evecs.initWith(kernelList.size(), merged_ncol);
+   size_t prev_levs, this_levs, next_levs;
+   for(size_t i=0; i< kernelList.size(); i++) {
+      this_levs = F->factorList[i]->nlevels;
+      prev_levs = 1; next_levs = 1;
+      for(size_t j=0; j<i; j++)
+         prev_levs *= F->factorList[j]->nlevels;
+      for(size_t j=i+1; j< kernelList.size(); j++)
+         next_levs *= F->factorList[j]->nlevels;
+      for(size_t k1=0; k1< prev_levs; k1++) {
+         for(size_t k2=0; k2< this_levs; k2++) {
+            for(size_t k3=0; k3< next_levs; k3++) {
+               size_t col = k1*this_levs*next_levs + k2*next_levs + k3;
+               alpha2evecs.data[i][col] = k2;
             }
          }
       }
    }
 
-      if (kernelList.size() > 1) {
-      std::vector<std::string> temp_labels(merged_ncol);
-      for(size_t col=0; col< merged_ncol; col++) {
-         std::string nm = kernelList[0]->colnames[ alpha2levels.data[0][col] ];
-         for(size_t row=1; row< kernelList.size(); row++) {
-            nm += "." + kernelList[row]->colnames[ alpha2levels.data[row][col] ];
-         }
-         temp_labels[col] = nm;
+   // labels for the regcoeff (alpha) vector: they are combinations of the colnames of the kernel evecs.
+   std::vector<std::string> temp_labels(merged_ncol);
+   for(size_t col=0; col< merged_ncol; col++) {
+      std::string nm = kernelList[0]->colnames[ alpha2levels.data[0][col] ];
+      for(size_t row=1; row< kernelList.size(); row++) {
+         nm += "." + kernelList[row]->colnames[ alpha2levels.data[row][col] ];
       }
-      regcoeff = new parVector(modeldescr, 0.0l, temp_labels);
+      temp_labels[col] = nm;
+   }
+
+   // set-up par vector
+   // This is not good, there is no K in this class ...
+   // Also, there needs some work to find the combinations of factor levels in the data.
+   par = new parVector(modeldescr, 0.0l, K->rownames);
+
+   // set-up / initialize 'regcoeff' (alpha) regression vector
+   regcoeff = new parVector(modeldescr, 0.0l, temp_labels);
+   regcoeff->Name = regcoeff->Name + ".alpha";
+   if(modeldescr.allOptions["alpha_est"].isgiven || modeldescr.allOptions["alpha_save"].isgiven) {
+      Rbayz::parList.push_back(&regcoeff);
    }
 
 }
 
-/* start on making the "non-merged" approach where kernels remain individually in a list
-model_rn_cor_k1::model_rn_cor_k1(parsedModelTerm & modeldescr, modelResp * rmod)
-           : modelFactor(modeldescr, rmod), regcoeff(), fitval(), gprior(modeldescr.allOptions["prior"]) {
-   // For the moment all variance objects must be kernels
-   for(size_t i=0; i<modeldescr.varObject.size(); i++) {
-      if (modeldescr.varObject[i]==R_NilValue) {
-         throw(generalRbayzError("Mixing kernels with IDEN or other indep structures not yet possible"));
-      }
-   }
-   for(size_t i=0; i<modeldescr.varObject.size(); i++) {
-      kernelList.push_back(new kernelMatrix(modeldescr.varObject[i], modeldescr.varName[i]));
-   }
-}
-*/
+modelRanfck::~modelRanfck() {
+   for(size_t i=0; i< kernelList.size(); i++)
+      delete kernelList[i];
+   delete Fnc;
+   delete regcoeff;
+   delete par;
+} 
+
+
+
+// [ToDo] implement sample(), sampleHpars(), restart(), fillFit(), prepForOutput()
+
 
