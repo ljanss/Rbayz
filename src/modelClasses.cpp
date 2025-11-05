@@ -308,8 +308,25 @@ modelRanfck::~modelRanfck() {
    delete par;
 } 
 
+modelRanfck::sample() {
+   // [ToDo] implement sampling of regressions on multiple kernels
+}
 
+modelRanfck::sampleHpars() {
+   // [ToDo] implement sampling of hyper-parameters for multiple kernels
+}
 
-// [ToDo] implement sample(), sampleHpars(), restart(), fillFit(), prepForOutput()
+modelRanfck::restart() {
+   // [ToDo] implement restart of hyper-parameters for multiple kernels
+}
+
+modelRanfck::fillFit() {
+   // [ToDo] implement fillFit for multiple kernels
+}
+
+modelRanfck::prepForOutput() {
+   // [ToDo] implement prepForOutput for multiple kernels
+}
+
 
 
