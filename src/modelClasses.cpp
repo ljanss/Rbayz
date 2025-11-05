@@ -251,15 +251,6 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
    // get the factor data in a dataFactorNC object
    Fnc = new dataFactorNC(modeldescr.variableObjects, modeldescr.variableNames, modeldescr.allOptions.Vlist());
 
-   // find the unique combinations of factor levels in the data to define the par vector size (the random effects modeled).
-   std::vector< std::string> temp_par_labels(Fnc->nelem);
-   for(size_t i=0; i< Fnc->nelem; i++) {
-      temp_par_labels[i] = Fnc->getLevelCombinationLabel(i);
-   }
-   std::sort(temp_par_labels.begin(), temp_par_labels.end());
-   std::vector< std::string>::iterator last = std::unique (temp_par_labels.begin(), temp_par_labels.end());
-   temp_par_labels.erase(last, temp_par_labels.end());
-
    // set up all kernels in a list
    for(size_t i=0; i<modeldescr.varObject.size(); i++) {
       kernelList.push_back(new kernelMatrix(modeldescr.varObject[i], modeldescr.varName[i]));
@@ -296,10 +287,9 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
       temp_labels[col] = nm;
    }
 
-   // set-up par vector
-   // This is not good, there is no K in this class ...
-   // Also, there needs some work to find the combinations of factor levels in the data.
-   par = new parVector(modeldescr, 0.0l, K->rownames);
+   // set-up par vector; the par vector has all the level-combinations that appear in the data and that
+   // are in the Fnc->labels.
+   par = new parVector(modeldescr, 0.0l, Fnc->labels);
 
    // set-up / initialize 'regcoeff' (alpha) regression vector
    regcoeff = new parVector(modeldescr, 0.0l, temp_labels);
