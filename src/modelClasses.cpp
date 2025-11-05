@@ -11,8 +11,8 @@
    Used by multiple modelRanfc classes
 */
 
-// get_var_retain: get vdimp option from modeldescr, if given, or set default of 90%;
-// if multiple kernels, convert to per-kernel percentage based on nKernels parameter.
+// get_var_retain: get vdimp option from modeldescr or set default of 90%;
+// If multiple kernels, convert to per-kernel percentage based on nKernels parameter.
 double get_var_retain(const parsedModelTerm & modeldescr, size_t nKernels) {
    double var_retain;
    if(modeldescr.allOptions["vdimp"].isgiven) {
@@ -23,12 +23,12 @@ double get_var_retain(const parsedModelTerm & modeldescr, size_t nKernels) {
          var_retain = pow(var_retain/100.0, (1.0/double(nKernels)))*100.0; // convert to per-kernel pct
    }
    else {
-      var_retain = 90;
+      var_retain = pow(0.9, (1.0/double(nKernels)))*100.0; // default 90% converted to per-kernel pct
    }
    return var_retain;
 }
 
-// get maxmem option from modeldescr, if given, or set default of 4GB.
+// get maxmem option from modeldescr or set default of 4GB.
 size_t get_maxmem(const parsedModelTerm & modeldescr) {
    size_t maxmem;
    if (modeldescr.allOptions["maxmem"].isgiven) {
