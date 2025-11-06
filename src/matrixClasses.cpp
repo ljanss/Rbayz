@@ -1,7 +1,7 @@
 //  matrixClasses.cpp
 //  Code for labeledMatrix and kernelMatrix classes
 
-#include "labeledMatrix.h"
+#include "kernelMatrix.h"
 #include "rbayzExceptions.h"
 #include "nameTools.h"
 
@@ -11,7 +11,7 @@
 // Throws errror if rownames not available, auto-fills colnames if colnames not available
 // This is now a member function of labeledMatrix, so that the object can call addRowNames
 // on itself to get its row or colnames filled.
-void labeledMatrix::addRowColNames(Rcpp::NumericMatrix M, std::string & name) {
+void labeledMatrix::addRowColNames(Rcpp::NumericMatrix M, const std::string & name) {
    rownames = getMatrixNames(M, 1);
    if(rownames.size()==0) {  // rownames empty not allowed
       throw generalRbayzError("No rownames on matrix " + name + "\n");
@@ -27,7 +27,7 @@ void labeledMatrix::addRowColNames(Rcpp::NumericMatrix M, std::string & name) {
 // Proper setting of useCol (>=1 and <= M.ncol) is not tested here, it is assumed that this
 // labeling function is only used in labeledMatrix contructor, and then simpleMatrix() constructor
 // will throw errors for improper setting of useCol.
-void labeledMatrix::addRowColNames(Rcpp::NumericMatrix M, std::string & name, size_t useCol) {
+void labeledMatrix::addRowColNames(Rcpp::NumericMatrix M, const std::string & name, size_t useCol) {
    rownames = getMatrixNames(M, 1);
    if(rownames.size()==0) {  // rownames empty not allowed
       throw generalRbayzError("No rownames on matrix " + name + "\n");
@@ -42,14 +42,14 @@ void labeledMatrix::addRowColNames(Rcpp::NumericMatrix M, std::string & name, si
    }
 }
 
-labeledMatrix::labeledMatrix(Rcpp::RObject col, std::string & name) : simpleMatrix(col) {
+labeledMatrix::labeledMatrix(Rcpp::RObject col, const std::string & name) : simpleMatrix(col) {
    // Need to temporarily redo the conversion of the input Robject to
    // Rcpp::NumericMatrix to retrieve row and col names.
    Rcpp::NumericMatrix Rmatrix = Rcpp::as<Rcpp::NumericMatrix>(col);
    this->addRowColNames(Rmatrix, name);
 }
 
-void labeledMatrix::initWith(Rcpp::NumericMatrix & M, std::string & name, size_t useCol) {
+void labeledMatrix::initWith(Rcpp::NumericMatrix & M, const std::string & name, size_t useCol) {
    simpleMatrix::initWith(M, useCol);
    this->addRowColNames(M, name, useCol);
 }
@@ -57,13 +57,18 @@ void labeledMatrix::initWith(Rcpp::NumericMatrix & M, std::string & name, size_t
 // ----------------- kernelMatrix class --------------------
 
 // kernelMatrix constructor with no dim_pct setting, this calls the other constructor,
-// setting the default dim_pct = 90
-kernelMatrix::kernelMatrix(varianceSpec var_descr) : kernelMatrix(var_descr, 90.0) {
+// setting the default dim_pct = 90.
+// NOTE: kernelMatrix is now called from modelRanfc1 and modelRanfck constructors that derive
+// a better default taking account of the number of kernels used; this is the better way
+// (here in kernelMatrix the correct default cannot be known because the number of kernels is not known).
+// Maybe this constructor can be deprecated in future as I think it is not used anymore? [ToDo].
+kernelMatrix::kernelMatrix(const varianceSpec & var_descr)
+   : kernelMatrix(var_descr, 90.0) {
 }
 
 // kernelMatrix constructor. The dim_pct is used as a default; when there are options dim or dimp
 // in the kernel specification, these are used instead of the default dim_pct.
-kernelMatrix::kernelMatrix(varianceSpec var_descr, double dim_pct) : labeledMatrix(), weights() {
+kernelMatrix::kernelMatrix(const varianceSpec & var_descr, double dim_pct_default) : labeledMatrix(), weights() {
 
 // note: kernelMatrix starts with an empty labeledMatrix, parent constructors have not done anything,
 // accept for having the matrix and vectors for storing data and row and column labels.
@@ -104,11 +109,11 @@ kernelMatrix::kernelMatrix(varianceSpec var_descr, double dim_pct) : labeledMatr
          dim_pct = dimp_opt.valnumb[0];
          if(dim_pct <= 0 || dim_pct > 100) {
             Rbayz::Messages.push_back("Warning: invalid dimp setting <" + std::to_string(dim_pct) + "> processing kernel " + var_descr.keyw + ", setting default dimp=90");
-            dim_pct=90;  // also here not error, but fall back to default dimp=90
+            dim_pct=dim_pct_default;  // also here not error, but fall back to default dimp
          }
       }
       else  // no options set: take default
-         dim_pct=90;
+         dim_pct=dim_pct_default;
    }
    sumEvalues = 0.0l;             // the sum of all positive eigenvalues and their count
    size_t counted_positive_evals=0;

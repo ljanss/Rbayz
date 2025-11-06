@@ -25,8 +25,8 @@ class kernelMatrix : public labeledMatrix {
 
 public:
 
-   kernelMatrix(varianceSpec var_descr); 
-   kernelMatrix(varianceSpec var_descr, double dim_pct);
+   kernelMatrix(const varianceSpec & var_descr); 
+   kernelMatrix(const varianceSpec & var_descr, double dim_pct);
    ~kernelMatrix() {
    }
 

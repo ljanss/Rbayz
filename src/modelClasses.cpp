@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 #include "Rbayz.h"
-#include "model_rn_cor.h"
+#include "modelRanfc.h"
 #include "indexTools.h"
 #include "optionsInfo.h"
 
@@ -108,7 +108,7 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
          // [ToDo] If messages could have an option that displays messages directly on the screen,
          // this could be a useful one to show up immediately.
          Rbayz::Messages.push_back("Warning: the number of regressions modeled in <" + modeldescr.shortModelTerm +
-             "> is large (" + std::to_string(merged_ncol) + ")";
+             "> is large (" + std::to_string(merged_ncol) + ")");
       }
       size_t mem_needed = merged_nrow * merged_ncol * 8; // in bytes, double = 8 bytes
       if( mem_needed > maxmem ) {
@@ -129,11 +129,11 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       // work with the hierarchy. Then each class swap() adds copying its own added member variables ... hmmm
       // it looks like such a thing can't work because a derived class swap overrides the parent swap. 
       // But ... I search on making copy contructors in a hierarchy, which should be possible. 
-      K.swap(kernelList[0]);
-      K.rownames = kernelList[0].rownames;    // members from labeledMatrix, these are std::vector and
-      K.colnames = kernelList[0].colnames;    // will copy nicely ..
-      K.weights.swap(kerneList[0].weights);   // weights from kernelMatrix is a simpleDblVector, which also has swap()
-      K.sumEvalues = kernelList[0].sumEvalues;
+      K->swap(kernelList[0]);
+      K->rownames = kernelList[0]->rownames;    // members from labeledMatrix, these are std::vector and
+      K->colnames = kernelList[0]->colnames;    // will copy nicely ..
+      K->weights.swap(&(kernelList[0]->weights));   // weights from kernelMatrix is a simpleDblVector, which also has swap()
+      K->sumEvalues = kernelList[0]->sumEvalues;
       // clean up 'new' allocations - the kernelList vector will clean up itself.
       for(size_t i=0; i< kernelList.size(); i++)
          delete kernelList[i];
@@ -155,17 +155,15 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // in principle replace the F->data and no need for the obsIndex vector.
    // I'm leaving it for a moment to see in debugging if obsIndex is indeed the same as F->data,
    // in the sample code it is already removed.
-   builObsIndex(obsIndex,F,kernelList[0]);
+   builObsIndex(obsIndex,F,K);
 
    // [ToDo] create the variance object - may need to move out as in ranfi when allowing for
    // different variance structures. But this is the variance structure for the alpha coefficients,
    // and there is no interface yet to allow different structures here...
-   varmodel = new diagVarStr(modeldescr, this->regcoeff, kernelList[0]->weights);
+   varmodel = new diagVarStr(modeldescr, this->regcoeff, K->weights);
 }
 
 modelRanfc1::~modelRanfc1() {
-   for(size_t i=0; i< kernelList.size(); i++)
-      delete kernelList[i];
    delete regcoeff;
    delete varmodel;
 }
@@ -236,37 +234,44 @@ void modelRanfc1::prepForOutput() {
 modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
            : modelCoeff(modeldescr, rmod), regcoeff(nullptr) {
 
+   std::vector<varianceSpec> varianceList = modeldescr.allOptions.Vlist();
+
    // Not OK if this is used for only one kernel
-   if (modeldescr.varObject.size() < 2) {
+   if (varianceList.size() < 2) {
       throw(generalRbayzError("Error: calling modelRanfck with one kernel; pls report to developers"));
    }
 
    // Not OK unless all variance objects are kernels
-   for(size_t i=0; i<modeldescr.varObject.size(); i++) {
-      if (modeldescr.varObject[i]==R_NilValue) {
-         throw(generalRbayzError("Error: calling modelRanfck with non-kernels; pls report to developers"));
+   for(size_t i=0; i<varianceList.size(); i++) {
+      if (! varianceList[i].iskernel) {
+         throw(generalRbayzError("Error: running Ranfck with parameterised kernels; pls report to developers"));
       }
    }
 
    // get the factor data in a dataFactorNC object
-   Fnc = new dataFactorNC(modeldescr.variableObjects, modeldescr.variableNames, modeldescr.allOptions.Vlist());
+   Fnc = new dataFactorNC(modeldescr.variableObjects, modeldescr.variableNames, varianceList);
 
-   // set up all kernels in a list
-   for(size_t i=0; i<modeldescr.varObject.size(); i++) {
-      kernelList.push_back(new kernelMatrix(modeldescr.varObject[i], modeldescr.varName[i]));
+   // set up all kernels in a vector
+   double var_retain = get_var_retain(modeldescr, varianceList.size());
+   for(size_t i=0; i<varianceList.size(); i++) {
+      kernelList.push_back(new kernelMatrix(varianceList[i], var_retain)); 
    }
 
    // Setup alpha2eves that maps combinations of evecs in the kernels to the alpha (regcoeff) vector.
    // Note: the factors in the interaction model is put on rows, the alpha's on columns.
+   size_t merged_ncol=1;
+   for(size_t i=0; i< kernelList.size(); i++) {
+      merged_ncol *= kernelList[i]->ncol;
+   }
    alpha2evecs.initWith(kernelList.size(), merged_ncol);
    size_t prev_levs, this_levs, next_levs;
    for(size_t i=0; i< kernelList.size(); i++) {
-      this_levs = F->factorList[i]->nlevels;
+      this_levs = Fnc->factorList[i]->labels.size();
       prev_levs = 1; next_levs = 1;
       for(size_t j=0; j<i; j++)
-         prev_levs *= F->factorList[j]->nlevels;
+         prev_levs *= Fnc->factorList[j]->labels.size();
       for(size_t j=i+1; j< kernelList.size(); j++)
-         next_levs *= F->factorList[j]->nlevels;
+         next_levs *= Fnc->factorList[j]->labels.size();
       for(size_t k1=0; k1< prev_levs; k1++) {
          for(size_t k2=0; k2< this_levs; k2++) {
             for(size_t k3=0; k3< next_levs; k3++) {
@@ -280,9 +285,9 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
    // labels for the regcoeff (alpha) vector: they are combinations of the colnames of the kernel evecs.
    std::vector<std::string> temp_labels(merged_ncol);
    for(size_t col=0; col< merged_ncol; col++) {
-      std::string nm = kernelList[0]->colnames[ alpha2levels.data[0][col] ];
+      std::string nm = kernelList[0]->colnames[ alpha2evecs.data[0][col] ];
       for(size_t row=1; row< kernelList.size(); row++) {
-         nm += "." + kernelList[row]->colnames[ alpha2levels.data[row][col] ];
+         nm += "." + kernelList[row]->colnames[ alpha2evecs.data[row][col] ];
       }
       temp_labels[col] = nm;
    }
@@ -308,25 +313,22 @@ modelRanfck::~modelRanfck() {
    delete par;
 } 
 
-modelRanfck::sample() {
+void modelRanfck::sample() {
    // [ToDo] implement sampling of regressions on multiple kernels
 }
 
-modelRanfck::sampleHpars() {
+void modelRanfck::sampleHpars() {
    // [ToDo] implement sampling of hyper-parameters for multiple kernels
 }
 
-modelRanfck::restart() {
+void modelRanfck::restart() {
    // [ToDo] implement restart of hyper-parameters for multiple kernels
 }
 
-modelRanfck::fillFit() {
+void modelRanfck::fillFit() {
    // [ToDo] implement fillFit for multiple kernels
 }
 
-modelRanfck::prepForOutput() {
+void modelRanfck::prepForOutput() {
    // [ToDo] implement prepForOutput for multiple kernels
 }
-
-
-

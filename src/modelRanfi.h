@@ -18,7 +18,7 @@ class modelRanfi : public modelFactor {
 public:
 
    modelRanfi(parsedModelTerm & modeldescr, modelResp * rmod)
-      : modelFactor(modeldescr, rmod, true) {   // the true is for collapseInteractions
+      : modelFactor(modeldescr, rmod) {
    }
 
    ~modelRanfi() {                 // the varmodels get allocated in the derived classes, but

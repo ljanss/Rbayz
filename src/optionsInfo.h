@@ -64,7 +64,7 @@ public:
       keyw="";
       kernObject = R_NilValue;
    }
-   optionSpec operator[](std::string s);
+   optionSpec operator[](std::string s) const;
 };
 
 /* A struct to store a combination of model-term, option, and 'required' flag.
@@ -132,7 +132,7 @@ public:
    void constr(std::string fname, std::string optstring);
    ~optionsInfo() { }
    bool haserror=false;
-   optionSpec operator[](std::string);
+   optionSpec operator[](std::string) const;
    std::vector<varianceSpec>& Vlist() {
       return this->varstructList;
    }

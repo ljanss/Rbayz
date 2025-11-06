@@ -9,10 +9,10 @@
 #include "modelResp.h"
 #include "modelMean.h"
 #include "modelFixf.h"
-#include "model_rn_ind.h"
+#include "modelRanfi.h"
 #include "modelFreg.h"
 #include "modelRreg.h"
-#include "model_rn_cor.h"
+#include "modelRanfc.h"
 #include "modelMixt.h"
 #include "rbayzExceptions.h"
 #include "simpleMatrix.h"
@@ -86,10 +86,15 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
          }
          else if(pmt.funcName=="rn") {
             if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven") {
-               model.push_back(new model_rn_ind_iden(pmt, modelR));
+               model.push_back(new modelRanfi_iden(pmt, modelR));
             }
-            else if (pmt.varianceStruct=="1kernel" || pmt.varianceStruct=="kernels") {
-               model.push_back(new model_rn_cor_k0(pmt, modelR));
+            else if (pmt.varianceStruct=="1kernel") {
+               model.push_back(new modelRanfc1(pmt, modelR));
+            }
+            else if (pmt.varianceStruct=="kernels") {
+               if (pmt.allOptions["mergeKernels"].isgiven && pmt.allOptions["mergeKernels"].valbool)
+                    model.push_back(new modelRanfc1(pmt, modelR));
+               else model.push_back(new modelRanfck(pmt, modelR));
             }
             else {
                throw generalRbayzError("There is no class to model rn(...) with Variance structure " + pmt.allOptions["V"].valstring);

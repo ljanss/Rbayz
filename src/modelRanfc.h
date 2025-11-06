@@ -22,29 +22,35 @@
 #include "simpleMatrix.h"
 
 class modelRanfc1 : public modelFactor {
-
 public:
-
    modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod);
    ~modelRanfc1();
+   void sample();
+   void sampleHpars();
+   void restart();
+   void fillFit();
+   void prepForOutput();
    kernelMatrix* K;
    parVector *regcoeff;
    std::vector<size_t> obsIndex;
    indepVarStr* varmodel;
-
 };
 
 class modelRanfck : public modelCoeff {
-
+public:
    modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod);
    ~modelRanfck();
+   void sample();
+   void sampleHpars();
+   void restart();
+   void fillFit();
+   void prepForOutput();
    dataFactorNC* Fnc;
    std::vector<kernelMatrix*> kernelList;
    parVector* regcoeff;
    indepVarStr* varmodel;
    simpleIntMatrix alpha2evecs;  // mapping of alpha's to evec columns in each kernel
-
-}
+};
 
 
 #endif /* modelRanfc_h */

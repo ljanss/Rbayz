@@ -314,14 +314,14 @@ void optionsInfo::constr(std::string fname, std::string optstring)
 
 // Retrieving options from the optionsInfo and varianceSpec objects;
 // If requested option (string s) is not found, an optionSpec object with isgiven false is returned.
-optionSpec optionsInfo::operator[](std::string s) {
+optionSpec optionsInfo::operator[](std::string s) const {
    for(size_t opt=0; opt<optionList.size(); opt++) {
       if(optionList[opt].keyw==s) return optionList[opt];
    }
    return optionSpec(false);
 }
 
-optionSpec varianceSpec::operator[](std::string s) {
+optionSpec varianceSpec::operator[](std::string s) const {
    for(size_t opt=0; opt<varOptions.size(); opt++) {
       if(varOptions[opt].keyw==s) return varOptions[opt];
    }

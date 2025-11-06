@@ -22,13 +22,13 @@ public:
    }
 
    // constructor with an R matrix
-   labeledMatrix(Rcpp::RObject col, std::string & name);
-   void addRowColNames(Rcpp::NumericMatrix M, std::string & name);
-   void addRowColNames(Rcpp::NumericMatrix M, std::string & name, size_t useCol);
+   labeledMatrix(Rcpp::RObject col, const std::string & name);
+   void addRowColNames(Rcpp::NumericMatrix M, const std::string & name);
+   void addRowColNames(Rcpp::NumericMatrix M, const std::string & name, size_t useCol);
 
    // this is hiding the initWith methods from simpleMatrix class, and a labeledMatrix
    // can only be initialised with this one?
-   void initWith(Rcpp::NumericMatrix & M, std::string & name, size_t useCol);
+   void initWith(Rcpp::NumericMatrix & M, const std::string & name, size_t useCol);
 
    ~labeledMatrix() {
    }

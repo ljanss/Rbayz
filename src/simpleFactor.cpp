@@ -17,8 +17,8 @@
 
 // comparison function for lower_bound on pair<string,int> by first element, used in the
 // second contrusctor with levelLabels.
-bool search_key_in_pair(const pair<std::string, int> & p, const std::string & key) {
-    return p.a < key;
+bool search_key_in_pair(const std::pair<std::string, int> & p, const std::string & key) {
+    return p.first < key;
 }
 
 simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntVector()
@@ -168,7 +168,7 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std:
       Rcpp::LogicalVector missing = Rcpp::is_na(temp_fac_Rlevs);
       Rcpp::CharacterVector templabels = col.attr("levels");
       temp_fac_strings.resize(temp_fac_Rlevs.size());
-      for (size_t row = 0; row < unsigned(temp_fac_Rlevs.size(); row++) {
+      for (size_t row = 0; row < unsigned(temp_fac_Rlevs.size()); row++) {
          if (missing[row])
             temp_fac_strings[row] = "NA";
          else
