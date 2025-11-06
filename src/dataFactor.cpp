@@ -140,7 +140,7 @@ dataFactorNC::dataFactorNC(std::vector<Rcpp::RObject> variableObjects, std::vect
 {
 
    // dataFactorNC is not for a single variable (no interaction)!
-   if(variableObjects.size==1) {
+   if(variableObjects.size()==1) {
       throw generalRbayzError("Error wrong calling of dataFactorNC, pls report to developers");
    }
 
@@ -200,7 +200,7 @@ dataFactorNC::dataFactorNC(std::vector<Rcpp::RObject> variableObjects, std::vect
    initWith(Ndata, 0);
    std::vector<std::string>::iterator p;
    firstOccurence.initWith(Ndata, 0); // initialize all to 0 ('false')
-   simpleIntVector seen_levels(unique_labels.size(), 0); // helper vector to track seen levels matching the unique_labels
+   simpleIntVector seen_levels(unique_labels.size()); // to track seen levels, it is initialized to 0!
    // code the data by searching the pasted_data_labels in the unique_labels
    for(size_t i=0; i<Ndata; i++) {
       p = std::lower_bound(unique_labels.begin(), unique_labels.end(), pasted_data_labels[i]);
@@ -225,21 +225,6 @@ dataFactorNC::~dataFactorNC() {
    for(size_t i=0; i<factorList.size(); i++)
       delete factorList[i];
 }
-
-// Return the combined level label for observation 'idx', joining each factor's label with dots.
-std::string dataFactorNC::getLevelCombinationLabel(size_t idx) {
-   if (idx >= this->nelem) {
-      throw generalRbayzError("Index out of range in getLevelCombinationLabel");
-   }
-   std::string res;
-   for(size_t i=0; i< factorList.size(); i++) {
-      int code = factorList[i]->data[idx];
-      if (i==0) res = factorList[i]->labels[code];
-      else res += "." + factorList[i]->labels[code];
-   }
-   return res;
-}
-
 
 // paste_data_labels: given a vector of simpleFactor pointers, create pasted labels for all data rows;
 // The function is designed to avoid making a copy of the pasted labels vector, if it would be returned,

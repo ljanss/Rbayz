@@ -50,7 +50,7 @@ class simpleIntMatrix {
 
 public:
    // 'empty' constructor, to be used with one of the initWith() versions   
-   simpleMatrix() {   }
+   simpleIntMatrix() {   }
    // other constructors
    simpleIntMatrix(size_t nr, size_t nc);
    simpleIntMatrix(Rcpp::RObject X);

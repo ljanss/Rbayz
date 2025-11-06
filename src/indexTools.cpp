@@ -26,7 +26,7 @@ void builObsIndex(std::vector<size_t> & obsIndex, dataFactor *F, labeledMatrix *
    std::string s;
    std::vector< std::pair<std::string, size_t> >::iterator it;
    for(size_t i=0; i<F->nelem; i++) {
-      s = F->labels[F->levcode[i]];
+      s = F->labels[F->data[i]];
       if ( (it = std::lower_bound(matLabelsSorted.begin(), matLabelsSorted.end(), s, compString2Pair)) != matLabelsSorted.end()) {
          obsIndex[i]=it->second;
       }
