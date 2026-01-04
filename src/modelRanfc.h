@@ -50,6 +50,7 @@ public:
    parVector* regcoeff;
    indepVarStr* varmodel;
    simpleIntMatrix alpha2evecs;  // mapping of alpha's to evec columns in each kernel
+   simpleDblVector covarint, covarsumsq, covarresidsums; // helper vectors
 };
 
 

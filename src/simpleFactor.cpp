@@ -235,7 +235,7 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std:
    if( unmatched_levels.size() > 0 ) {
       Rbayz::Messages.push_back("There are levels in factor " + name +
          " that cannot be matched to rownames of the kernel " + kernel_name + ":");
-      size_t nshow = std::min( unmatched_levels.size(), (size_t)10 );
+      size_t nshow = std::min( unmatched_levels.size(), 10 );
       std::string s;
       for(size_t i=0; i< nshow; i++) {
          s += unmatched_levels[i] + " ";

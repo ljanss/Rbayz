@@ -266,7 +266,7 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
    alpha2evecs.initWith(kernelList.size(), merged_ncol);
    size_t prev_levs, this_levs, next_levs;
    for(size_t i=0; i< kernelList.size(); i++) {
-      this_levs = Fnc->factorList[i]->labels.size();
+      this_levs = kernelList[i]->ncol; // this looks wrong, it should not be the factor levels, but the kernel ncol
       prev_levs = 1; next_levs = 1;
       for(size_t j=0; j<i; j++)
          prev_levs *= Fnc->factorList[j]->labels.size();
@@ -276,7 +276,7 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
          for(size_t k2=0; k2< this_levs; k2++) {
             for(size_t k3=0; k3< next_levs; k3++) {
                size_t col = k1*this_levs*next_levs + k2*next_levs + k3;
-               alpha2evecs.data[i][col] = k2;
+               alpha2evecs.data[col][i] = k2;
             }
          }
       }
@@ -302,6 +302,17 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
    if(modeldescr.allOptions["alpha_est"].isgiven || modeldescr.allOptions["alpha_save"].isgiven) {
       Rbayz::parList.push_back(&regcoeff);
    }
+   if (modeldescr.allOptions["alpha_save"].isgiven) {
+      regcoeff->saveSamples=true;
+   }
+
+   // helper vectors: covarint is used to compute the interaction covariate (size of data rows),
+   // covarsums is used to store sums of covarint with size of last factor levels.
+   covarint.initWith(Fnc->nelem, 0.0l);
+   covarsumsq.initWith(Fnc->factorList[factorList.size()-1]->labels.size(), 0.0l);
+   covarresidsums.initWith(Fnc->factorList[factorList.size()-1]->labels.size(), 0.0l);
+
+   // need to setup the varmodel with the combinations of evalues from all kernels
 
 }
 
@@ -314,7 +325,68 @@ modelRanfck::~modelRanfck() {
 } 
 
 void modelRanfck::sample() {
-   // [ToDo] implement sampling of regressions on multiple kernels
+
+   for (size_t obs=0; obs < F->nelem; obs++)
+      fit.data[obs] = 0.0l;
+
+   // the main loop is over alpha (regcoeff) vector; it has step equal to the ncol of the last kernel;
+   // then there is an inner loop over this same number last kernel ncol.
+   size_t main_loop_step = kernelList[kernelList.size()-1]->ncol
+   for(size_t alphai=0; alphai < regcoeff->nelem; alphai+= main_loop_step) {
+      // 1. build the interaction covariate for this alpha except using the last kernel.
+      // Every alpha combines evecs from the different kernels, and the evecs to use
+      // are in alpha2evecs[alpha_index][kernel_index]. 
+      for(size_t i=0; i< covarint.nelem; i++)
+         covarint.data[i] = 1.0l;
+      for(size_t k=0; k< (kernelList.size()-1); k++) {
+         double* evec_col = kernelList[k]->data[ alpha2evecs.data[alphai][k] ];
+         simpleIntVector* Fk = Fnc->factorList[k];
+         for(size_t i=0; i< covarint.nelem; i++) {
+            size_t level = Fk->data[i];
+            covarint.data[i] *= evec_col[level];
+         }
+      }
+      // 2. make covarsumsq statistics grouped by levels of last factor; these ones can be reused
+      // in the innner loop over last kernel evecs and therefore outside the inner loop. The
+      // covarresidsums cannot be re-used (now) and will need to be recomputed in every inner loop.
+      for(size_t i=0; i< covarsumsq.nelem; i++) {
+         covarsumsq.data[i] = 0.0l;
+      }
+      simpleIntVector* Flast = Fnc->factorList[kernelList.size()-1];
+      double* evec_last = kernelList[kernelList.size()-1]->data[ alpha2evecs.data[alphai][kernelList.size()-1] ];
+      for(size_t i=0; i< covarint.nelem; i++) {
+         size_t level = Flast->data[i];
+         covarsumsq.data[level] += covarint.data[i] * covarint.data[i];
+      }
+      // 3. Make inside loop over evecs of last kernel, iterating from current alphai to alphai + ncol_last_kernel
+      for(size_t col=alphai; col< alphai + kernelList[kernelList.size()-1]->ncol; col++) {
+         simpleIntVector* Flast = Fnc->factorList[kernelList.size()-1];
+         double* evec_last = kernelList[kernelList.size()-1]->data[ alpha2evecs.data[col][kernelList.size()-1] ];
+         // compute covarresidsums using current covarint * resid, grouped by levels of last factor
+         for(size_t i=0; i< covarresidsums.nelem; i++) {
+            covarresidsums.data[i] = 0.0l;
+         }
+         for(size_t i=0; i< covarint.nelem; i++) {
+            size_t level = Flast->data[i];
+            covarresidsums.data[level] += covarint.data[i] * resid[i];
+         }
+         // final steps is to compute the lhs and rhs statistics summing over the last evec
+         double lhsl=0.0l, rhsl=0.0l;
+         for(size_t i=0; i< covarresidsums.nelem; i++) {
+            rhsl += evec_last[i] * covarresidsums.data[i];
+            lhsl += evec_last[i] * evec_last[i] * covarsumsq.data[i];
+         }
+      }
+      // add prior precision from varmodel - [ToDo] currently only diagVarStr is possible
+      lhsl += ((diagVarStr*)varmodel)->weights[col];
+      regcoeff->val[col] = R::rnorm( (rhsl/lhsl), sqrt(1.0/lhsl));
+      // 3. update fit and resid with updated regression - here need to add last evec to covarint
+      for(size_t i=0; i< covarint.nelem; i++) {
+         fit.data[i] += regcoeff->val[col] * covarint.data[i];
+         resid[i] -= regcoeff->val[col] * covarint.data[i];
+      }
+   }
+      
 }
 
 void modelRanfck::sampleHpars() {
