@@ -1,6 +1,7 @@
 //  simpleFactor
 //
 
+#include <algorithm>
 #include "simpleFactor.h"
 #include "nameTools.h"
 #include "rbayzExceptions.h"
@@ -15,10 +16,9 @@
    of "unmatched levels" because "NA" will not be found in levelLabels.
 */
 
-// comparison function for lower_bound on pair<string,int> by first element, used in the
-// second contrusctor with levelLabels.
-bool search_key_in_pair(const std::pair<std::string, int> & p, const std::string & key) {
-    return p.first < key;
+// comparison function for lower_bound on pair<string,int> by first element only
+bool compare_pair_by_first(const std::pair<std::string, int> & a, const std::pair<std::string, int> & b) {
+    return a.first < b.first;
 }
 
 simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntVector()
@@ -217,11 +217,16 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std:
       sorted_levels_pairs[i] = std::make_pair(levelLabels[i], i);
    }
    std::sort(sorted_levels_pairs.begin(), sorted_levels_pairs.end());
+   
+   // Initialize data vector - temp_fac_strings is the strings (and size) found in the data
+   initWith(temp_fac_strings.size(), 0);
+   
    std::vector<std::string> unmatched_levels; // to store any unmatched levels
    for(size_t i=0; i< temp_fac_strings.size(); i++) {
       std::vector< std::pair<std::string,int> >::iterator it;
-      it = std::lower_bound(sorted_levels_pairs.begin(), sorted_levels_pairs.end(),
-                            temp_fac_strings[i], search_key_in_pair);
+      // Create a temporary pair for searching
+      std::pair<std::string,int> search_pair = std::make_pair(temp_fac_strings[i], 0);
+      it = std::lower_bound(sorted_levels_pairs.begin(), sorted_levels_pairs.end(), search_pair, compare_pair_by_first);
       if( it == sorted_levels_pairs.end() || it->first != temp_fac_strings[i] ) {
          unmatched_levels.push_back( temp_fac_strings[i] );
       }
@@ -230,12 +235,11 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std:
       }
    }
 
-
    // if any unmatched levels, throw error
    if( unmatched_levels.size() > 0 ) {
       Rbayz::Messages.push_back("There are levels in factor " + name +
          " that cannot be matched to rownames of the kernel " + kernel_name + ":");
-      size_t nshow = std::min( unmatched_levels.size(), 10 );
+      size_t nshow = std::min( unmatched_levels.size(), size_t(10) );
       std::string s;
       for(size_t i=0; i< nshow; i++) {
          s += unmatched_levels[i] + " ";
@@ -248,6 +252,9 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string name, std::vector<std:
       throw generalRbayzError("Error matching kernel to factor levels - see messages output");
    }
 
+   // if all OK, labels of the factor are the same (and in same order) as the supplied levelLabels
+   // - but it will be normal that some levels have not observations in the data.
+   labels = levelLabels;
 
 }
 

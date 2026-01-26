@@ -95,8 +95,8 @@ void dataFactor::run_constructor(std::vector<Rcpp::RObject> variableObjects,
       initWith(factorList[0]->nelem, 0);
       for(size_t i=0; i<nelem; i++)
          data[i] = factorList[0]->data[i];
-      labels = factorList[0]->labels;  // instead of copying, it could also 'move' contents ...?
-      name = factorList[0]->name;
+      labels = std::move(factorList[0]->labels);
+      name = std::move(factorList[0]->name);
    }
    else { // multiple factors to collapse: recode interaction levels by pasting labels together.
       std::vector<std::string> pasted_data_labels;

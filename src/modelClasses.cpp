@@ -223,12 +223,14 @@ void modelRanfc1::prepForOutput() {
 
 // ------------------------- modelRanfck ----------------------------
 
-/* Ranfck is the class that handles multiple kernels, and only kernels (no US or other included).
-   Cases with a single kernel (including 'merged' kernels) should have been sent
-   by rbayz main to the Ranfc1 class.
+/* Ranfck is the class that handles multiple kernels, and only kernels (no US or other included),
+   without merging them into one kernel.
+   Cases with a single kernel and 'merged' kernels (then treated as single kernel) should have been 
+   sent by rbayz main to the Ranfc1 class.
    With not merging kernels, set-up is different from Ranfc1:
    - does not derive from modelFator, needs to set up factor data, par vector, helping vectors, itself.
    - ranfc1 will produce random effects for all rows in the kernel, here only for the factor levels in the data.
+   OBS! Not finished yet ...
 */
 
 modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
@@ -309,9 +311,8 @@ modelRanfck::modelRanfck(parsedModelTerm & modeldescr, modelResp * rmod)
    // helper vectors: covarint is used to compute the interaction covariate (size of data rows),
    // covarsums is used to store sums of covarint with size of last factor levels.
    covarint.initWith(Fnc->nelem, 0.0l);
-   covarsumsq.initWith(Fnc->factorList[factorList.size()-1]->labels.size(), 0.0l);
-   covarresidsums.initWith(Fnc->factorList[factorList.size()-1]->labels.size(), 0.0l);
-
+   covarsumsq.initWith(Fnc->factorList[Fnc->factorList.size()-1]->labels.size(), 0.0l);
+   covarresidsums.initWith(Fnc->factorList[Fnc->factorList.size()-1]->labels.size(), 0.0l);
    // need to setup the varmodel with the combinations of evalues from all kernels
 
 }
@@ -326,12 +327,13 @@ modelRanfck::~modelRanfck() {
 
 void modelRanfck::sample() {
 
-   for (size_t obs=0; obs < F->nelem; obs++)
+   for (size_t obs=0; obs < Fnc->factorList[0]->nelem; obs++)
       fit.data[obs] = 0.0l;
 
    // the main loop is over alpha (regcoeff) vector; it has step equal to the ncol of the last kernel;
    // then there is an inner loop over this same number last kernel ncol.
-   size_t main_loop_step = kernelList[kernelList.size()-1]->ncol
+   /*
+   size_t main_loop_step = kernelList[kernelList.size()-1]->ncol;
    for(size_t alphai=0; alphai < regcoeff->nelem; alphai+= main_loop_step) {
       // 1. build the interaction covariate for this alpha except using the last kernel.
       // Every alpha combines evecs from the different kernels, and the evecs to use
@@ -386,7 +388,7 @@ void modelRanfck::sample() {
          resid[i] -= regcoeff->val[col] * covarint.data[i];
       }
    }
-      
+   */ 
 }
 
 void modelRanfck::sampleHpars() {
