@@ -45,12 +45,10 @@ size_t get_maxmem(const parsedModelTerm & modeldescr) {
 
 /* For the Ranfc1 version, interactions and kernels should be recoded / merged so code can work
    as if handling one factor and one kernel (including the case if there was really only one
-   factor with one kernel). If it originates from a model-term with interaction and multiple kernels,
-   it should have the 'mergeKernels' options.
+   factor with one kernel). modelFactor is doing this merging for the factor data (ranfck without merging
+   does not derive from modelFactor!). If there were interaction and multiple kernels in the model, 
+   it should have the 'mergeKernels' options to come here in ranfc1.
 */
-// rn_cor_k0 runs models with 1 kernel or multiple kernels.
-// With "mergedKernel", multiple kernels are merged into one and the code runs on one kernel,
-// otherwise it will apply the 'on the fly' construction of the kernel kronecker products. 
 modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       : modelFactor(modeldescr, rmod, modeldescr.allOptions.Vlist()), 
         regcoeff(nullptr), varmodel(nullptr)
@@ -71,11 +69,12 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // Kernels should be merged, if there were multiple kernels. This should have been sorted in 
    // rbayz main when building the model term objects.
    // Note: the default is not merging, so merging can only be specified by the user, it must be given and true.
-   if (varianceList.size() > 1) {
-      if (!(modeldescr.allOptions["mergeKernels"].isgiven && modeldescr.allOptions["mergeKernels"].valbool)) {
-         throw generalRbayzError("Error: running Ranfc1 without merging kernels; pls report to developers");
-      }
-   }
+   // NOTE: not merging is not yet ready, for now removing this check because all will be merged.
+//   if (varianceList.size() > 1) {
+//      if (!(modeldescr.allOptions["mergeKernels"].isgiven && modeldescr.allOptions["mergeKernels"].valbool)) {
+//         throw generalRbayzError("Error: running Ranfc1 without merging kernels; pls report to developers");
+//      }
+//   }
 
    // Check model term vdimp option; this is used to reset the default dimp=90 to select evecs in each kernel.
    // Note: I was consdidering to also allow a vdim, but that's not yet implemented, and the current kernelMatrix

@@ -92,9 +92,13 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                model.push_back(new modelRanfc1(pmt, modelR));
             }
             else if (pmt.varianceStruct=="kernels") {
-               if (pmt.allOptions["mergeKernels"].isgiven && pmt.allOptions["mergeKernels"].valbool)
-                    model.push_back(new modelRanfc1(pmt, modelR));
-               else model.push_back(new modelRanfck(pmt, modelR));
+               // Here default should become not merging kernels, unless user specified merging.
+               // However, the code for not merging is not yet ready, so for now force merging.
+               // [ToDo] finish the code for not merging kernels in modelRanfck.
+//               if (pmt.allOptions["mergeKernels"].isgiven && pmt.allOptions["mergeKernels"].valbool)
+                  model.push_back(new modelRanfc1(pmt, modelR));
+//               else 
+//                  model.push_back(new modelRanfck(pmt, modelR));
             }
             else {
                throw generalRbayzError("There is no class to model rn(...) with Variance structure " + pmt.allOptions["V"].valstring);
