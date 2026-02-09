@@ -19,7 +19,8 @@
 #'
 ranef.bayz <- function(object, ...){
   random_model_terms <-
-    grepl("rr|rn", object$Parameters$ModelTerm)
+    grepl("rr|rn", object$Parameters$ModelTerm) &
+    (object$Parameters$Variance == "-")
   random_parameters <- object$Parameters$Param[random_model_terms]
   estim(object, param = random_parameters, splitlabels = FALSE,
         unlist = TRUE)
