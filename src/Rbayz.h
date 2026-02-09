@@ -17,7 +17,8 @@ namespace Rbayz {
    extern std::vector<parVector**> parList;
    extern std::vector<std::string> Messages;
    extern bool needStop;
-   extern Rcpp::DataFrame mainData; 
+   extern Rcpp::DataFrame mainData;
+   extern std::string outputDir;
 }
 
 #endif /* Rbayz_h */

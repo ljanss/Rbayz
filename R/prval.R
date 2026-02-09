@@ -11,7 +11,7 @@
 #' with all other effects remaining random.
 #' The reported pr-value is based on a z-test.
 #' Note that the model-term for which pr-values are to be computed should have
-#' set a 'save' or 'prvalue' option.
+#' set a 'save' or 'prval' option.
 #'
 #' @param object        A bayz model output
 #' @param param         Parameter name for which to extract r-values (if in

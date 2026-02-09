@@ -29,6 +29,7 @@ std::vector<parVector**> Rbayz::parList;
 std::vector<std::string> Rbayz::Messages;
 bool Rbayz::needStop=false;
 Rcpp::DataFrame Rbayz::mainData;
+std::string Rbayz::outputDir="";
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
@@ -45,6 +46,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::Messages.clear();
    Rbayz::needStop=false;
    Rbayz::mainData=inputData;
+   Rcpp::Function getwd("getwd");
+   Rbayz::outputDir = getwd()[0];
 
    // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
@@ -53,7 +56,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    modelResp* modelR = 0;
    std::vector<modelBase *> model;
 
-   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.11(.00)\n";
+   if (verbose > 0) Rcpp::Rcout << "R/bayz 0.12.00\n";
 
    try {     // normal execution builds a return list at the end of try{}; in case of
              // errors catch() builds a return list with the messages vector defined above.
@@ -380,7 +383,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
             rcpp_postSDs[row] = sqrt( (*(Rbayz::parList[i]))->postVar[row] );
          }
          Rcpp::DataFrame thispar_estimates = Rcpp::DataFrame::create
-              (Rcpp::Named("Level")=rcpp_labels, Rcpp::Named("PostMean")=rcpp_postmeans,
+              (Rcpp::Named("Label")=rcpp_labels, Rcpp::Named("PostMean")=rcpp_postmeans,
               Rcpp::Named("PostSD")=rcpp_postSDs);
          estimates.push_back(thispar_estimates,(*(Rbayz::parList[i]))->Name);
       }
@@ -433,6 +436,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       result.push_back(estimates,"Estimates");
       result.push_back(residuals,"Residuals");
       result.push_back(chain,"Chain");
+      result.push_back(Rbayz::outputDir,"wd");
       lastDone="Filling return list";
       if (verbose>1) Rcpp::Rcout << "Ready filling return list\n";
 
