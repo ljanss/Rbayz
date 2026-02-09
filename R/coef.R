@@ -1,28 +1,49 @@
-#' Extract posterior means and SDs for all or a selection of coefficients
+#' Extract posterior means and SDs for a selection of model parameters from a bayz model output
 #'
-#' Extract from the Bayz output all or a selection of coefficients (posterior mean and SD), i.e. estimates from the
-#' fx(), rg() and rn() terms.
-#'
+#' Rbayz::coef() extracts coefficients (posterior mean and SD of fixed or random effects) from the Bayz output for one or more model-terms.
+#' Common use is to extract estimates from a single model-term, for example using param="year:location" to retrieve the estimates for a
+#' modelled year:location interaction, but param can also take a vector of strings to combine estimates from several model-terms in one output.
+#' To extract all coefficients, use fixef() and ranef() functions to retrieve all fixed and random effects, respectively.
+#' For interactions, and when retrieving estimates from a single model-term, 
+#' the labels of the coefficients are by default split in multiple columns; this can be toggled off setting splitLabels=FALSE.
+#' Note that coef() with a single model-term is nearly equivalent to directly accessing $Estimates$`model-term` from the output, but with the default feature
+#' to splits labels from interaction terms. For multiple model-terms, coef() formats all estimates in a single data.table, while it is stored in 
+#' separate data.tables in the output $Estimates. 
+#' 
 #' @param object        A bayz model output
-#' @param which         A vector TRUE/FALSE to indicate which model coefficients to extract (should match the rows
-#'                      in the $Parameters table in a bayz output object). It can be omitted to extract all coefficients.
-#' @param splitLabels   Whether labels that contain % (in interactions) such as a%b should be split
-#'                      in multiple columns (default TRUE). 
+#' @param param         A string, or vector of strings, to indicate for which parameter(s) estimates should be extracted.
+#' @param splitLabels   Whether labels in interaction terms that are pasted together should be split
+#'                      in multiple columns. This is default TRUE when retrieving estimates for a single parameter, but cannot be done
+#'                      when retrieving estimates from multiple sets of parameters.
 #' @param ...           Additional parameters.
 #'
-#' @return a list with one member (a data frame) for each coefficient
+#' @return A data.table object with labels or split labels, posterior mean and SD, and for multiple model-terms a column ModelTerm.
 #' @import stats
 #' @export
-coef.bayz <- function(object, which=NULL, splitLabels=TRUE, ...){
-    par = object$Parameters
-    est = object$Estimates
-    if(is.null(which)) {
-       which = ( par$ModelTerm=="fx" | par$ModelTerm=="rg" | par$ModelTerm=="rn" | par$ModelTerm=="rr" )
+#'
+coef.bayz <- function(bayz_output, param=NULL, splitLabels=TRUE, ...){
+    par = bayz_output$Parameters
+    est = bayz_output$Estimates
+    if(is.null(param)) {
+        stop("param= must be specified. To retrieve all fixed or random effects use fixef() and ranef().")
+    }
+    if(length(param)==1) {
+        search_term = param
     }
     else {
-       if(length(which) != nrow(par)) stop("In coef.R which= is not of right length")
-       # can also check that which vector is proper TRUE/FALSE
+        search_term = param[1]
     }
+    if( !(search_term %in% names(est))) {
+        stop(paste0("Parameter '",search_term,"' not found in bayz output. Check the Param column in the output$Parameters for available parameter names."))
+    }
+    return_object = est[[search_term]]
+    if(length(param)>1) {
+        for(i in 2:length(param)) {
+            search_term = param[i]
+            if( !(search_term %in% names(est))) { 
+                stop(paste0("Parameter '",search_term,"' not found in bayz output. Check the Param column in the output$Parameters for available parameter names."))
+            }
+            return_object = rbind(return_object, est[[search_term]])
     par = par[which,]
     new_object = list()
     for(i in 1:nrow(par)) {

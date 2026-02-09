@@ -5,10 +5,11 @@
 #' Variation (MCCV%) using functions from the coda package. Note that the MCCV% can remain high when the parameter's
 #' posterior mean is close to zero and the posterior mean is therefore also reported to help interpret the MCCV%.
 #' Parameter 'burnin' can be used to increase the burnin setting from the orginal chain and discard additional samples
-#' from the start of the chain. Setting burnin here lower than the original chain burnin has no effect. 
+#' from the start of the chain.  
 #'
 #' @param object    bayz output object
-#' @param burnin    (Updated) burn-in (warm-up) to discard additional samples form the start of the chain
+#' @param burnin    Discard additional samples with cycle number less or equal to this (updated) burnin setting.
+#'                  Setting burnin here lower than the original chain burnin has no effect.
 #' @param ...       additional parameters
 #'
 #' @return bayzconv object; if bayz finished without errors, a list with a convergence table and convergence status,
