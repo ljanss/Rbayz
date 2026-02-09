@@ -18,7 +18,7 @@
 #'   returns a list of data frames with estimates for the requested parameters.
 #' For the first and third usage, adding unlist=TRUE will reformat the default
 #' list output into a single data frame.
-#' For the second usage, adding splitLabels=TRUE will split labels of
+#' For the second usage, adding splitlabels=TRUE will split labels of
 #' interaction terms in multiple columns, which can be easier
 #' to read and match with the original data. The second and third usage has
 #' better error handling because estim() checks exsistence of the requested
@@ -31,8 +31,9 @@
 #' parameter list, one for the random effects themselves
 #' and one for the variance (or other) hyper-parameters. If in doubt about
 #' parameter names, check the $Parameters data frame in the output. 
-#' Apart from estim(), Rbayz also provides fixef() and ranef() to retrieve all
-#' fixed and random effects, respectively, and
+#' Apart from estim(), Rbayz also provides fixef() and ranef() to retrieve
+#' fixed and random effects, respectively, coef() to retrieve the combined
+#' fixed and random effects, and
 #' var() to retrieve all variance (and other) hyper-parameters.
 #'
 #' @param object        A bayz model output
@@ -51,11 +52,11 @@
 #'                      (default) multiple parameters are returned in a list of
 #'                      data frames.
 #' @param ...           Additional parameters.
-#'
 #' @return Dependent on usage, a single data frame with parameter estimates,
 #'         or a list of data frames with estimates
 #'         for multiple parameters.
 #' @export
+#' 
 estim <- function(object, param = NULL, splitlabels = FALSE,
                   unlist = FALSE, ...) {
   # First prepare estim_return as a list with the parameter(s) to be returned.
