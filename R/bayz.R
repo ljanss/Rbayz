@@ -68,17 +68,28 @@
 #' 
 #' Full details are available in the github site ljanss.github.io/Rbayz.
 #'
-#' @param model   An R formula describing the model to be fitted using an extended R formula syntax (see details).
-#' @param data    Data frame with variables (responses, explanatory variables) to build the model.
-#' @param VE      Model for the residual variance as formula or string (see details).
-#' @param chain   Vector c(length, burn-in, skip) with total chain length to run, burn-in, and skip-interval
-#'                for saving samples and collecting posterior statistics.
-#' @param method  String to indicate analysis method: "Bayes" (full Bayesian, default), "BLUPMC"
-#'                (BLUE/BLUP solutions with Monte Carlo to get SD/SE).
-#' @param init    An object of class "bayz", output from a previous bayz run, to supply initialisation
-#'                values to start a new chain. 
-#' @param verbose Integer to regulate printing to R console: 0 (quiet), 1 (some), >=2 (more), with
-#'                verbose=1 as default.
+#' @param model   An R formula describing the model to be fitted using an
+#'                extended R formula syntax (see details).
+#' @param data    Data frame with variables (responses, explanatory variables)
+#'                to build the model.
+#' @param VE      Model for the residual variance as formula or string (see
+#'                details).
+#' @param chain   Vector c(length, burn-in, skip) with total chain length to
+#'                run, burn-in, and skip-interval for saving samples and
+#'                collecting posterior statistics.
+#' @param method  String to indicate analysis method: "Bayes" (full Bayesian,
+#'                default) or "BLUPMC" (BLUE/BLUP solutions with Monte Carlo
+#'                to get SD/SE).
+#' @param verbose Integer to regulate printing to R console: 0 (quiet), 1
+#'                (some), >=2 (more), verbose=1 is default.
+#' @param workingdir  Optional string with path to a directory where bayz
+#'                can write output files (currently only used when the 'save'
+#'                flag is added on a model term to save samples). When omitted
+#'                the R working directory as obtained with getwd() will be
+#'                used.
+#' @param init    An object of class "bayz", which is output from a previous
+#'                bayz run, to supply initialisation values to start a new
+#'                chain. 
 #'
 #' @return A list of class "bayz" containing results from the fitted model. Several methods
 #'         are available to summarize, extract, plot or compute contrasts, predictions, etc. on the output.
@@ -88,30 +99,31 @@
 #'
 #' @useDynLib Rbayz, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
-bayz <- function(model, VE="", data=NULL, chain=c(0,0,0), method="", verbose=1, init=NULL){
-	if(!inherits(model,"formula")) {
-		stop("The first argument is not a valid formula")
-	}
-    if( !(class(VE)=="character" | class(VE)=="formula") ) {
-        stop("VE must be given as a string or formula")
-    }
-    if( class(method)!="character" ) {
-        stop("method must be given as a string")
-    }
-    if (is.null(data)){
-        stop("The data= argument is missing")
-    }
-    if(class(VE)=="formula") {
-        VE=deparse(VE)
-    }
-    if(method=="") {
-        method="Bayes"
-    }
-    chain <- as.integer(chain)
-    result <- rbayz_cpp(model, VE, data, chain, method, verbose, init)
-    class(result) <- "bayz"
-    #result[['modelname']] <- fct()
-    #result[['modelfunction']] <- deparse(substitute(fct))
-    #result[['terms']] <- terms(model)
-    return(result)
+bayz <- function(model, VE = "", data = NULL, chain = c(0,0,0), method = "",
+                 verbose = 1, workingdir = NULL, init = NULL) {
+  if (!inherits(model, "formula")) {
+	stop("The first argument is not a valid formula")
+  }
+  if (!(class(VE) == "character" | class(VE) == "formula")) {
+    stop("VE must be given as a string or formula")
+  }
+  if (class(method) != "character") {
+    stop("method must be given as a string")
+  }
+  if (is.null(data)) {
+    stop("The data= argument is missing")
+  }
+  if (class(VE) == "formula") {
+    VE <- deparse(VE)
+  }
+  if (method == "") {
+    method <- "Bayes"
+  }
+  if (is.null(workingdir)) {
+    workingdir <- getwd()
+  }
+  chain <- as.integer(chain)
+  result <- rbayz_cpp(model, VE, data, chain, method, verbose, init)
+  class(result) <- "bayz"
+  return(result)
 }

@@ -34,6 +34,7 @@ std::string Rbayz::outputDir="";
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
                      Rcpp::IntegerVector chain, SEXP methodArg, int verbose,
+                     SEXP workingDirArg,
                      Rcpp::Nullable<Rcpp::List> initVals_ = R_NilValue
                      )
 //                   note VE and method are strings, it will be converted below
@@ -47,7 +48,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::needStop=false;
    Rbayz::mainData=inputData;
    Rcpp::Function getwd("getwd");
-   Rbayz::outputDir = getwd()[0];
+   Rbayz::workingDir = Rcpp::as<std::string>(workingDirArg);
 
    // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
