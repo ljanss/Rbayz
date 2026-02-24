@@ -16,7 +16,7 @@
 #'         otherwise a list with error messages.
 #' @import stats coda
 #' @export
-summary.bayz <- function(object, burnin=0, ...){
+summary.bayz <- function(object, burnIn = 0, ...){
 
     return_object <- list()
     class(return_object) <- "bayzconv"

@@ -41,7 +41,7 @@
 #'                      retrieve estimates, or a vector of strings with the
 #'                      names of multiple parameters. This argument can be
 #'                      omitted to retrieve all parameter estimates.
-#' @param splitlabels   Whether labels in interactions should be split in
+#' @param splitLabels   Whether labels in interactions should be split in
 #'                      multiple columns (default FALSE). Splitting labels is
 #'                      only possible when retrieving estimates for a single
 #'                      parameter.
@@ -57,7 +57,7 @@
 #'         for multiple parameters.
 #' @export
 #' 
-estim <- function(object, param = NULL, splitlabels = FALSE,
+estim <- function(object, param = NULL, splitLabels = FALSE,
                   unlist = FALSE, ...) {
   # First prepare estim_return as a list with the parameter(s) to be returned.
   # If no param given, this is simply the whole $Estimates list.
@@ -87,7 +87,7 @@ estim <- function(object, param = NULL, splitlabels = FALSE,
   # If multiple, it can optionally 'unlist' to a single data frame.
   if (length(estim_return) == 1) {
     estim_return <- estim_return[[1]]
-    if (splitlabels) {
+    if (splitLabels) {
       clmnames <- unlist(strsplit(search_term, ".", fixed = TRUE))
       split_labels_list <- strsplit(estim_return$Level, ".", fixed = TRUE)
       split_labels_lengths <- sapply(split_labels_list, length)
@@ -112,6 +112,7 @@ estim <- function(object, param = NULL, splitlabels = FALSE,
         estim_return_dframe <- rbind(estim_return_dframe, 
           cbind(Parameter=names(estim_return)[i], estim_return[[i]]))
       }
+      estim_return_dframe$Parameter = as.factor(estim_return_dframe$Parameter)
       return(estim_return_dframe)
     } else {
       return(estim_return)

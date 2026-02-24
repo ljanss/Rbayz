@@ -1,19 +1,18 @@
 #' Bayesian mixed models, shrinkage and interaction kernel regression
 #'
-#' The bayz function fits various mixed-linear, Bayesian shrinkage, (sparse) kernel-regression, (kernel)
-#' interaction and multi-trait models with complex covariance structures using an extended R-formula syntax.
-#'
-#' The model formula in bayz has an extended syntax with all
-#' explanatory (right-hand-side) terms wrapped by a function to specify how to fit
-#' the variables in the model, for example Yield ~ fx(Year) + rn(Variety)
-#' to fit Yield with Year as a fixed class effect and Variety as a random class effect. 
-#' The syntax allows
-#' to add options on each model term, such as variance-structures, 
-#' fitting, prior, and output options. Common applications are to specify a
-#' relationship / similarity "kernel" as correlation-structure for random effects using
-#' rn(Variety, V=myGmat), extensions of this with interactions and a variance-structure
-#' specified as a kronecker product, and the fitting of regularized regression models on (multiple)
-#' large sets of covariates with different shrinkage options.
+#' The bayz() function fits various mixed-linear, Bayesian shrinkage, (sparse)
+#' kernel-regression, (kernel) interaction and multi-trait models with complex
+#' covariance structures using an extended R-formula syntax.
+#' The basic R formula response ~ terms is extended by wrapping
+#' every 'term' by a function that controls the type of variable(s) fitted, how
+#' they are fitted, and to add variance structures and options for each term.
+#' As an example, Yield ~ fx(Year:Site) + rn(Variety:Year:Site, V=Kv*Ky*Ks)
+#' specifies a fixed Year:site interaction, and a random Variety:Year:Site
+#' interaction with variance structure as a 3-D kronecker kernel interaction.
+#' Kernels and kernel-interactions are fitted using reduced rank ('factor
+#' analytic') approaches allowing to efficiently handle multi-dimensional
+#' tensors, with options to control sparsity.
+#' 
 #' The model-terms currently available are fx() (fixed effects of one or multiple interacting
 #' class variables), rn() (random effects of one or multiple interacting class variables with
 #' various options to model the covariance structure), rr() (random/ridge regression on a table
@@ -82,7 +81,7 @@
 #'                to get SD/SE).
 #' @param verbose Integer to regulate printing to R console: 0 (quiet), 1
 #'                (some), >=2 (more), verbose=1 is default.
-#' @param workingdir  Optional string with path to a directory where bayz
+#' @param workdir  Optional string with path to a directory where bayz
 #'                can write output files (currently only used when the 'save'
 #'                flag is added on a model term to save samples). When omitted
 #'                the R working directory as obtained with getwd() will be
@@ -100,9 +99,9 @@
 #' @useDynLib Rbayz, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 bayz <- function(model, VE = "", data = NULL, chain = c(0,0,0), method = "",
-                 verbose = 1, workingdir = NULL, init = NULL) {
+                 verbose = 1, workdir = NULL, init = NULL) {
   if (!inherits(model, "formula")) {
-	stop("The first argument is not a valid formula")
+    stop("The first argument is not a valid formula")
   }
   if (!(class(VE) == "character" | class(VE) == "formula")) {
     stop("VE must be given as a string or formula")
@@ -119,11 +118,20 @@ bayz <- function(model, VE = "", data = NULL, chain = c(0,0,0), method = "",
   if (method == "") {
     method <- "Bayes"
   }
-  if (is.null(workingdir)) {
-    workingdir <- getwd()
+  if (!is.null(workdir)) {
+    currdir <- getwd()
+    on.exit(setwd(currdir))
+    tryCatch(
+      setwd(workdir),
+      error = function(err) {
+        stop("Failed to set working directory to '", workdir, "': ",
+             err$message)
+      }
+    )
   }
   chain <- as.integer(chain)
   result <- rbayz_cpp(model, VE, data, chain, method, verbose, init)
+  result[["workdir"]] <- getwd()
   class(result) <- "bayz"
   return(result)
 }

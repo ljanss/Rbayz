@@ -8,12 +8,10 @@
 #' return a single data frame.
 #' To extract estimates for one, or a subset, of the random effects, use the
 #' more generic estim(). Use fixef() to extract estimates for all fixed
-#' effects. ranef.bayz() is an implementation of the generic R ranef()
-#' function.
+#' effects. 
 #'
-#' @param object        A bayz model output
-#' @param ...           Additional parameters passed onto the Model function.
-#' @return a data frame with estimates for all random effects
+#' @param object A bayz model output.
+#' @return A data frame with estimates for all random effects.
 #' @importFrom nlme ranef
 #' @export
 #'
@@ -22,6 +20,6 @@ ranef.bayz <- function(object, ...){
     grepl("rr|rn", object$Parameters$ModelTerm) &
     (object$Parameters$Variance == "-")
   random_parameters <- object$Parameters$Param[random_model_terms]
-  estim(object, param = random_parameters, splitlabels = FALSE,
-        unlist = TRUE)
+  Rbayz::estim(object, param = random_parameters, splitlabels = FALSE,
+               unlist = TRUE)
 }
