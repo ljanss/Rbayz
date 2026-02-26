@@ -5,73 +5,33 @@
 #' covariance structures using an extended R-formula syntax.
 #' The basic R formula response ~ terms is extended by wrapping
 #' every 'term' by a function that controls the type of variable(s) fitted, how
-#' they are fitted, and to add variance structures and options for each term.
-#' As an example, Yield ~ fx(Year:Site) + rn(Variety:Year:Site, V=Kv*Ky*Ks)
+#' they are fitted, to add variance structures or shrinkage distribtions,
+#' and options. As an example:
+#' Yield ~ fx(Year:Site) + rn(Variety:Year:Site, V=Kv*Ky*Ks)
 #' specifies a fixed Year:site interaction, and a random Variety:Year:Site
 #' interaction with variance structure as a 3-D kronecker kernel interaction.
 #' Kernels and kernel-interactions are fitted using reduced rank ('factor
 #' analytic') approaches allowing to efficiently handle multi-dimensional
-#' tensors, with options to control sparsity.
-#' 
-#' The model-terms currently available are fx() (fixed effects of one or multiple interacting
-#' class variables), rn() (random effects of one or multiple interacting class variables with
-#' various options to model the covariance structure), rr() (random/ridge regression on a table
-#' of covariates with options for homogeneous or heterogeneous shrinkage), rg() (fixed regressions
-#' and nested fixed regressions) and a model can specify any number of such model terms.
-#' 
-#' Model-terms for class variables fx() and rn() allow to specify interactions of variables
-#' with a colon, such as fx(Year:Location). This has the same interpretation as in other R models;
-#' main effects, if desired, need to be explicitly added in the model.
-#' Nested regressions are specified in the common R syntax
-#' rg(TempSum|Year:Location) to specify regressions on TempSum within each Year-Location.
-#' For random effects, interacting variables can have
-#' interaction-variance structures written as a multiplication of similarity matrices / kernels
-#' (interpreted as kronecker product)
-#' like rn(Variety:Location, V=KG*KE), or can involve an estimated covariance structure specified as VCOV,
-#' for instance to specify a multitrait model with rn(Variety:Trait, V=KG*VCOV).
-#' Kernels and covariance structures can be made sparser and
-#' of reduced rank by setting cut-offs on the eigenvectors to use, by setting an in-model
-#' Bayesian variable-selection on eigenvectors, or by estimating a large covariance structure
-#' as the kronecker product of two or more smaller matrices. Estimated VCOV covariances structures
-#' by default run a Bayesian factor-analytic model estimating a limited number of eigenvectors.
-#'
-#' The data argument supplies a data frame with response(s) and explanatory variables to build the model
-#' in the usual R-way, and bayz will also search the R environment if variables are not found in the supplied data.
-#' The data-frame typically does not include tables with large sets of predictors, and covariance structures / kernels to be
-#' used in variance models, and bayz will also search these objects in the R environment. 
-#' These additional tables of data and matrices should have
-#' row-names to match a variable (sample id) in the data, and bayz will link on sample ids, allowing
-#' for sample ids in the data to be in different order, repeated, or missing.
-#'
-#' The VE argument sets the model for the error (residual) variance structure, which can either be a string
-#' with one or a combination of pre-defined structures such as WGHT (weighted), GRP (to fit heterogenous
-#' variances by some grouping factor), VCOV (general var-covariance structures), or by a linear model.
-#' The latter is interpreted as fitting a log-linear model for the variances and allows to parsimoniously
-#' include multiple explanatory variables in the residual variance modelling.
-#' VE can be omitted, which will fit a default iid homogeneous variance.
-#'
-#' For method="Bayes" (default), bayz runs the common Bayesian estimation of all model parameters by using a
-#' Monte Carlo Markov chain. For method="BLUPMC", updating of variance parameters is omitted, and variance
-#' estimates should be supplied by using the init argument with the output of a previous run with estimated
-#' variances. 
-#'
-#' The output of the bayz function is a list of class "bayz" that includes several data-frames and lists.
-#' For instance, model estimtes are in <output>$Estimates with members named after model parameters. Overviews
-#' of the output can be obtained using summary(), which also includes convergence diagnostics and Highest Posterior
-#' Density (HPD) intervals on selected parameters. Parameter estimates can also be extracted from the output
-#' with methods coef() (all fixed and random effect estimates), fixef()
-#' and ranef() (fixed, and random effects, respectively), vcomp() (all variance estimates). Additionally,
-#' vcomp() can compute "PVEs" (proportions of variance explained), including HPD intervals, when supplied with information 
-#' on how to weigh each variance parameter in the total explained variance. Rbayz also includes predict(),
-#' contrast() and plot() methods.
-#' 
+#' tensors, with options to control sparsity. Kernels can be replaced by
+#' estimated (reduced rank) covariance structures,
+#' allowing combinations of multi-trait, multi-environment, spatial,
+#' temporal and other models. An rr() model term allows to fit random/ridge
+#' regression on large sets of features, with options for homogeneous or
+#' heterogeneous shrinkage and significances of individual features as
+#' $p_r$ values (p-values from random effects). The Rbayz package supports many
+#' common R model summary and extraction methods, such as summary(), coef(),
+#' fixef(), ranef(), estim() (retrieval of any set(s) of model paramteres),
+#' vcomp() (variance and hyper paramters and functions thereof), predict(),
+#' conv() and plot(). The latter two use the R Coda package to diagnose MCMC
+#' convergence and plot posterior distributions.
 #' Full details are available in the github site ljanss.github.io/Rbayz.
 #'
 #' @param model   An R formula describing the model to be fitted using an
 #'                extended R formula syntax (see details).
 #' @param data    Data frame with variables (responses, explanatory variables)
-#'                to build the model.
-#' @param VE      Model for the residual variance as formula or string (see
+#'                to build the model. Kernel matrices and matrices with large
+#'                sets of features are typically not in this data frame.
+#' @param Ve      Model for the residual variance as formula or string (see
 #'                details).
 #' @param chain   Vector c(length, burn-in, skip) with total chain length to
 #'                run, burn-in, and skip-interval for saving samples and
@@ -80,7 +40,7 @@
 #'                default) or "BLUPMC" (BLUE/BLUP solutions with Monte Carlo
 #'                to get SD/SE).
 #' @param verbose Integer to regulate printing to R console: 0 (quiet), 1
-#'                (some), >=2 (more), verbose=1 is default.
+#'                (some), >=2 (more). Default verbose=1.
 #' @param workdir  Optional string with path to a directory where bayz
 #'                can write output files (currently only used when the 'save'
 #'                flag is added on a model term to save samples). When omitted
@@ -88,23 +48,24 @@
 #'                used.
 #' @param init    An object of class "bayz", which is output from a previous
 #'                bayz run, to supply initialisation values to start a new
-#'                chain. 
+#'                chain.
 #'
-#' @return A list of class "bayz" containing results from the fitted model. Several methods
-#'         are available to summarize, extract, plot or compute contrasts, predictions, etc. on the output.
+#' @return A list of class "bayz" containing results from the fitted model.
+#'         Several methods are available to summarize, extract, plot or compute
+#'         contrasts, predictions, etc. on the output.
 #'
 #' @import stats
 #' @export
 #'
 #' @useDynLib Rbayz, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
-bayz <- function(model, VE = "", data = NULL, chain = c(0,0,0), method = "",
+bayz <- function(model, Ve = "", data = NULL, chain = c(0,0,0), method = "",
                  verbose = 1, workdir = NULL, init = NULL) {
   if (!inherits(model, "formula")) {
     stop("The first argument is not a valid formula")
   }
-  if (!(class(VE) == "character" | class(VE) == "formula")) {
-    stop("VE must be given as a string or formula")
+  if (!(class(Ve) == "character" || class(Ve) == "formula")) {
+    stop("Ve must be given as a string or formula")
   }
   if (class(method) != "character") {
     stop("method must be given as a string")
@@ -112,8 +73,8 @@ bayz <- function(model, VE = "", data = NULL, chain = c(0,0,0), method = "",
   if (is.null(data)) {
     stop("The data= argument is missing")
   }
-  if (class(VE) == "formula") {
-    VE <- deparse(VE)
+  if (class(Ve) == "formula") {
+    Ve <- deparse(Ve)
   }
   if (method == "") {
     method <- "Bayes"
@@ -130,7 +91,7 @@ bayz <- function(model, VE = "", data = NULL, chain = c(0,0,0), method = "",
     )
   }
   chain <- as.integer(chain)
-  result <- rbayz_cpp(model, VE, data, chain, method, verbose, init)
+  result <- rbayz_cpp(model, Ve, data, chain, method, verbose, init)
   result[["workdir"]] <- getwd()
   class(result) <- "bayz"
   return(result)
