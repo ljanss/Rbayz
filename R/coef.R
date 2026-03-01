@@ -7,7 +7,7 @@
 #' The coef() function is a wrapper around estim() and 'unlists' the output to
 #' return a single data frame.
 #' Other functions to extract estimates from the bayz output are fixef(),
-#' ranef(), var(), and the generic estim().
+#' ranef(), vhest(), and the generic estim().
 #'
 #' @param object        A bayz model output
 #' @param ...           Additional parameters.
@@ -19,6 +19,6 @@ coef.bayz <- function(bayz_output, ...) {
     grepl("mn|fx|rg|rr|rn", bayz_output$Parameters$ModelTerm) &
     (bayz_output$Parameters$Variance == "-")
   coef_parameters <- bayz_output$Parameters$Param[coef_model_terms]
-  estim(bayz_output, param = coef_parameters, splitlabels = FALSE,
-        unlist = TRUE)
+  Rbayz::estim(bayz_output, param = coef_parameters, splitLabels = FALSE,
+               unlist = TRUE)
 }

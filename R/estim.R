@@ -26,15 +26,16 @@
 #' when directly accessing $Estimates in the output, one risks attempting to
 #' access non-existing parameters.
 #' Parameter names are based on the variable names in the model-term, but can
-#' have small modifications, notably colons in interactions
-#' are replaced by dots. Random effect terms will create two slots in the
+#' have small modifications: colons in interactions
+#' are replaced by dots; and multiple use of the same variable can have
+#' appended an extra digit. Random effect terms will create two slots in the
 #' parameter list, one for the random effects themselves
 #' and one for the variance (or other) hyper-parameters. If in doubt about
 #' parameter names, check the $Parameters data frame in the output. 
 #' Apart from estim(), Rbayz also provides fixef() and ranef() to retrieve
 #' fixed and random effects, respectively, coef() to retrieve the combined
 #' fixed and random effects, and
-#' var() to retrieve all variance (and other) hyper-parameters.
+#' vhest() to retrieve estimates for variance and hyper-parameters.
 #'
 #' @param object        A bayz model output
 #' @param param         A string with the name of the parameter for which to
@@ -52,9 +53,10 @@
 #'                      (default) multiple parameters are returned in a list of
 #'                      data frames.
 #' @param ...           Additional parameters.
+#' 
 #' @return Dependent on usage, a single data frame with parameter estimates,
-#'         or a list of data frames with estimates
-#'         for multiple parameters.
+#'         or a list of data frames with estimates for multiple parameters.
+#'         
 #' @export
 #' 
 estim <- function(object, param = NULL, splitLabels = FALSE,
