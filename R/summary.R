@@ -1,16 +1,27 @@
-#' Summary of traced parameters from bayz model fit
+#' Summary of model run and main model parameters from bayz model fit.
 #'
-#' Posterior summary statistics including HPD interval and convergence diagnostics of traced parameters
-#'     from a bayz model fit, returns a summarybayz object.
+#' Summary() presents an overview of the model fitted, any errors and warnings,
+#' and posterior summary statistics, including HPD intervals, for the main model
+#' parameters in a bayz output. Summary() collects the 'traced' parameters,
+#' for which samples are saved in the output, allowing to compute HPD intervals
+#' (as well as trace plots, density plots and convergence diagnostics as done by
+#' plot() and conv()). The 'traced' parameters are by default intercept,
+#' fixed effects and regressions with up to 4 levels, and variances
+#' and hyper-paramters. Tracing can be user-toggled
+#' with a 'trace' option on model terms. Computation of HPD intervals accounts
+#' for parameter boundaries, allowing variance intervals starting at zero.
+#' The conv() function computes convergence diagnostics on the same set of
+#' traced parameters.
 #'
 #' @param object    bayz output object
-#' @param HPDprob   probability for the Highest Posterior Density intervals (default 0.95)
+#' @param HPDprob   probability for the Highest Posterior Density intervals
+#'                  (default 0.95)
 #' @param ...       additional parameters
 #'
 #' @return summarybayz object
 #' @import stats coda
 #' @export
-summary.bayz <- function(object, maxLevel=10, HPDprob=0.95, ...){
+summary.bayz <- function(object, HPDprob=0.95, ...){
 
     new_object <- list()
     class(new_object) <- "summarybayz"

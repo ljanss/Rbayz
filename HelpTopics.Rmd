@@ -14,21 +14,60 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Jump to sections or pages using the links below:
 
-| bayz() arguments | Modeling options | Output use |
+| [bayz() function](#Main-function-bayz)            | Model-term features and options | Output use |
 |---|---|---|
-| [Model formula](#Summary of output) | `summary()` | Summarizes parameter estimates, convergence diagnostics, and HPD regions. |
-| [Coefficients estimates](#Coefficients estimates) | `coef()`, `fixef()`, `ranef()` | Extracts coefficient estimates from the fitted model output. |
-| [Variance components and PVEs](#Variance components and PVEs) | `vcomp()` | Extracts variance component estimates and related quantities. |
-| [Computing constrasts](#Computing constrasts) | Contrasts workflow | Computes contrasts from estimated model parameters. |
+| [Model formula](#Model-formala)                   | Interaction specifications | General summary |
+| [Residual variance (Ve)](#Coefficients estimates) | Nested regressions         | Extract estimates (estim, coef, fixef, ranef) |
+| [data frame](#Variance components and PVEs)       |                            | Extracts variances, hyper-pars, and functions (vhest) |
+| [linking kernels, features (linkid)](#Computing constrasts) |                  | Convergence diagnostics (conv) |
+| [MCMC chain]                                      | Variance specification (V) | Trace and density plots (plot)|
+| [workdir in/output]                               | Reduced rank (dim, dimp)   | Warnings and errors |
+| [initial values (init)]                           | trace and save options     | | 
+| [verbose settings]                                | linkid on rr() term        | | 
 
-
+ 
 -   [summary](#Summary of output)
 -   [coef, fixef and ranef](#Coefficients estimates)
 -   [vcomp](#Variance components and PVEs)
 -   [Computing contrasts](#Computing constrasts)
 
-# Summary of output
+# Main function bayz()
 
+The complete interface for the bayz() main modelling function is:
+
+```{verbatim}
+  bayz(modelformula, Ve, data, linkid, chain, workdir, init, verbose)
+```
+
+where
+-  modelformula is an extended R-style model formala, see xxx
+-  Ve sets the model for the residual variance, see xxx
+-  data is a data frame with variables (responses, explanatory variables) to build the model, see xxx
+-  linkid is an id in the data used to link to kernels and sets of features. 
+-  chain is a vector c(length, burn-in, skip) with total chain length to run, burn-in, and skip-interval for saving samples and computing convergence diagnostics.
+-  workdir is a directory to save the MCMC samples and intermediate files, and to run the MCMC chain in. If not specified, the current working directory is used.
+-  init is a list of initial values for the MCMC chain, see xxx
+-  verbose is an integer with settings for the amount of information printed during the MCMC run, see xxx
+
+## Model formula
+
+
+## Residual variance (Ve)
+
+## Data frame (data)
+
+## linking kernels, features (linkid)
+
+## MCMC chain settings
+
+## workdir in/output
+
+## initial values (init)
+
+## verbose settings
+
+
+# Output use
 Use of summary() on the bayz output object produces a summary of parameter estimates from the fitted model
 including convergence diagnostics and Highest Posterior Density (HPD) regions. 
 
