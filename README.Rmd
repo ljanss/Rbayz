@@ -18,8 +18,7 @@ Jump to:
 
 - [R/bayz overview and features](#R/bayz overview and features)
 - [Downloading and installing R/bayz](#Downloading and installing R/bayz)
-- [A very short tour](#A very short tour of R/bayz)
-- [Further help](#Further help)
+- [Quick tour and help](#Quick tour and help)
 
 # R/bayz overview and features
 
@@ -43,7 +42,15 @@ a Bayesian factor-analytic approach,
 is extendable to efficienctly learn covariance structures in higher order interactions such as trait x time x enviroment,
 and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.
 
-For further help check links in the text above, and see the overview of manual pages below. 
+For further help check links in the text above, and the [Quick tour and help](#Quick tour and help)
+section below that can help finding relevant
+documentation. If you'er reading this as part of the R package help, full documentation is available on
+github at [ljanss.github.io/Rbayz/](https://ljanss.github.io/Rbayz/).
+
+## R/bayz technical details
+
+R/Bayz is implemented in C++ using Rcpp and uses MCMC-based inference in Bayesian models.
+Current version: 0.12 (March 2026).
 
 # Downloading and installing R/bayz
 
@@ -93,49 +100,85 @@ library(devtools)
 devtools::install_github("ljanss/Rbayz")
 ```
 
-# Further help
+# Quick tour and help
 
-R/bayz has a single main function bayz() that accepts model formulas in an extended
+## Basic syntax and Bayesian mixed model
+
+R/bayz main function bayz() accepts model formulas in an extended
 R-formula syntax where all
-explanatory (right-hand-side) variables are wrapped by a "function-like" to specify
-how to fit it in the model. 
-This may look like Yield ~ fx(Year) + rn(Variety)
-to fit Yield with Year as a fixed factor and Variety as a random factor (fx() and rn()
-imply the variable used should be (converted to) factor).
+explanatory (right-hand-side) variables are wrapped by a term to specify
+how to fit variable(s) in the model. For instance:
+
+```{verbatim}
+fit1 <- bayz(Yield ~ fx(Year) + rn(Variety), data=example1)
+```
+
+specifies a model to fit Yield with Year as a fixed factor and Variety as a random
+factor. Wrappers fx() and rn() force data variables Year and Variety as factors. 
+
+Interactions between fators are specified using a colon, such as fx(Year:Location)
+for fixed effects of Year-Location interactions and with the same meaning as in other
+R model functions. This works likewise for random effects in rn().
+Automatic expansion with main effects is not supported, and main effects,
+if desired, should be explicitly added in the model. 
+
+More on the basic syntax for model building (including using regressions) here:
+
+## Use of model output
+
+R/bayz supports many common R methods to work on model output, such as summary(), 
+standard methods to extract fixed and random effect estimaes fixef() and ranef(), extraction
+of variance estimates with vhest() (variance and hyper parameter estimates), conv() to find
+convergence diagnostics, plot() to produce trace and density plots for MCMC diagnostics, and
+predict() which extracts predictions for missing data.
+
+More on the basic syntax for model building (including using regressions) here:
+
+## Use of kernels on random effects and on interactions
+
 For random effects, variance structures can be added with a V= option inside the
-rn(), for instance with a given relationship / similarity matrix rn(Variety,V=Gmat),
-which implies the variance-covariance structure Gmat $\sigma_g^2$.
+rn(), for instance
 
-Interactions between fators are specified using the colon, such as fx(Year:Location)
-for fixed effects of Year-Location interactions. R/bayz does
-not support automatic expansion with main effects, and main effects, if desired, should
-be explicitly added in the model. For interactions in random effects, the variance specification
-is expanded to a product of terms (interpreted as Kronecker product), written as
-rn(Variety:Environment, V=Gmat*Emat), implying the variance-covariance structure for
-the interaction effects as Gmat $\otimes$ Emat $\sigma_{ge}^2$. Using interactions
-and Kronecker products involving estimated unstructured covariance matrices allows to
-fit multi-trait models by supplying data in a "melted" form and specifying interactions
-with Trait. Interactions and the matching variance structures can be specified to any order.
-R/bayz can additionally fit large sets of predictors using the rr() (ridge or random regression)
-model function, regular fixed (nested) regressions using rg(), and random slope models using rs().
+```{verbatim}
+fit1 <- bayz(Yield ~ fx(Year) + rn(Variety, V=Gmat), data=example1)
+```
 
-R/bayz is used as many other R model functions by capturing the output object, and running methods
-on that output like summary(), plot(), various methods to extract part of the estimates, and a
-contrast and predict method. The summary() gives MCMC convergence diagnostics and Highest Posterior
-Density regions for selected "traced" parameters, while plot() produces trace plots and density plots.
+to model a variance-covariance structure Gmat $\sigma_g^2$ for Variety effects.
+Kernels should be prepared with rownames matching the levels of the variable in the data,
+but data levels may be repeated or missing (the latter implies prediction of Variety effects not
+in the data).
 
-Check the following manual pages for additional information on:
+On interactions, products of kernels can be specified, which are interpreted as Kronecker products
+(here with main and interaction effects):
 
--   An extended tour of R/bayz with examples
--   Full syntax for the bayz() function call
--   Overview of all model-function terms and their options
--   Overview of all variance-model specifications
--   Specification of residual variance structures
--   Using the output with summary() and other methods
+```{verbatim}
+fit1 <- bayz(Yield ~ fx(Environment) + rn(Variety, V=Gmat) +
+                     rn(Variety:Environment, V=Gmat*Emat), data=example1)
+```
 
-# R/bayz technical details
+This implies a variance-covariance structure for Variety-by-Environment effects
+Gmat $\otimes$ Emat $\sigma_{ge}^2$. The Emat could be a weather-based similarity matrix between environments,
+and, like other kernels, should have rownames matching the levels of (in this example) the Environment variable in the data.
 
-R/Bayz is implemented in C++ using Rcpp. 
+R/bayz always fits kernels as lower-rank embeddings ('factor analytic') and, for products of kernels, keeps
+sets of embeddings as a tensor-decomposition which allows efficient computations on large kernels and in higher dimensions,
+and allows to sparsify and re-weight kernels in each dimension.
 
-Current version: 0.12 (March 2026).
+More on working with kernels and interactions can be found here:
 
+## Estimated kernels and multi-trait / multi-response models
+
+Description under development...
+
+## Sets of features and significances for individual features
+
+R/bayz can fit sets of features directly using the rr() (ridge or random regression) wrapper term.
+These sets of features are supplied as matrices, with row-names to match to the data, and are fitted
+as random / shrunken regressions. Significances for individual features can be obtained as
+"p-values from the random effects" ($p_r$ values), extracted with the prval() method. 
+Running a multiple regression on large sets of features can be computationally intensive, but 
+can be speeded up using sparse regression options, or by running the model on an SVD decomposition
+of the feature matrix. When run on an SVD decomposition, posterior uncertainties and significances
+for individual features can be obtained approximately, or exactly by back-solving.
+
+More on working with sets of features and and extracting $p_r$ values can be found here:
