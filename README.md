@@ -1,3 +1,4 @@
+
 # Bayesian mixed models, shrinkage, sparse and interaction kernel regression
 
 [![Build
@@ -159,7 +160,7 @@ inside the rn(), for instance
 fit1 <- bayz(Yield ~ fx(Year) + rn(Variety, V=Gmat), data=example1)
 ```
 
-to model a variance-covariance structure Gmat $`\sigma_g^2`$ for Variety
+to model a variance-covariance structure Gmat $\sigma_g^2$ for Variety
 effects. Kernels should be prepared with rownames matching the levels of
 the variable in the data, but data levels may be repeated or missing
 (the latter implies prediction of Variety effects not in the data).
@@ -174,7 +175,7 @@ fit1 <- bayz(Yield ~ fx(Environment) + rn(Variety, V=Gmat) +
 ```
 
 This implies a variance-covariance structure for Variety-by-Environment
-effects Gmat $`\otimes`$ Emat $`\sigma_{ge}^2`$. The Emat could be a
+effects Gmat $\otimes$ Emat $\sigma_{ge}^2$. The Emat could be a
 weather-based similarity matrix between environments, and, like other
 kernels, should have rownames matching the levels of (in this example)
 the Environment variable in the data.
@@ -197,13 +198,13 @@ R/bayz can fit sets of features directly using the rr() (ridge or random
 regression) wrapper term. These sets of features are supplied as
 matrices, with row-names to match to the data, and are fitted as random
 / shrunken regressions. Significances for individual features can be
-obtained as “p-values from the random effects” ($p_r$ values),
-extracted with the prval() method. Running a multiple regression on
-large sets of features can be computationally intensive, but can be
-speeded up using sparse regression options, or by running the model on
-an SVD decomposition of the feature matrix. When run on an SVD
-decomposition, posterior uncertainties and significances for individual
-features can be obtained approximately, or exactly by back-solving.
+obtained as “p-values from the random effects” ($p_r$ values), extracted
+with the prval() method. Running a multiple regression on large sets of
+features can be computationally intensive, but can be speeded up using
+sparse regression options, or by running the model on an SVD
+decomposition of the feature matrix. When run on an SVD decomposition,
+posterior uncertainties and significances for individual features can be
+obtained approximately, or exactly by back-solving.
 
-More on working with sets of features and on extracting $p_r$ values
-can be found here:
+More on working with sets of features and on extracting $p_r$ values can
+be found here:

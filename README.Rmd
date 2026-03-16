@@ -2,9 +2,7 @@
 #title: "Bayesian mixed models, shrinkage, sparse and interaction kernel regression"
 #author: "Luc Janss, Marni Tausen, Maria Izabel Cavassim Alves, Zhe Zhang"
 #date: "`r Sys.Date()`"
-output:
-  md_document:
-    variant: gfm+tex_math_dollars
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
