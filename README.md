@@ -197,7 +197,7 @@ R/bayz can fit sets of features directly using the rr() (ridge or random
 regression) wrapper term. These sets of features are supplied as
 matrices, with row-names to match to the data, and are fitted as random
 / shrunken regressions. Significances for individual features can be
-obtained as “p-values from the random effects” ($`p_r`$ values),
+obtained as “p-values from the random effects” ($p_r$ values),
 extracted with the prval() method. Running a multiple regression on
 large sets of features can be computationally intensive, but can be
 speeded up using sparse regression options, or by running the model on
@@ -205,5 +205,5 @@ an SVD decomposition of the feature matrix. When run on an SVD
 decomposition, posterior uncertainties and significances for individual
 features can be obtained approximately, or exactly by back-solving.
 
-More on working with sets of features and on extracting $`p_r`$ values
+More on working with sets of features and on extracting $p_r$ values
 can be found here:
