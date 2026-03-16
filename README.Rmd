@@ -4,7 +4,7 @@
 #date: "`r Sys.Date()`"
 output:
   md_document:
-    variant: gfm
+    variant: gfm+tex_math_dollars
 ---
 
 ```{r setup, include=FALSE}
