@@ -7,10 +7,9 @@ coveralls](https://coveralls.io/repos/github/ljanss/Rbayz/badge.svg?branch=maste
 
 Jump to:
 
-- [R/bayz overview and features](#R/bayz%20overview%20and%20features)
-- [Downloading and installing
-  R/bayz](#Downloading%20and%20installing%20R/bayz)
-- [Quick tour and help](#Quick%20tour%20and%20help)
+- [R/bayz overview and features](#rbayz-overview-and-features)
+- [Downloading and installing R/bayz](#downloading-and-installing-rbayz)
+- [Quick tour and help](#quick-tour-and-help)
 
 # R/bayz overview and features
 
@@ -45,9 +44,9 @@ domain where mixed models, (multiple) kernels and/or large sets of
 predictors are relevant.
 
 For further help check links in the text above, and the [Quick tour and
-help](#Quick%20tour%20and%20help) section below that can help finding
-relevant documentation. If you’er reading this as part of the R package
-help, full documentation is available on github at
+help](#quick-tour-and-help) section below that can help finding relevant
+documentation. If you’er reading this as part of the R package help,
+full documentation is available on github at
 [ljanss.github.io/Rbayz/](https://ljanss.github.io/Rbayz/).
 
 ## R/bayz technical details

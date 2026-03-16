@@ -16,9 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Jump to:
 
-- [R/bayz overview and features](#R/bayz overview and features)
-- [Downloading and installing R/bayz](#Downloading and installing R/bayz)
-- [Quick tour and help](#Quick tour and help)
+- [R/bayz overview and features](#rbayz-overview-and-features)
+- [Downloading and installing R/bayz](#downloading-and-installing-rbayz)
+- [Quick tour and help](#quick-tour-and-help)
 
 # R/bayz overview and features
 
@@ -42,7 +42,7 @@ a Bayesian factor-analytic approach,
 is extendable to efficienctly learn covariance structures in higher order interactions such as trait x time x enviroment,
 and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.
 
-For further help check links in the text above, and the [Quick tour and help](#Quick tour and help)
+For further help check links in the text above, and the [Quick tour and help](#quick-tour-and-help)
 section below that can help finding relevant
 documentation. If you'er reading this as part of the R package help, full documentation is available on
 github at [ljanss.github.io/Rbayz/](https://ljanss.github.io/Rbayz/).
