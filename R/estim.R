@@ -98,18 +98,19 @@ estim <- function(object, param = NULL, splitLabels = FALSE,
             " in the original levels? The estimates will be",
             " returned without splitting labels.\n")
         return(estim_return)
-      } else {
-        split_labels_dframe <- t(as.data.frame(split_labels_list))
-        colnames(split_labels_dframe) <- clmnames
-        rownames(split_labels_dframe) <- NULL
-        estim_return <- data.frame(split_labels_dframe,
-                                   PostMean = estim_return$PostMean,
-                                   PostSD = estim_return$PostSD)
-        return(estim_return)
       }
+    } else {
+      split_labels_dframe <- t(as.data.frame(split_labels_list))
+      colnames(split_labels_dframe) <- clmnames
+      rownames(split_labels_dframe) <- NULL
+      estim_return <- data.frame(split_labels_dframe,
+                                 PostMean = estim_return$PostMean,
+                                 PostSD = estim_return$PostSD)
+      return(estim_return)
+    }
   } else { # length(estim_return) > 1
     if (unlist) {
-      estim_return_dframe = data.frame()
+      estim_return_dframe <- data.frame()
       for (i in 1:length(estim_return)) {
         estim_return_dframe <- rbind(estim_return_dframe, 
           cbind(Parameter=names(estim_return)[i], estim_return[[i]]))

@@ -29,12 +29,10 @@ std::vector<parVector**> Rbayz::parList;
 std::vector<std::string> Rbayz::Messages;
 bool Rbayz::needStop=false;
 Rcpp::DataFrame Rbayz::mainData;
-std::string Rbayz::outputDir="";
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
                      Rcpp::IntegerVector chain, SEXP methodArg, int verbose,
-                     SEXP workingDirArg,
                      Rcpp::Nullable<Rcpp::List> initVals_ = R_NilValue
                      )
 //                   note VE and method are strings, it will be converted below
@@ -47,8 +45,6 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::Messages.clear();
    Rbayz::needStop=false;
    Rbayz::mainData=inputData;
-   Rcpp::Function getwd("getwd");
-   Rbayz::workingDir = Rcpp::as<std::string>(workingDirArg);
 
    // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
@@ -437,7 +433,6 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       result.push_back(estimates,"Estimates");
       result.push_back(residuals,"Residuals");
       result.push_back(chain,"Chain");
-      result.push_back(Rbayz::outputDir,"wd");
       lastDone="Filling return list";
       if (verbose>1) Rcpp::Rcout << "Ready filling return list\n";
 
