@@ -25,10 +25,15 @@ summary.bayz <- function(object, HPDprob=0.95, ...) {
 
   output <- list()
   class(output) <- "summarybayz"
-  if (object$nError > 0) {
+
+  if (object$Runinfo["Nerror"] > 0) {
     output[["Errors"]] <- object[["Errors"]]
+    output[["Runinfo"]] <- object[["Runinfo"]]
     return(output)
   }
+
+  output[["Errors"]] <- NULL
+  output[["Runinfo"]] <- object[["Runinfo"]]
 
   # It could be nice with a very compact overview of parameter names and sizes,
   # with a * if traced. Something like:
@@ -45,15 +50,27 @@ summary.bayz <- function(object, HPDprob=0.95, ...) {
   # This summary now only lists the "traced" parameters that are in the Samples
   # table.
   output_cycles <- as.numeric(rownames(object$Samples))
+  mcmc_samples <- coda::mcmc(object$Samples,
+                             start = output_cycles[1],
+                             end = output_cycles[length(output_cycles)],
+                             thin = output_cycles[2] - output_cycles[1])
   postMeans <- apply(object$Samples, 2, mean)
   postSDs <- apply(object$Samples, 2, sd)
   HPDbounds <- rep("none", ncol(object$Samples))
-  HPDbounds[substr(colnames(object$Samples),0,3) == "var"] <- "var"
-  HPDs <- HPDbayz(object$Samples, prob=HPDprob, bound=HPDbounds)
-  summary_table <- data.frame(postMeans, postSDs, HPDs)
-  colnames(summary_table) <- c("postMean", "postSD", "HPDleft", "HPDright")
+  HPDbounds[substr(colnames(object$Samples), 0, 3) == "var"] <- "var"
+  HPDs <- HPDbayz(object$Samples, prob = HPDprob, bound = HPDbounds)
+  effSizes <- coda::effectiveSize(mcmc_samples)
+  MCSEs <- postSDs / sqrt(effSizes)
+  MCCVpct <- 100 * MCSEs / abs(postMeans)
+  GewekeZ <- abs(coda::geweke.diag(mcmc_samples)$z)
+  summary_table <- data.frame(postMeans, postSDs, HPDs,
+                              effSizes, GewekeZ, MCSEs, MCCVpct)
+  colnames(summary_table) <- c("postMean", "postSD", "HPDleft", "HPDright",
+                               "effSize", "GewekeZ", "MCSE", "MCCV%")
   rownames(summary_table) <- colnames(object$Samples)
   output[["summarystats"]] <- summary_table
   output[["HPDprob"]] <- HPDprob
+  output[["WarnFewSamples"]] <- ifelse(length(output_cycles) < 10, TRUE, FALSE)
   return(output)
+
 }

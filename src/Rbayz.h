@@ -18,6 +18,7 @@ namespace Rbayz {
    extern std::vector<std::string> Messages;
    extern bool needStop;
    extern Rcpp::DataFrame mainData;
+   extern Rcpp::IntegerVector RunInfo;
 }
 
 #endif /* Rbayz_h */

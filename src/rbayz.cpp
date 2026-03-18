@@ -29,6 +29,7 @@ std::vector<parVector**> Rbayz::parList;
 std::vector<std::string> Rbayz::Messages;
 bool Rbayz::needStop=false;
 Rcpp::DataFrame Rbayz::mainData;
+Rcpp::IntegerVector Rbayz::RunInfo(9);
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
@@ -45,6 +46,10 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::Messages.clear();
    Rbayz::needStop=false;
    Rbayz::mainData=inputData;
+   Rbayz::RunInfo.fill(0);
+   Rbayz::RunInfo.names() = Rcpp::CharacterVector::create("Nerror","Nwarning","Nnote",
+                            "Data Size","Nmissing","Nparameters","Chain Length","Burn-In",
+                            "Chain Skip");
 
    // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
@@ -143,14 +148,9 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       size_t nResiduals = (*(Rbayz::parList[0]))->nelem;
       size_t nParameters = 0;
       size_t nNAs = sum(modelR->missing);
-      for(size_t i=1; i<Rbayz::parList.size(); i++) nParameters += (*(Rbayz::parList[i]))->nelem;
-      {
-         std::string s1="Note: data included total="+std::to_string(nResiduals)+" observed="+
-                       std::to_string(nResiduals-nNAs)+" missing="+std::to_string(nNAs);
-         std::string s2="Note: model build with "+std::to_string(nParameters)+" parameters";
-         Rbayz::Messages.push_back(s1);
-         Rbayz::Messages.push_back(s2);
-      }
+      Rbayz::RunInfo["Data Size"] = nResiduals;
+      Rbayz::RunInfo["Nmissing"] = nNAs;
+      Rbayz::RunInfo["Nparameters"] = nParameters;
       if(verbose > 2) {
          Rcpp::Rcout << "Model-object overview (#, Name, Size, Traced, first Labels) after model building:\n";
          for(size_t i=0; i<Rbayz::parList.size(); i++) {
@@ -163,34 +163,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
          }
       }
 
-      // Make parameter name disambiguation - this skips residuals (parList[0])
-      // I considered this can move to parVector where names are set.
-/*
-      {
-         Rcpp::CharacterVector parNames;
-         for(size_t i=1; i<Rbayz::parList.size(); i++)
-            parNames.push_back((*Rbayz::parList[i])->Name);
-         Rcpp::IntegerVector name_matches = Rcpp::match(parNames, parNames);
-         std::vector<size_t> numb_matches(name_matches.size(),0);
-         bool found_duplicates = FALSE;
-         for(int i=0; i < name_matches.size(); i++) {
-            if(name_matches[i] != (i+1))  {  // the i'th name matches (name_matches[i]-1)'th name in the list
-               if(numb_matches[name_matches[i]-1] == 0) {
-                  parNames[name_matches[i]-1] += ".1";
-                  numb_matches[name_matches[i]-1]++; 
-               }
-               numb_matches[name_matches[i]-1]++;
-               parNames[i] += "." + std::to_string(numb_matches[name_matches[i]-1]);
-            }
-            found_duplicates=TRUE;
-         }
-         if(found_duplicates) {  // copy new names back in parList->Names
-            for(int i=0; i<parNames.size(); i++)
-               (*(Rbayz::parList[i+1]))->Name = parNames[i];
-         }
-      }
-      if (verbose>4) Rcpp::Rcout << "Parameter names disambiguation checked\n";
-*/
+      // Make parameter name disambiguation - this is moved parVector class.
 
       // Load initial values if given. An easy start is to only allow init-values from a run
       // with the same model - so that parameter-names and sizes all align.
@@ -231,7 +204,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       // Check the chain settings and find number of output samples by making list of output cycle-numbers.
       if (chain[0]==0 && chain[1]==0 && chain[2]==0) {  // chain was not set
          chain[0]=1100; chain[1]=100; chain[2]=10;
-         Rcpp::Rcout << "Warning: chain was not set, running 1100 cycles but it may be too short for many analyses\n";
+         Rbayz::Messages.push_back("Warning: chain was not set, running 1100 cycles but it may be too short for many analyses");
+         Rbayz::RunInfo["Nwarning"] = Rbayz::RunInfo["Nwarning"] + 1;
       }
       if (chain.size() != 3) throw (generalRbayzError("The chain settings do not have 3 elements"));
       if (chain[0] <= 0) throw (generalRbayzError("The chain length is zero or negative"));
@@ -244,6 +218,9 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       }
       size_t nSamples = outputCycleNumbers.size();
       if (nSamples==0) throw (generalRbayzError("The chain settings do not make any output"));
+      Rbayz::RunInfo["Chain Length"] = chain[0];
+      Rbayz::RunInfo["Burn-In"] = chain[1];
+      Rbayz::RunInfo["Chain Skip"] = chain[2];
       if (verbose>4) Rcpp::Rcout << "Chain checks done\n";
 
       // Find the number of traced parameters and set-up matrix to store samples of traced parameters
@@ -425,14 +402,13 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
 
       // Build the final return list
       Rcpp::List result = Rcpp::List::create();
-      result.push_back(0,"nError");
       if(Rbayz::Messages.size()>0) 
          result.push_back(Rbayz::Messages,"Messages");
       result.push_back(parInfo,"Parameters");
       result.push_back(tracedSamples,"Samples");
       result.push_back(estimates,"Estimates");
       result.push_back(residuals,"Residuals");
-      result.push_back(chain,"Chain");
+      result.push_back(Rbayz::RunInfo,"Runinfo");
       lastDone="Filling return list";
       if (verbose>1) Rcpp::Rcout << "Ready filling return list\n";
 

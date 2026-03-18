@@ -8,21 +8,31 @@
 #' @return Nothing, only prints
 #' @import stats
 #' @export
-print.summarybayz <- function(object, ...){
-  cat("Summary of bayz model fit\n\n")
-  cat("model formula:", deparse(object$terms), "\n\n")
-  if (object$nError > 0) {
+print.summarybayz <- function(object, ...) {
+  if (object$Runinfo["Nerror"] > 0) {
     cat("Bayz encountered errors while running:\n")
     for (errormsg in object$Errors){
       cat("  ", errormsg, "\n")
     }
   } else {
     # No errors
-    cat("Parameters and sizes in the output; * is traced and summarized below:\n")
-    print(object$Pameters)
+    cat("Bayz model run completed successfully.\n")
     cat("\n")
-    cat("Estimates and HPD intervals for 'traced' parameters:\n")
+    cat("Model run information:\n")
+    print(object$Runinfo)
+    cat("\n")
+    cat("Model parameters and sizes:\n")
+    print(noquote(object$Parameters))
+    cat("  *Traced and summarized below.\n")
+    cat("   Tracing can be toggled - see HelpIndex#tracing-parameters\n")
+    cat("\n")
+    cat("Estimates, HPD ", object$HPDprob * 100,
+        "% intervals and convergence diagnostics for traced parameters:\n")
     print(object$summarystats)
+    if (object$WarnFewSamples) {
+      cat("  Warning: Output has few samples",
+          ", convergence diagnostics may be unreliable.\n")
+    }
     cat("\n")
   }
 }
