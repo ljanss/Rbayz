@@ -18,6 +18,8 @@ Jump to:
 - [Downloading and installing R/bayz](#downloading-and-installing-rbayz)
 - [Quick tour and help](#quick-tour-and-help)
 
+For various help check the [Help Index page](HelpIndex.html).
+
 # R/bayz overview and features
 
 R/bayz -- package Rbayz -- with main function bayz():
