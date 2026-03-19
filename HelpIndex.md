@@ -1,0 +1,85 @@
+
+# Rbayz and bayz help topics by subject
+
+Jump to sections or pages using the links below:
+
+| [bayz() function](#Main-function-bayz) | Model-term features and options | Output use |
+|----|----|----|
+| [Model formula](#Model-formala) | Interaction specifications | General summary |
+| [Residual variance (Ve)](#Coefficients%20estimates) | Nested regressions | Extract estimates (estim, coef, fixef, ranef) |
+| [data frame](#Variance%20components%20and%20PVEs) |  | Extracts variances, hyper-pars, and functions (vhest) |
+| [linking kernels, features (linkid)](#Computing%20constrasts) |  | Convergence diagnostics (conv) |
+| \[MCMC chain\] | Variance specification (V) | Trace and density plots (plot) |
+| [workdir in/output](#workdir-inoutput) | Reduced rank (dim, dimp) | Warnings and errors |
+| [initial values (init)](#initial-values-init) | trace and save options |  |
+| [verbose settings](#verbose-settings) | linkid on rr() term |  |
+
+- [summary](#Summary%20of%20output)
+- [coef, fixef and ranef](#Coefficients%20estimates)
+- [vcomp](#Variance%20components%20and%20PVEs)
+- [Computing contrasts](#Computing%20constrasts)
+
+# Main function bayz()
+
+The complete interface for the bayz() main modelling function is:
+
+``` default
+  bayz(modelformula, Ve, data, linkid, chain, workdir, init, verbose)
+```
+
+where - modelformula is an extended R-style model formala, see xxx - Ve
+sets the model for the residual variance, see xxx - data is a data frame
+with variables (responses, explanatory variables) to build the model,
+see xxx - linkid is an id in the data used to link to kernels and sets
+of features. - chain is a vector c(length, burn-in, skip) with total
+chain length to run, burn-in, and skip-interval for saving samples and
+computing convergence diagnostics. - workdir is a directory to save the
+MCMC samples and intermediate files, and to run the MCMC chain in. If
+not specified, the current working directory is used. - init is a list
+of initial values for the MCMC chain, see xxx - verbose is an integer
+with settings for the amount of information printed during the MCMC run,
+see xxx
+
+## Model formula
+
+## Residual variance (Ve)
+
+## Data frame (data)
+
+## linking kernels, features (linkid)
+
+## MCMC chain settings
+
+## workdir in/output
+
+## initial values (init)
+
+## verbose settings
+
+# Output use
+
+Use of summary() on the bayz output object produces a summary of
+parameter estimates from the fitted model including convergence
+diagnostics and Highest Posterior Density (HPD) regions.
+
+The summary() method only lists a limited number of the so-called
+“traced” parameters - these are model-parameters for which all MCMC
+samples are saved in the output, allowing to compute convergence, HPD
+regions, and to plot traces and densities (using plot()). The traced
+parameters by default include: all scalar variance parameters, estimated
+variance-covariances up to dimension 4x4, the model mean, scalar
+regression coefficients, coefficient estimates from fixed effects with
+up to 4 levels, and nested regressions with up to 4 levels.
+
+# Coefficients estimates
+
+Apart from using these functions, it is also quite straightforward to
+extract estimates directly from the bayz output object. All estimates
+are stored in the output in a list called
+<output>
+
+\$Estimates, which has named elements according to parameter names.
+
+# Variance components and PVEs
+
+The vcomp() method extracts variance estimates from the output.

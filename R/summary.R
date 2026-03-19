@@ -16,12 +16,14 @@
 #' @param object    bayz output object
 #' @param HPDprob   probability for the Highest Posterior Density intervals
 #'                  (default 0.95)
+#' @param burnin    Discard additional samples with cycle number less or equal to this (updated) burnin setting.
+#'                  Setting burnin here lower than the original chain burnin has no effect.
 #' @param ...       additional parameters
 #'
 #' @return summarybayz object
 #' @import stats coda
 #' @export
-summary.bayz <- function(object, HPDprob=0.95, ...) {
+summary.bayz <- function(object, HPDprob=0.95, burnin=NULL, ...) {
 
   output <- list()
   class(output) <- "summarybayz"
@@ -50,15 +52,24 @@ summary.bayz <- function(object, HPDprob=0.95, ...) {
   # This summary now only lists the "traced" parameters that are in the Samples
   # table.
   output_cycles <- as.numeric(rownames(object$Samples))
-  mcmc_samples <- coda::mcmc(object$Samples,
+  if (!is.null(burnin) && burnin > object$Runinfo["Burn-In"]) {
+    samples_used <- object$Samples[which(output_cycles > burnin), ,
+                                   drop = FALSE]
+    output_cycles <- output_cycles[which(output_cycles > burnin)]
+    output[["UpdatedBurnIn"]] <- burnin
+  } else {
+    samples_used <- object$Samples
+    output[["UpdatedBurnIn"]] <- 0
+  }
+  mcmc_samples <- coda::mcmc(samples_used,
                              start = output_cycles[1],
                              end = output_cycles[length(output_cycles)],
                              thin = output_cycles[2] - output_cycles[1])
-  postMeans <- apply(object$Samples, 2, mean)
-  postSDs <- apply(object$Samples, 2, sd)
-  HPDbounds <- rep("none", ncol(object$Samples))
-  HPDbounds[substr(colnames(object$Samples), 0, 3) == "var"] <- "var"
-  HPDs <- HPDbayz(object$Samples, prob = HPDprob, bound = HPDbounds)
+  postMeans <- apply(samples_used, 2, mean)
+  postSDs <- apply(samples_used, 2, sd)
+  HPDbounds <- rep("none", ncol(samples_used))
+  HPDbounds[substr(colnames(samples_used), 0, 3) == "var"] <- "var"
+  HPDs <- HPDbayz(samples_used, prob = HPDprob, bound = HPDbounds)
   effSizes <- coda::effectiveSize(mcmc_samples)
   MCSEs <- postSDs / sqrt(effSizes)
   MCCVpct <- 100 * MCSEs / abs(postMeans)
@@ -67,10 +78,10 @@ summary.bayz <- function(object, HPDprob=0.95, ...) {
                               effSizes, GewekeZ, MCSEs, MCCVpct)
   colnames(summary_table) <- c("postMean", "postSD", "HPDleft", "HPDright",
                                "effSize", "GewekeZ", "MCSE", "MCCV%")
-  rownames(summary_table) <- colnames(object$Samples)
+  rownames(summary_table) <- colnames(samples_used)
   output[["summarystats"]] <- summary_table
   output[["HPDprob"]] <- HPDprob
-  output[["WarnFewSamples"]] <- ifelse(length(output_cycles) < 10, TRUE, FALSE)
+  output[["NsamplesUsed"]] <- nrow(samples_used)
   return(output)
 
 }

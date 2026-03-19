@@ -29,10 +29,15 @@ print.summarybayz <- function(object, ...) {
     cat("Estimates, HPD ", object$HPDprob * 100,
         "% intervals and convergence diagnostics for traced parameters:\n")
     print(object$summarystats)
-    if (object$WarnFewSamples) {
-      cat("  Warning: Output has few samples",
+    if (object$UpdatedBurnIn > 0) {
+      cat("  Note: Burn-in updated to ", object$UpdatedBurnIn,
+          " leaving ", object$NsamplesUsed, " samples for summary.\n")
+    }
+    if (object$NsamplesUsed < 10) {
+      cat(" *Warning* Output has few samples",
           ", convergence diagnostics may be unreliable.\n")
     }
+    cat("  See HelpIndex#summary for background and help.\n")
     cat("\n")
   }
 }

@@ -1,16 +1,14 @@
 ---
-#title: "Rbayz and bayz help topics"
+#title: "Rbayz and bayz help topics by subject"
 #date: "`r Sys.Date()`"
-output:
-  md_document:
-    variant: markdown_github
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Rbayz and bayz help topics
+# Rbayz and bayz help topics by subject
 
 Jump to sections or pages using the links below:
 
