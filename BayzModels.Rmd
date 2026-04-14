@@ -1,37 +1,22 @@
 ---
-#title: "Rbayz and bayz help topics"
+#title: "Bayz interface and model building"
 #date: "`r Sys.Date()`"
-output:
-  md_document:
-    variant: markdown_github
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Rbayz and bayz help topics
+| On this page | Other help pages |
+|--------------|------------------|
+| [R/bayz overview and features](#rbayz-overview-and-features) | [Main readme page](README.html) |
+| [Downloading and installing R/bayz](#downloading-and-installing-rbayz) | [Using bayz output](BayzOutput.html) |
+| [Quick tour and help](#quick-tour-and-help) | [Help Index](HelpIndex.html) |
 
-Jump to sections or pages using the links below:
+# Bayz interface and model building
 
-| [bayz() function](#Main-function-bayz)            | Model-term features and options | Output use |
-|---|---|---|
-| [Model formula](#Model-formala)                   | Interaction specifications | General summary |
-| [Residual variance (Ve)](#Coefficients estimates) | Nested regressions         | Extract estimates (estim, coef, fixef, ranef) |
-| [data frame](#Variance components and PVEs)       |                            | Extracts variances, hyper-pars, and functions (vhest) |
-| [linking kernels, features (linkid)](#Computing constrasts) |                  | Convergence diagnostics (conv) |
-| [MCMC chain]                                      | Variance specification (V) | Trace and density plots (plot)|
-| [workdir in/output]                               | Reduced rank (dim, dimp)   | Warnings and errors |
-| [initial values (init)]                           | trace and save options     | | 
-| [verbose settings]                                | linkid on rr() term        | | 
-
- 
--   [summary](#Summary of output)
--   [coef, fixef and ranef](#Coefficients estimates)
--   [vcomp](#Variance components and PVEs)
--   [Computing contrasts](#Computing constrasts)
-
-# Main function bayz()
+# Main function bayz
 
 The complete interface for the bayz() main modelling function is:
 
@@ -40,43 +25,306 @@ The complete interface for the bayz() main modelling function is:
 ```
 
 where
--  modelformula is an extended R-style model formala, see xxx
--  Ve sets the model for the residual variance, see xxx
--  data is a data frame with variables (responses, explanatory variables) to build the model, see xxx
--  linkid is an id in the data used to link to kernels and sets of features. 
--  chain is a vector c(length, burn-in, skip) with total chain length to run, burn-in, and skip-interval for saving samples and computing convergence diagnostics.
--  workdir is a directory to save the MCMC samples and intermediate files, and to run the MCMC chain in. If not specified, the current working directory is used.
--  init is a list of initial values for the MCMC chain, see xxx
--  verbose is an integer with settings for the amount of information printed during the MCMC run, see xxx
+-  modelformula is an extended R-style model formula, see [Bayz model formula](#bayz-model-formula) below.
+-  Ve sets the model for the residual variance, see [Residual variance (Ve)](#residual-variance-ve) below.
+-  data is a data frame with variables to build the model, see [Data frame (data)](#data-frame-data) below.
+-  linkid is an id to link feature sets, see [linking kernels, features (linkid)](#linking-kernels-features-linkid) below.
+-  chain is a vector c(length, burn-in, skip), see [MCMC chain settings](#mcmc-chain-settings) below.
+-  workdir is a directory to save the MCMC sample files, see [Workdir in/output](#workdir-inoutput) below.
+-  init is a list of initial values for the MCMC chain, see [Initial values (init)](#initial-values-init) below.
+-  verbose is an integer controlling the amount of information printed, see [Verbose settings](#verbose-settings) below.
 
-## Model formula
+## Bayz model formula
+
+The bayz model formula is an extended R-formula syntax where all
+explanatory (right-hand-side) variables are wrapped by a term to specify
+how to fit variable(s) in the model, for instance:
+
+```{verbatim}
+Yield ~ fx(Year:Site) + rn(Variety)
+```
+
+specifies Yield as response modelled by fixed effects of Year-Site interactions and random effects of Variety.
+All currenly supported wrappers are listed in the table below, and more details on their use and options are given in the sections below.
+
+| Wrapper | Description | Variable treatment | Interactions or nesting |
+|---------|-------------|---------------------|------------------------|
+| fx()    | fixed effects | factor or multiple factors | Any degree using colon(s) |
+| rn()    | random effects | factor or multiple factors | Any degree using colon(s) |
+| rg()    | fixed or nested regression | numeric or numeric \| factor | Nested with bar |
+| rr()    | ridge/shrinkage regression | numeric sets of features | No |
+
+### Intercept
+
+An intercept is included by default; it can be removed by using '0' as first term in the model, 
+as in standard R formula syntax. Fixed effects constrain their first level to zero, so that the
+intercept represents the combined first levels of all fixed effects used. The intercept is logged
+in the estimates as 'mean' and is included in the traced parameters. However, it can
+show poor convergence when there is some overparameterisation in the fixed effects, but this is
+generally not worrysome and should not be a reason to remove the intercept from the model.
+
+### Factors in fx() and rn()
+
+Variables used in fx() and rn() are treated as factors, or will be transformed to factors.
+There can thus be no confusion about treatment of integer variables: in fx() and rn() this will
+be treated as factors; in rg() or rr() this will be treated as continuous covariates (this often
+goes wrong in R modelling functions where, e.g., batch numbers will be treated as continuous but
+it is more appropriate to treat them as factors).
+
+### Interactions in fx() and rn()
+
+Bayz allows for interactions of any degree in fx() and rn() using the colon operator, but does not perform
+automatic expansion with main effects using asterix or slash. Main effects, if desired, should be added explicitly.
+Note that it is not needed to add main effects to achieve the same model and data corrections; Site:Year
+will do the same  as Site*Year (Site + Year + Site:Year). Site:Year does not allow a classical ANOVA
+by separating the main effects,
+but the Bayesian framework does not do ANOVA anyway, and the approach to judge whether an interaction is needed
+would be to run a model with main effects only (Site+Year) and compare BIC or marginal likelihood to a model with
+main effects and interaction (which simply can be Site:Year).
+
+### Fixed effects (fx)
+
+The fx() wrapper is used to fit factors as "fixed effects", translated in the Bayesian framework as using flat priors.
+See the sections on factors and interactions in fx() and rn() for details on these respective subjects.
+
+For fixed effects the first level is constraint to zero, so that other levels represent differences to the first level,
+as is also the standard in other R models like lm(). This constraint on the first level is applied to all
+fixed effects so that it's wise to keep an intercept in the model. The Bayesian MCMC approach cannot determine
+if colinearities need further constraints, which can lead to poor convergence in fixed effect (and intercept)
+estimates. This is generally not worrysome and can be ignored, but significances of fixed effect estimates
+and contrasts are only reliable for estimable effects and contrasts. 
+
+The posterior means and SDs for fixed effects are usually very close to frequentist estimates and S.E.'s
+from (O)LS or mixed model approaches (e.g, R lm() and lmer()),
+but the Bayesian version includes additional uncertainty from the estimation of variance parameters.
+This usually has minimal effect on the
+estimates, and small effect on the posterior SD, compared to frequentist analogues. 
+It is possible to obtain estimates identical to frequentist estimates (apart from Monte Carlo noise)
+by fixing variance parameters and using the BLUPMC method.
+
+To judge significance of estimates or contrasts in a Bayesian spirit, HPD intervals can be obtained
+from summary() if the samples for the effect were traced. Contrasts between levels other than with the first
+level can be obtained using the contrast() method, which also requires that the samples for the effect were traced.
+Fixed effects with fewer than 5 levels are by default added to the traced parameters;
+with 5 or more levels, tracing is by default off, but can be toggled on manually by adding a 'trace' option in the
+model term. With tracing on, MCMC samples for the fixed effects are saved, which provides convergence diagnostics
+and HPD intervals with summary(), trace plots with plot(), and contrast with their HPD
+intervals with contrast(). See the linked sections and the section on traced parameters for more info. There is no
+Bayesian analogue to ANOVA to judge importance of including a fixed effect in the model;
+this can be done in the Bayesian framework by comparing BIC or marginal likelihood of models with and without the fixed effect.
+
+### Random effects (rn)
+
+The rn() wrapper is used to fit factors as "random effects", 
+translated in the Bayesian framework as using Normal priors (by default), or other shrinkage priors.
+The default Normal (Gaussian) priors mimic the frequentist mixed model, but with other shrinkage priors,
+one leaves the realm of mixed models and random effects. Using, for instance, Laplace or t-distributed priors
+can account for larger extremes in the random effects than what mixed model Normal priors can support.
+This is well known in the context of ridge regression and other shrinkage regression approaches, but is less
+commonly used in the context of "regular" random effects.
+Variance (or other hyper-) parameters are added to the model and learnt from the data with default uninformative priors,
+and are included in the list of model parameters with a "var." or "hyp." prefix.
+See the sections on factors and interactions in fx() and rn() for details on these respective subjects.
+
+When using default Normal priors, posterior means for random effects are usually similar to
+frequentist estimates from mixed model approaches (e.g, R lmer()).
+However, the Bayesian approach includes additional uncertainty from the estimation of variance parameters, which
+can especially increase the posterior SD compared to a frequentist S.E.P. that does not account for
+uncertainty in the variance. In the frequentist approach, SEP^2 is always smaller than the (fixed)
+variance parameter, but in the Bayesian approach, the postSD^2 can be larger than the posterior mean for the
+variance parameter because the postSD is a marginal estimate evaluated over the whole distribution of the variance
+parameter.
+If desired, R/bayz supports two approaches to obtain postSD's that are identical (apart from Monte Carlo noise)
+to frequentist SEP:
+1) the prval() method can evaluate the posterior SD *conditional* on the posterior mean estimate of the
+variance from a standard full Bayesian approach; and 2) it is possible to use an empirical Bayes approach
+by fixing variance parameters and using the BLUPMC method. 
+
+The rn() wrapper supports using different distributions on the random effects. 
+The default fit for random effects is an uncorrelated Normal (Gaussian) distribution with uniform variance, so that:
+```{verbatim}
+bayz(yield ~ rn(Variety), data=...)
+```
+fits a model with random variety effects that Normally distributed with variance $I\sigma_{Variety}^2)$. 
+
+This can also be applied to interactions, for instance:
+```{verbatim}
+bayz(yield ~ rn(Variety) + rn(Variety:Site), data=...)
+```
+will fit Variety main and Variety:Site interaction effects using uncorrelated Normal priors,
+and estimates the two corresponding variance parameters.
+
+Kernels, and products of kernels, can be added on single and interaction terms using the V= argument
+inside the rn() wrapper, for instance:
+```{verbatim}
+bayz(yield ~ rn(Variety, V=Gmat) + rn(Variety:Site, V=Gmat*Smat), data=...)
+```
+which models Variety effecets distributed ~ Gmat $\sigma_{Variety}^2)$, and
+Variety:Site interaction effects distributed ~ Gmat $`\otimes`$ Smat $\sigma_{Variety:Site}^2)$.
+
+### Fixed and nested fixed regression (rg)
+
+The rg() wrapper supports fitting a regression on a single covariate, or a regression on a covariate nested in a factor
+using the covariate|factor syntax. For instance, rg(Temperature) fits a regression on the covariate Temperature,
+and rg(Temperature|Site) fits a regression on Temperature within each level of Site.  
+
+### Ridge/shrinkage regression (rr)
+
+The rr() wrapper supports fitting regressions on a (large) set of features with shrinkage models.
+The default is to use Normal priors with uniform shrinkage variance, which corresponds to
+'random regression' or ridge regression. 
+
+### P-values from random effects
+
+
+
+### Parameter names and disambiguation
+
+A model can include multiple terms, and the same variable can be used in multiple terms. In some
+cases this can lead to identical parameter names across model-terms.
 
 
 ## Residual variance (Ve)
 
+The current version models a uniform residual variance, but we're working on implementing
+extensions to model more complex residual variance structures using the Ve argument.
+
 ## Data frame (data)
 
-## linking kernels, features (linkid)
+The data argument is a data frame with responses and explanatory variables used in the model, in the usual
+way for R modelling functions. Matrices with features for rr() are typically not included in the data frame, but are
+supplied separately and linked to the model with a linking-variable specified in the linkid argument,
+see [linking kernels, features (linkid)](#linking-kernels-features-linkid) below. 
+It is not required to prepared variable intended as factors as factors in the data frame, bayz will
+transform variables to factors when placed in fx(), rn() or nested regression terms.
+
+## Linking kernels, features (linkid)
+
+Bayz merges feature sets and kernels with the data using rownames, allowing for seamless integration
+of kernels and external data sources into the model without need to filter / order / subset such data to match
+contents, order and repetitions in the data frame.
+This allows for 1) kernels to have more levels than the data, predicting the levels with missing data
+(but see [Predicting missing levels of interactions](#predicting-missing-levels-of-interactions) how this
+works for interactions),
+2) for feature sets to have rows that don't match to the data, which will be ignored in the model, 
+3) for both kernels and features to have repeated levels in the data, but are given only once in the
+kernel or feature set, and 4) ordering of levels in the data and kernel or feature set can differ.
+Note that levels or IDs found in the data *must find a match*
+in the kernel or feature set, but the reverse is not needed. 
+
+For kernels, the match to the data is implied by the variable(s) in the model term, that is, for
+a triple interaction with variance specified as a triple kernel product:
+
+```{verbatim}
+rn(Variety:Site:Year, V=Gmat*Smat*Ymat)
+```
+
+levels of Variety must find matches in the rownames of Gmat, levels of Site must find matches in the
+rownames of Smat, and levels of Year must find matches in the rownames of Ymat.
+
+For feature sets, a 'linkid' should specify a variable in the data that matches to rownames in the feature set:
+
+```{verbatim}
+bayz(Glucose ~ rr(myFeatures), linkid="featID", data=myData, ...)
+```
+
+and "featID" is a column in myData to link to the feature set myFeatures. The linkid can be moved inside
+the rr() term if there is a need to use different linkids for different feature sets, for instance:
+
+```{verbatim}
+bayz(Glucose ~ rr(Features1, linkid="ID1") + rr(Features2, linkid="ID2"), data=myData, ...)
+```
+
+which could be a case where Features1 are measured once on a set of subjects, and Features2 are repeated
+measurement in time, and ID1 is a subject ID, and ID2 a subject-time ID.
+
+### Predicting missing levels of interactions
+
+For a single random effect with one kernel, levels in the kernel with no data will get predictions
+based on the kernel similarity to levels with data. This can be used in prediction and cross-validation
+set-ups to predict, for instance, a new variety with no phenotypic data but a genomic relationship to other
+varieties in the training data.
+
+The same does not automatically work with interactions to predict unseen combinations of levels, but can be
+made to work. By default, bayz restricts modelling of interactions to the combinations seen in the data,
+because all combinations of levels can quickly become enourmous and computing intensive. Two ways to get
+predictions for unseen combinations are:
+
+1) add 'mergeKernels' in the rn() specification. This will explicitly merge the kernels for the
+interaction in a single kernel product, which will then predict *all combinations of levels* of the interaction.
+This should be used with caution because the kernel product can become large, 
+but is the most straightforward way to predict all combinations of levels of the interaction. For instance when
+modelling Variety:Site:Year with 500 varieties, 10 sites and 5 years, by default bayz works on
+the three kernels of sizes 500, 10 and 5 and only on combinations seen in the data,
+but with mergeKernels, a single 500\*10\*5 = 25,000 size kernel is created that has all possible
+combinations of levels. 
+
+2) add (or keep) combinations of levels to predict in the data frame with a missing data value. In a cross-validation
+set-up this is easily used by replacing held-out data with missings (NA), instead of removing the rows
+with held-out data. 
 
 ## MCMC chain settings
 
+The length of the MCMC chain to run, burn-in, and skip-interval to use are specified by the chain argument
+as a vector with 3 integer values:
+
+```{verbatim}
+bayz(formula, data=..., chain=c(length, burnin, skip))
+```
+
+In MCMC-based estimation it is always somewhat difficult to judge a-priori these settings
+and some trials are often needed to find satisfactory convergence and precision of estimates. 
+Bayz employs some smart sampling algorithms and for kernels works on (approximate) orthogonal embeddings,
+which allows for relatively good convergence, and chain=c(5000, 500, 10) can
+be a good starting point for many models. But models with multiple kernels, or kernels with tunable or
+estimated parameters, can need much longer chains. The summary() method provides convergence
+diagnostics and plot() provides trace plots for traced parameters to judge convergence.
+
+The chain setting can be omitted, which runs a default chain=c(1000, 100, 10),
+which can be good for testing if a model runs but may be too small for good precision in most models.
+
+The skip parameter controls the interval to accumulate posterior means and SDs and to save samples
+for traced parameters. Choice of the skip parameter is largely a matter of efficiency and memory use:
+skip below 10 is usually not needed and inefficient: this implies larger
+overhead in computing posterior statistics, larger memory need to store samples, without
+much gain as consecutive MCMC samples are often highly autocorrelated, and can lead to incorrect
+inference on effective sample sizes. There is sometimes a misconception
+that skip should be so high to reach near indepdence of samples, but this is not needed either.
+Settings that extract 500-1000 samples and reach effective sample sizes of 100-200 are often reasonable. 
+
 ## workdir in/output
 
-## initial values (init)
+The workdir argument specifies a directory to run the MCMC chain in, and to save MCMC samples for model terms
+with the 'save' option.
+If not specified, the current working directory is used. The workdir should be a directory with write permissions,
+and should have enough space to save the MCMC samples, which can be large for long chains and model terms
+with many parameters.
+The workdir path can either be absolute or relative to the current working directory - anything that works
+with R's setwd() function is acceptable. 
+
+<!--
+## Bayz method options
+
+The method currently supports two uses: method="Bayes" and method="BLUPMC". 
+Method "Bayes" is the default and runs a full Bayesian MCMC sampling (a combination of
+single-site Gibbs sampling, blocked Gibbs sampling, slice sampling and Metropolis-Hastings updates)
+estimating all coefficients and learning all variance and hyper parameters.
+
+Method BLUPMC keeps variance and hyper parameters fixed and obtains BLUP and BLUE estimates with MCMC-based posterior
+uncertainties that will be identical to frequentist BLUP and BLUE estimates and their uncertainty estimates (S.E. and S.E.P.).
+Use of BLUPMC requires to [use init](#initial-values-init) to supply the variance and hyper parameter values to use.
+-->
+
+## Initial values (init)
+
+The init argument can be used to supply initial values for the MCMC chain, which currently
+only supports to use output from another model-run for init.
 
 ## verbose settings
 
-
-# Output use
-Use of summary() on the bayz output object produces a summary of parameter estimates from the fitted model
-including convergence diagnostics and Highest Posterior Density (HPD) regions. 
-
-The summary() method only lists a limited number of the so-called "traced" parameters - these are model-parameters
-for which all MCMC samples are saved in the output, allowing to compute convergence, HPD regions, and to plot traces
-and densities (using plot()). The traced parameters by default include: all scalar variance parameters, estimated
-variance-covariances up to dimension 4x4, the model mean, scalar regression coefficients,
-coefficient estimates from fixed effects with up to 4 levels, and nested regressions with up to 4 levels. 
-
+The verbose argument is an integer with settings for the amount of information printed during the MCMC run:
+0 for no output, 1 for basic information on the MCMC run, and 2 for more detailed information on the MCMC run.
+The default is verbose=1.
 
 # Coefficients estimates
 
@@ -86,5 +334,5 @@ All estimates are stored in the output in a list called <output>$Estimates, whic
 
 # Variance components and PVEs
 
-The vcomp() method extracts variance estimates from the output.
+The vhest() method extracts variance and hyper paramter estimates from the output.
 

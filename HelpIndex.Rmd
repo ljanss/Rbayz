@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 Jump to sections or pages using the links below:
 
 | [bayz() function](#Main-function-bayz)            | Model-term features and options | Output use |
-|---|---|---|
 | [Model formula](#Model-formala)                   | Interaction specifications | General summary |
 | [Residual variance (Ve)](#Coefficients estimates) | Nested regressions         | Extract estimates (estim, coef, fixef, ranef) |
 | [data frame](#Variance components and PVEs)       |                            | Extracts variances, hyper-pars, and functions (vhest) |
@@ -29,23 +28,6 @@ Jump to sections or pages using the links below:
 -   [vcomp](#Variance components and PVEs)
 -   [Computing contrasts](#Computing constrasts)
 
-# Main function bayz()
-
-The complete interface for the bayz() main modelling function is:
-
-```{verbatim}
-  bayz(modelformula, Ve, data, linkid, chain, workdir, init, verbose)
-```
-
-where
--  modelformula is an extended R-style model formala, see xxx
--  Ve sets the model for the residual variance, see xxx
--  data is a data frame with variables (responses, explanatory variables) to build the model, see xxx
--  linkid is an id in the data used to link to kernels and sets of features. 
--  chain is a vector c(length, burn-in, skip) with total chain length to run, burn-in, and skip-interval for saving samples and computing convergence diagnostics.
--  workdir is a directory to save the MCMC samples and intermediate files, and to run the MCMC chain in. If not specified, the current working directory is used.
--  init is a list of initial values for the MCMC chain, see xxx
--  verbose is an integer with settings for the amount of information printed during the MCMC run, see xxx
 
 ## Model formula
 

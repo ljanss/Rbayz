@@ -37,7 +37,10 @@ print.summarybayz <- function(object, ...) {
       cat(" *Warning* Output has few samples",
           ", convergence diagnostics may be unreliable.\n")
     }
-    cat("  See HelpIndex#summary for background and help.\n")
+    cat("\n")
+    cat("For help check https://ljanss.github.io/Rbayz/HelpIndex.html\n")
+    cat("#summary #tracing-parameters #update-burnin #HPD-interval",
+        "#convergence-diagnostics\n")
     cat("\n")
   }
 }
