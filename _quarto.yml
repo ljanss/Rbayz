@@ -1,0 +1,33 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - BayzModels.Rmd
+    - UsingOutput.Rmd
+    - HelpIndex.Rmd
+
+website:
+  title: "R/bayz"
+  page-navigation: true
+  navbar:
+    left:
+      - href: index.qmd
+        text: Overview
+      - href: BayzModels.Rmd
+        text: Models
+      - href: UsingOutput.Rmd
+        text: Output
+      - href: HelpIndex.Rmd
+        text: Help Index
+
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    theme: cosmo
+    smooth-scroll: true
+
+execute:
+  echo: true

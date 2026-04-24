@@ -1,14 +1,11 @@
 ---
-#title: "Rbayz and bayz help topics by subject"
-#date: "`r Sys.Date()`"
-output: github_document
+title: "Help Index"
+format: html
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-# Rbayz and bayz help topics by subject
 
 Jump to sections or pages using the links below:
 

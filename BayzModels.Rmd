@@ -1,7 +1,6 @@
 ---
-#title: "Bayz interface and model building"
-#date: "`r Sys.Date()`"
-output: github_document
+title: "Bayz Interface and Model Building"
+format: html
 ---
 
 ```{r setup, include=FALSE}
@@ -10,11 +9,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 | On this page | Other help pages |
 |--------------|------------------|
-| [R/bayz overview and features](#rbayz-overview-and-features) | [Main readme page](README.html) |
-| [Downloading and installing R/bayz](#downloading-and-installing-rbayz) | [Using bayz output](BayzOutput.html) |
+| [R/bayz overview and features](#rbayz-overview-and-features) | [Main readme page](index.html) |
+| [Downloading and installing R/bayz](#downloading-and-installing-rbayz) | [Using bayz output](UsingOutput.html) |
 | [Quick tour and help](#quick-tour-and-help) | [Help Index](HelpIndex.html) |
-
-# Bayz interface and model building
 
 # Main function bayz
 
@@ -172,17 +169,49 @@ and rg(Temperature|Site) fits a regression on Temperature within each level of S
 
 The rr() wrapper supports fitting regressions on a (large) set of features with shrinkage models.
 The default is to use Normal priors with uniform shrinkage variance, which corresponds to
-'random regression' or ridge regression. 
+random or ridge regression and where the ridge penalty is learnt from the data in a full Bayesian approach
+(i.e., from its marginal posterior distribution, using a default uniform prior).
 
 ### P-values from random effects
 
+Frequentist significances for individual features used in ridge regression can be obtained using the prval() method.
+The approach behind prval() is based on mixed model theory to backtransform random effect solutions to solutions as
+if one feature at a time was fitted fixed, while keeping all others fitted random, but without the actual need to iterate
+over all features. When applied to genomic (SNP) data, this is performing the equivalent of a mixed model GWAS, but
+it can be applied as a 'feature-wide association study' to any other sets of features fitted with rr().
+In R/bayz the frequentist approach is
+transferred to a Bayesian framework using a procedure to evaluate the posterior SD of random effects *conditional*
+on the posterior mean estimate of the variance parameters, to mimic the conditional frequentist approach. 
 
+Use of prval() requires a 'save' option in the rr() term to save MCMC samples for the regression coefficients
+on the set of features. This allows prval() to compute the required conditional posterior SDs and the
+frequentist p-values, as in the following example:
+```{verbatim}
+# Feature-wide association study
+fit <- bayz(Glucose ~ rr(metabolites, idlink="Mouse", save),
+            data=myData, ...)
+pvals <- prval(fit, "metabolites")
+```
+
+Rbayz allows to fit multiple rr() terms with multiple sets of features, allowing simultaneous multi-omics
+feature-wide association studies. prval() is then used repeatedly to obtain p-values for each set of features.
+
+Note that the save option writes a (possibly large) file with MCMC samples on disk; you can control where this
+file is written with the [workdir argument](#workdir-in-output).
 
 ### Parameter names and disambiguation
 
 A model can include multiple terms, and the same variable can be used in multiple terms. In some
-cases this can lead to identical parameter names across model-terms.
+cases this can lead to identical parameter names across model-terms. Bayz runs a disambiguation procedure
+to make sure that parameter names are unique across model terms, adding numerals 1,2,3, ... to the parameter names when needed.
 
+One example where this happens is fitting multiple kernels on a common ID-variable, for instance in
+a multi-omics variance partitioning using a genomic and metabolomic kernel:
+```{verbatim}
+bayz(yield ~ rn(Variety, V=Gmat) + rn(Variety, V=Mmat), data=...)
+```
+This would initially create parameter names "Variety" and "var.Variety" for both terms, but they will be
+disambiguated to "Variety1", "var.Variety1" for the first term, and "Variety2", "var.Variety2" for the second term.
 
 ## Residual variance (Ve)
 
@@ -192,10 +221,13 @@ extensions to model more complex residual variance structures using the Ve argum
 ## Data frame (data)
 
 The data argument is a data frame with responses and explanatory variables used in the model, in the usual
-way for R modelling functions. Matrices with features for rr() are typically not included in the data frame, but are
-supplied separately and linked to the model with a linking-variable specified in the linkid argument,
-see [linking kernels, features (linkid)](#linking-kernels-features-linkid) below. 
-It is not required to prepared variable intended as factors as factors in the data frame, bayz will
+way for R modelling functions. Matrices with features for rr() and kernels used in rn()
+are typically not included in the data frame, but are
+supplied separately and linked to the model using rownames, and for feature sets
+by specifying a linking-variable,
+see [linking kernels, features (linkid)](#linking-kernels-features-linkid). 
+
+It is not required to prepare variables intended as factors as such in the data frame, bayz will
 transform variables to factors when placed in fx(), rn() or nested regression terms.
 
 ## Linking kernels, features (linkid)
@@ -222,7 +254,8 @@ rn(Variety:Site:Year, V=Gmat*Smat*Ymat)
 levels of Variety must find matches in the rownames of Gmat, levels of Site must find matches in the
 rownames of Smat, and levels of Year must find matches in the rownames of Ymat.
 
-For feature sets, a 'linkid' should specify a variable in the data that matches to rownames in the feature set:
+For feature sets, a 'linkid' should specify a variable in the suplied main data frame
+that matches to rownames in the feature set:
 
 ```{verbatim}
 bayz(Glucose ~ rr(myFeatures), linkid="featID", data=myData, ...)
@@ -243,7 +276,8 @@ measurement in time, and ID1 is a subject ID, and ID2 a subject-time ID.
 For a single random effect with one kernel, levels in the kernel with no data will get predictions
 based on the kernel similarity to levels with data. This can be used in prediction and cross-validation
 set-ups to predict, for instance, a new variety with no phenotypic data but a genomic relationship to other
-varieties in the training data.
+varieties in the training data. Predictions of levels with no data works both when they are mssing or left-out
+from the data, or when they are included with NA values for the response variable. 
 
 The same does not automatically work with interactions to predict unseen combinations of levels, but can be
 made to work. By default, bayz restricts modelling of interactions to the combinations seen in the data,
@@ -253,7 +287,8 @@ predictions for unseen combinations are:
 1) add 'mergeKernels' in the rn() specification. This will explicitly merge the kernels for the
 interaction in a single kernel product, which will then predict *all combinations of levels* of the interaction.
 This should be used with caution because the kernel product can become large, 
-but is the most straightforward way to predict all combinations of levels of the interaction. For instance when
+but is the most straightforward way to predict all combinations of levels of the interaction if the product
+of the levels of the interacting factors is not too large. For instance when
 modelling Variety:Site:Year with 500 varieties, 10 sites and 5 years, by default bayz works on
 the three kernels of sizes 500, 10 and 5 and only on combinations seen in the data,
 but with mergeKernels, a single 500\*10\*5 = 25,000 size kernel is created that has all possible

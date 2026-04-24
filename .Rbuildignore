@@ -10,3 +10,9 @@
 ^README.pdf$
 ^profile.R$
 ^README_files/*$
+^_quarto\.yml$
+^index\.qmd$
+^docs$
+^docs/.*$
+^\.quarto$
+^\.quarto/.*$

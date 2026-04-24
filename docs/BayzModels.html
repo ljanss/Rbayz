@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Bayz Interface and Model Building – R/bayz</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">R/bayz</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Overview</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./BayzModels.html" aria-current="page"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./UsingOutput.html"> 
+<span class="menu-text">Output</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./HelpIndex.html"> 
+<span class="menu-text">Help Index</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#main-function-bayz" id="toc-main-function-bayz" class="nav-link active" data-scroll-target="#main-function-bayz">Main function bayz</a>
+  <ul class="collapse">
+  <li><a href="#bayz-model-formula" id="toc-bayz-model-formula" class="nav-link" data-scroll-target="#bayz-model-formula">Bayz model formula</a>
+  <ul class="collapse">
+  <li><a href="#intercept" id="toc-intercept" class="nav-link" data-scroll-target="#intercept">Intercept</a></li>
+  <li><a href="#factors-in-fx-and-rn" id="toc-factors-in-fx-and-rn" class="nav-link" data-scroll-target="#factors-in-fx-and-rn">Factors in fx() and rn()</a></li>
+  <li><a href="#interactions-in-fx-and-rn" id="toc-interactions-in-fx-and-rn" class="nav-link" data-scroll-target="#interactions-in-fx-and-rn">Interactions in fx() and rn()</a></li>
+  <li><a href="#fixed-effects-fx" id="toc-fixed-effects-fx" class="nav-link" data-scroll-target="#fixed-effects-fx">Fixed effects (fx)</a></li>
+  <li><a href="#random-effects-rn" id="toc-random-effects-rn" class="nav-link" data-scroll-target="#random-effects-rn">Random effects (rn)</a></li>
+  <li><a href="#fixed-and-nested-fixed-regression-rg" id="toc-fixed-and-nested-fixed-regression-rg" class="nav-link" data-scroll-target="#fixed-and-nested-fixed-regression-rg">Fixed and nested fixed regression (rg)</a></li>
+  <li><a href="#ridgeshrinkage-regression-rr" id="toc-ridgeshrinkage-regression-rr" class="nav-link" data-scroll-target="#ridgeshrinkage-regression-rr">Ridge/shrinkage regression (rr)</a></li>
+  <li><a href="#p-values-from-random-effects" id="toc-p-values-from-random-effects" class="nav-link" data-scroll-target="#p-values-from-random-effects">P-values from random effects</a></li>
+  <li><a href="#parameter-names-and-disambiguation" id="toc-parameter-names-and-disambiguation" class="nav-link" data-scroll-target="#parameter-names-and-disambiguation">Parameter names and disambiguation</a></li>
+  </ul></li>
+  <li><a href="#residual-variance-ve" id="toc-residual-variance-ve" class="nav-link" data-scroll-target="#residual-variance-ve">Residual variance (Ve)</a></li>
+  <li><a href="#data-frame-data" id="toc-data-frame-data" class="nav-link" data-scroll-target="#data-frame-data">Data frame (data)</a></li>
+  <li><a href="#linking-kernels-features-linkid" id="toc-linking-kernels-features-linkid" class="nav-link" data-scroll-target="#linking-kernels-features-linkid">Linking kernels, features (linkid)</a>
+  <ul class="collapse">
+  <li><a href="#predicting-missing-levels-of-interactions" id="toc-predicting-missing-levels-of-interactions" class="nav-link" data-scroll-target="#predicting-missing-levels-of-interactions">Predicting missing levels of interactions</a></li>
+  </ul></li>
+  <li><a href="#mcmc-chain-settings" id="toc-mcmc-chain-settings" class="nav-link" data-scroll-target="#mcmc-chain-settings">MCMC chain settings</a></li>
+  <li><a href="#workdir-inoutput" id="toc-workdir-inoutput" class="nav-link" data-scroll-target="#workdir-inoutput">workdir in/output</a></li>
+  <li><a href="#initial-values-init" id="toc-initial-values-init" class="nav-link" data-scroll-target="#initial-values-init">Initial values (init)</a></li>
+  <li><a href="#verbose-settings" id="toc-verbose-settings" class="nav-link" data-scroll-target="#verbose-settings">verbose settings</a></li>
+  </ul></li>
+  <li><a href="#coefficients-estimates" id="toc-coefficients-estimates" class="nav-link" data-scroll-target="#coefficients-estimates">Coefficients estimates</a></li>
+  <li><a href="#variance-components-and-pves" id="toc-variance-components-and-pves" class="nav-link" data-scroll-target="#variance-components-and-pves">Variance components and PVEs</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Bayz Interface and Model Building</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>On this page</th>
+<th>Other help pages</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#rbayz-overview-and-features">R/bayz overview and features</a></td>
+<td><a href="index.html">Main readme page</a></td>
+</tr>
+<tr class="even">
+<td><a href="#downloading-and-installing-rbayz">Downloading and installing R/bayz</a></td>
+<td><a href="UsingOutput.html">Using bayz output</a></td>
+</tr>
+<tr class="odd">
+<td><a href="#quick-tour-and-help">Quick tour and help</a></td>
+<td><a href="HelpIndex.html">Help Index</a></td>
+</tr>
+</tbody>
+</table>
+<section id="main-function-bayz" class="level1">
+<h1>Main function bayz</h1>
+<p>The complete interface for the bayz() main modelling function is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>  bayz(modelformula, Ve, data, linkid, chain, workdir, init, verbose)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>where - modelformula is an extended R-style model formula, see <a href="#bayz-model-formula">Bayz model formula</a> below. - Ve sets the model for the residual variance, see <a href="#residual-variance-ve">Residual variance (Ve)</a> below. - data is a data frame with variables to build the model, see <a href="#data-frame-data">Data frame (data)</a> below. - linkid is an id to link feature sets, see <a href="#linking-kernels-features-linkid">linking kernels, features (linkid)</a> below. - chain is a vector c(length, burn-in, skip), see <a href="#mcmc-chain-settings">MCMC chain settings</a> below. - workdir is a directory to save the MCMC sample files, see <a href="#workdir-inoutput">Workdir in/output</a> below. - init is a list of initial values for the MCMC chain, see <a href="#initial-values-init">Initial values (init)</a> below. - verbose is an integer controlling the amount of information printed, see <a href="#verbose-settings">Verbose settings</a> below.</p>
+<section id="bayz-model-formula" class="level2">
+<h2 class="anchored" data-anchor-id="bayz-model-formula">Bayz model formula</h2>
+<p>The bayz model formula is an extended R-formula syntax where all explanatory (right-hand-side) variables are wrapped by a term to specify how to fit variable(s) in the model, for instance:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>Yield ~ fx(Year:Site) + rn(Variety)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>specifies Yield as response modelled by fixed effects of Year-Site interactions and random effects of Variety. All currenly supported wrappers are listed in the table below, and more details on their use and options are given in the sections below.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 19%">
+<col style="width: 31%">
+<col style="width: 35%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Wrapper</th>
+<th>Description</th>
+<th>Variable treatment</th>
+<th>Interactions or nesting</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>fx()</td>
+<td>fixed effects</td>
+<td>factor or multiple factors</td>
+<td>Any degree using colon(s)</td>
+</tr>
+<tr class="even">
+<td>rn()</td>
+<td>random effects</td>
+<td>factor or multiple factors</td>
+<td>Any degree using colon(s)</td>
+</tr>
+<tr class="odd">
+<td>rg()</td>
+<td>fixed or nested regression</td>
+<td>numeric or numeric | factor</td>
+<td>Nested with bar</td>
+</tr>
+<tr class="even">
+<td>rr()</td>
+<td>ridge/shrinkage regression</td>
+<td>numeric sets of features</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<section id="intercept" class="level3">
+<h3 class="anchored" data-anchor-id="intercept">Intercept</h3>
+<p>An intercept is included by default; it can be removed by using ‘0’ as first term in the model, as in standard R formula syntax. Fixed effects constrain their first level to zero, so that the intercept represents the combined first levels of all fixed effects used. The intercept is logged in the estimates as ‘mean’ and is included in the traced parameters. However, it can show poor convergence when there is some overparameterisation in the fixed effects, but this is generally not worrysome and should not be a reason to remove the intercept from the model.</p>
+</section>
+<section id="factors-in-fx-and-rn" class="level3">
+<h3 class="anchored" data-anchor-id="factors-in-fx-and-rn">Factors in fx() and rn()</h3>
+<p>Variables used in fx() and rn() are treated as factors, or will be transformed to factors. There can thus be no confusion about treatment of integer variables: in fx() and rn() this will be treated as factors; in rg() or rr() this will be treated as continuous covariates (this often goes wrong in R modelling functions where, e.g., batch numbers will be treated as continuous but it is more appropriate to treat them as factors).</p>
+</section>
+<section id="interactions-in-fx-and-rn" class="level3">
+<h3 class="anchored" data-anchor-id="interactions-in-fx-and-rn">Interactions in fx() and rn()</h3>
+<p>Bayz allows for interactions of any degree in fx() and rn() using the colon operator, but does not perform automatic expansion with main effects using asterix or slash. Main effects, if desired, should be added explicitly. Note that it is not needed to add main effects to achieve the same model and data corrections; Site:Year will do the same as Site*Year (Site + Year + Site:Year). Site:Year does not allow a classical ANOVA by separating the main effects, but the Bayesian framework does not do ANOVA anyway, and the approach to judge whether an interaction is needed would be to run a model with main effects only (Site+Year) and compare BIC or marginal likelihood to a model with main effects and interaction (which simply can be Site:Year).</p>
+</section>
+<section id="fixed-effects-fx" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-effects-fx">Fixed effects (fx)</h3>
+<p>The fx() wrapper is used to fit factors as “fixed effects”, translated in the Bayesian framework as using flat priors. See the sections on factors and interactions in fx() and rn() for details on these respective subjects.</p>
+<p>For fixed effects the first level is constraint to zero, so that other levels represent differences to the first level, as is also the standard in other R models like lm(). This constraint on the first level is applied to all fixed effects so that it’s wise to keep an intercept in the model. The Bayesian MCMC approach cannot determine if colinearities need further constraints, which can lead to poor convergence in fixed effect (and intercept) estimates. This is generally not worrysome and can be ignored, but significances of fixed effect estimates and contrasts are only reliable for estimable effects and contrasts.</p>
+<p>The posterior means and SDs for fixed effects are usually very close to frequentist estimates and S.E.’s from (O)LS or mixed model approaches (e.g, R lm() and lmer()), but the Bayesian version includes additional uncertainty from the estimation of variance parameters. This usually has minimal effect on the estimates, and small effect on the posterior SD, compared to frequentist analogues. It is possible to obtain estimates identical to frequentist estimates (apart from Monte Carlo noise) by fixing variance parameters and using the BLUPMC method.</p>
+<p>To judge significance of estimates or contrasts in a Bayesian spirit, HPD intervals can be obtained from summary() if the samples for the effect were traced. Contrasts between levels other than with the first level can be obtained using the contrast() method, which also requires that the samples for the effect were traced. Fixed effects with fewer than 5 levels are by default added to the traced parameters; with 5 or more levels, tracing is by default off, but can be toggled on manually by adding a ‘trace’ option in the model term. With tracing on, MCMC samples for the fixed effects are saved, which provides convergence diagnostics and HPD intervals with summary(), trace plots with plot(), and contrast with their HPD intervals with contrast(). See the linked sections and the section on traced parameters for more info. There is no Bayesian analogue to ANOVA to judge importance of including a fixed effect in the model; this can be done in the Bayesian framework by comparing BIC or marginal likelihood of models with and without the fixed effect.</p>
+</section>
+<section id="random-effects-rn" class="level3">
+<h3 class="anchored" data-anchor-id="random-effects-rn">Random effects (rn)</h3>
+<p>The rn() wrapper is used to fit factors as “random effects”, translated in the Bayesian framework as using Normal priors (by default), or other shrinkage priors. The default Normal (Gaussian) priors mimic the frequentist mixed model, but with other shrinkage priors, one leaves the realm of mixed models and random effects. Using, for instance, Laplace or t-distributed priors can account for larger extremes in the random effects than what mixed model Normal priors can support. This is well known in the context of ridge regression and other shrinkage regression approaches, but is less commonly used in the context of “regular” random effects. Variance (or other hyper-) parameters are added to the model and learnt from the data with default uninformative priors, and are included in the list of model parameters with a “var.” or “hyp.” prefix. See the sections on factors and interactions in fx() and rn() for details on these respective subjects.</p>
+<p>When using default Normal priors, posterior means for random effects are usually similar to frequentist estimates from mixed model approaches (e.g, R lmer()). However, the Bayesian approach includes additional uncertainty from the estimation of variance parameters, which can especially increase the posterior SD compared to a frequentist S.E.P. that does not account for uncertainty in the variance. In the frequentist approach, SEP^2 is always smaller than the (fixed) variance parameter, but in the Bayesian approach, the postSD^2 can be larger than the posterior mean for the variance parameter because the postSD is a marginal estimate evaluated over the whole distribution of the variance parameter. If desired, R/bayz supports two approaches to obtain postSD’s that are identical (apart from Monte Carlo noise) to frequentist SEP: 1) the prval() method can evaluate the posterior SD <em>conditional</em> on the posterior mean estimate of the variance from a standard full Bayesian approach; and 2) it is possible to use an empirical Bayes approach by fixing variance parameters and using the BLUPMC method.</p>
+<p>The rn() wrapper supports using different distributions on the random effects. The default fit for random effects is an uncorrelated Normal (Gaussian) distribution with uniform variance, so that:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>bayz(yield ~ rn(Variety), data=...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>fits a model with random variety effects that Normally distributed with variance <span class="math inline">\(I\sigma_{Variety}^2)\)</span>.</p>
+<p>This can also be applied to interactions, for instance:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bayz(yield ~ rn(Variety) + rn(Variety:Site), data=...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>will fit Variety main and Variety:Site interaction effects using uncorrelated Normal priors, and estimates the two corresponding variance parameters.</p>
+<p>Kernels, and products of kernels, can be added on single and interaction terms using the V= argument inside the rn() wrapper, for instance:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>bayz(yield ~ rn(Variety, V=Gmat) + rn(Variety:Site, V=Gmat*Smat), data=...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>which models Variety effecets distributed ~ Gmat <span class="math inline">\(\sigma_{Variety}^2)\)</span>, and Variety:Site interaction effects distributed ~ Gmat <span class="math inline">\(`\otimes`\)</span> Smat <span class="math inline">\(\sigma_{Variety:Site}^2)\)</span>.</p>
+</section>
+<section id="fixed-and-nested-fixed-regression-rg" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-and-nested-fixed-regression-rg">Fixed and nested fixed regression (rg)</h3>
+<p>The rg() wrapper supports fitting a regression on a single covariate, or a regression on a covariate nested in a factor using the covariate|factor syntax. For instance, rg(Temperature) fits a regression on the covariate Temperature, and rg(Temperature|Site) fits a regression on Temperature within each level of Site.</p>
+</section>
+<section id="ridgeshrinkage-regression-rr" class="level3">
+<h3 class="anchored" data-anchor-id="ridgeshrinkage-regression-rr">Ridge/shrinkage regression (rr)</h3>
+<p>The rr() wrapper supports fitting regressions on a (large) set of features with shrinkage models. The default is to use Normal priors with uniform shrinkage variance, which corresponds to random or ridge regression and where the ridge penalty is learnt from the data in a full Bayesian approach (i.e., from its marginal posterior distribution, using a default uniform prior).</p>
+</section>
+<section id="p-values-from-random-effects" class="level3">
+<h3 class="anchored" data-anchor-id="p-values-from-random-effects">P-values from random effects</h3>
+<p>Frequentist significances for individual features used in ridge regression can be obtained using the prval() method. The approach behind prval() is based on mixed model theory to backtransform random effect solutions to solutions as if one feature at a time was fitted fixed, while keeping all others fitted random, but without the actual need to iterate over all features. When applied to genomic (SNP) data, this is performing the equivalent of a mixed model GWAS, but it can be applied as a ‘feature-wide association study’ to any other sets of features fitted with rr(). In R/bayz the frequentist approach is transferred to a Bayesian framework using a procedure to evaluate the posterior SD of random effects <em>conditional</em> on the posterior mean estimate of the variance parameters, to mimic the conditional frequentist approach.</p>
+<p>Use of prval() requires a ‘save’ option in the rr() term to save MCMC samples for the regression coefficients on the set of features. This allows prval() to compute the required conditional posterior SDs and the frequentist p-values, as in the following example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a># Feature-wide association study</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fit &lt;- bayz(Glucose ~ rr(metabolites, idlink="Mouse", save),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>            data=myData, ...)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>pvals &lt;- prval(fit, "metabolites")</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Rbayz allows to fit multiple rr() terms with multiple sets of features, allowing simultaneous multi-omics feature-wide association studies. prval() is then used repeatedly to obtain p-values for each set of features.</p>
+<p>Note that the save option writes a (possibly large) file with MCMC samples on disk; you can control where this file is written with the <a href="#workdir-in-output">workdir argument</a>.</p>
+</section>
+<section id="parameter-names-and-disambiguation" class="level3">
+<h3 class="anchored" data-anchor-id="parameter-names-and-disambiguation">Parameter names and disambiguation</h3>
+<p>A model can include multiple terms, and the same variable can be used in multiple terms. In some cases this can lead to identical parameter names across model-terms. Bayz runs a disambiguation procedure to make sure that parameter names are unique across model terms, adding numerals 1,2,3, … to the parameter names when needed.</p>
+<p>One example where this happens is fitting multiple kernels on a common ID-variable, for instance in a multi-omics variance partitioning using a genomic and metabolomic kernel:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bayz(yield ~ rn(Variety, V=Gmat) + rn(Variety, V=Mmat), data=...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This would initially create parameter names “Variety” and “var.Variety” for both terms, but they will be disambiguated to “Variety1”, “var.Variety1” for the first term, and “Variety2”, “var.Variety2” for the second term.</p>
+</section>
+</section>
+<section id="residual-variance-ve" class="level2">
+<h2 class="anchored" data-anchor-id="residual-variance-ve">Residual variance (Ve)</h2>
+<p>The current version models a uniform residual variance, but we’re working on implementing extensions to model more complex residual variance structures using the Ve argument.</p>
+</section>
+<section id="data-frame-data" class="level2">
+<h2 class="anchored" data-anchor-id="data-frame-data">Data frame (data)</h2>
+<p>The data argument is a data frame with responses and explanatory variables used in the model, in the usual way for R modelling functions. Matrices with features for rr() and kernels used in rn() are typically not included in the data frame, but are supplied separately and linked to the model using rownames, and for feature sets by specifying a linking-variable, see <a href="#linking-kernels-features-linkid">linking kernels, features (linkid)</a>.</p>
+<p>It is not required to prepare variables intended as factors as such in the data frame, bayz will transform variables to factors when placed in fx(), rn() or nested regression terms.</p>
+</section>
+<section id="linking-kernels-features-linkid" class="level2">
+<h2 class="anchored" data-anchor-id="linking-kernels-features-linkid">Linking kernels, features (linkid)</h2>
+<p>Bayz merges feature sets and kernels with the data using rownames, allowing for seamless integration of kernels and external data sources into the model without need to filter / order / subset such data to match contents, order and repetitions in the data frame. This allows for 1) kernels to have more levels than the data, predicting the levels with missing data (but see <a href="#predicting-missing-levels-of-interactions">Predicting missing levels of interactions</a> how this works for interactions), 2) for feature sets to have rows that don’t match to the data, which will be ignored in the model, 3) for both kernels and features to have repeated levels in the data, but are given only once in the kernel or feature set, and 4) ordering of levels in the data and kernel or feature set can differ. Note that levels or IDs found in the data <em>must find a match</em> in the kernel or feature set, but the reverse is not needed.</p>
+<p>For kernels, the match to the data is implied by the variable(s) in the model term, that is, for a triple interaction with variance specified as a triple kernel product:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>rn(Variety:Site:Year, V=Gmat*Smat*Ymat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>levels of Variety must find matches in the rownames of Gmat, levels of Site must find matches in the rownames of Smat, and levels of Year must find matches in the rownames of Ymat.</p>
+<p>For feature sets, a ‘linkid’ should specify a variable in the suplied main data frame that matches to rownames in the feature set:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bayz(Glucose ~ rr(myFeatures), linkid="featID", data=myData, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>and “featID” is a column in myData to link to the feature set myFeatures. The linkid can be moved inside the rr() term if there is a need to use different linkids for different feature sets, for instance:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bayz(Glucose ~ rr(Features1, linkid="ID1") + rr(Features2, linkid="ID2"), data=myData, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>which could be a case where Features1 are measured once on a set of subjects, and Features2 are repeated measurement in time, and ID1 is a subject ID, and ID2 a subject-time ID.</p>
+<section id="predicting-missing-levels-of-interactions" class="level3">
+<h3 class="anchored" data-anchor-id="predicting-missing-levels-of-interactions">Predicting missing levels of interactions</h3>
+<p>For a single random effect with one kernel, levels in the kernel with no data will get predictions based on the kernel similarity to levels with data. This can be used in prediction and cross-validation set-ups to predict, for instance, a new variety with no phenotypic data but a genomic relationship to other varieties in the training data. Predictions of levels with no data works both when they are mssing or left-out from the data, or when they are included with NA values for the response variable.</p>
+<p>The same does not automatically work with interactions to predict unseen combinations of levels, but can be made to work. By default, bayz restricts modelling of interactions to the combinations seen in the data, because all combinations of levels can quickly become enourmous and computing intensive. Two ways to get predictions for unseen combinations are:</p>
+<ol type="1">
+<li><p>add ‘mergeKernels’ in the rn() specification. This will explicitly merge the kernels for the interaction in a single kernel product, which will then predict <em>all combinations of levels</em> of the interaction. This should be used with caution because the kernel product can become large, but is the most straightforward way to predict all combinations of levels of the interaction if the product of the levels of the interacting factors is not too large. For instance when modelling Variety:Site:Year with 500 varieties, 10 sites and 5 years, by default bayz works on the three kernels of sizes 500, 10 and 5 and only on combinations seen in the data, but with mergeKernels, a single 500*10*5 = 25,000 size kernel is created that has all possible combinations of levels.</p></li>
+<li><p>add (or keep) combinations of levels to predict in the data frame with a missing data value. In a cross-validation set-up this is easily used by replacing held-out data with missings (NA), instead of removing the rows with held-out data.</p></li>
+</ol>
+</section>
+</section>
+<section id="mcmc-chain-settings" class="level2">
+<h2 class="anchored" data-anchor-id="mcmc-chain-settings">MCMC chain settings</h2>
+<p>The length of the MCMC chain to run, burn-in, and skip-interval to use are specified by the chain argument as a vector with 3 integer values:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>bayz(formula, data=..., chain=c(length, burnin, skip))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>In MCMC-based estimation it is always somewhat difficult to judge a-priori these settings and some trials are often needed to find satisfactory convergence and precision of estimates. Bayz employs some smart sampling algorithms and for kernels works on (approximate) orthogonal embeddings, which allows for relatively good convergence, and chain=c(5000, 500, 10) can be a good starting point for many models. But models with multiple kernels, or kernels with tunable or estimated parameters, can need much longer chains. The summary() method provides convergence diagnostics and plot() provides trace plots for traced parameters to judge convergence.</p>
+<p>The chain setting can be omitted, which runs a default chain=c(1000, 100, 10), which can be good for testing if a model runs but may be too small for good precision in most models.</p>
+<p>The skip parameter controls the interval to accumulate posterior means and SDs and to save samples for traced parameters. Choice of the skip parameter is largely a matter of efficiency and memory use: skip below 10 is usually not needed and inefficient: this implies larger overhead in computing posterior statistics, larger memory need to store samples, without much gain as consecutive MCMC samples are often highly autocorrelated, and can lead to incorrect inference on effective sample sizes. There is sometimes a misconception that skip should be so high to reach near indepdence of samples, but this is not needed either. Settings that extract 500-1000 samples and reach effective sample sizes of 100-200 are often reasonable.</p>
+</section>
+<section id="workdir-inoutput" class="level2">
+<h2 class="anchored" data-anchor-id="workdir-inoutput">workdir in/output</h2>
+<p>The workdir argument specifies a directory to run the MCMC chain in, and to save MCMC samples for model terms with the ‘save’ option. If not specified, the current working directory is used. The workdir should be a directory with write permissions, and should have enough space to save the MCMC samples, which can be large for long chains and model terms with many parameters. The workdir path can either be absolute or relative to the current working directory - anything that works with R’s setwd() function is acceptable.</p>
+<!--
+## Bayz method options
+
+The method currently supports two uses: method="Bayes" and method="BLUPMC". 
+Method "Bayes" is the default and runs a full Bayesian MCMC sampling (a combination of
+single-site Gibbs sampling, blocked Gibbs sampling, slice sampling and Metropolis-Hastings updates)
+estimating all coefficients and learning all variance and hyper parameters.
+
+Method BLUPMC keeps variance and hyper parameters fixed and obtains BLUP and BLUE estimates with MCMC-based posterior
+uncertainties that will be identical to frequentist BLUP and BLUE estimates and their uncertainty estimates (S.E. and S.E.P.).
+Use of BLUPMC requires to [use init](#initial-values-init) to supply the variance and hyper parameter values to use.
+-->
+</section>
+<section id="initial-values-init" class="level2">
+<h2 class="anchored" data-anchor-id="initial-values-init">Initial values (init)</h2>
+<p>The init argument can be used to supply initial values for the MCMC chain, which currently only supports to use output from another model-run for init.</p>
+</section>
+<section id="verbose-settings" class="level2">
+<h2 class="anchored" data-anchor-id="verbose-settings">verbose settings</h2>
+<p>The verbose argument is an integer with settings for the amount of information printed during the MCMC run: 0 for no output, 1 for basic information on the MCMC run, and 2 for more detailed information on the MCMC run. The default is verbose=1.</p>
+</section>
+</section>
+<section id="coefficients-estimates" class="level1">
+<h1>Coefficients estimates</h1>
+Apart from using these functions, it is also quite straightforward to extract estimates directly from the bayz output object. All estimates are stored in the output in a list called
+<output>
+<p>$Estimates, which has named elements according to parameter names.</p>
+</output></section>
+<section id="variance-components-and-pves" class="level1">
+<h1>Variance components and PVEs</h1>
+<p>The vhest() method extracts variance and hyper paramter estimates from the output.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

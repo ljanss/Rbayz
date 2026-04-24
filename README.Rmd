@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 | On this page | Other help pages |
 |--------------|------------------|
 | [R/bayz overview and features](#rbayz-overview-and-features) | [Bayz interface and models](BayzModels.html) |
-| [Downloading and installing R/bayz](#downloading-and-installing-rbayz) | [Using bayz output](BayzOutput.html) |
+| [Downloading and installing R/bayz](#downloading-and-installing-rbayz) | [Using bayz output](UsingOutput.html) |
 | [Quick tour and help](#quick-tour-and-help) | [Help Index](HelpIndex.html) |
 
 # R/bayz overview and features

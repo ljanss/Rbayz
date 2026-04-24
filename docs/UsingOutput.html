@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Using Bayz Output – R/bayz</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">R/bayz</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Overview</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./BayzModels.html"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./UsingOutput.html" aria-current="page"> 
+<span class="menu-text">Output</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./HelpIndex.html"> 
+<span class="menu-text">Help Index</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#bayz-traced-parameters" id="toc-bayz-traced-parameters" class="nav-link active" data-scroll-target="#bayz-traced-parameters">Bayz traced parameters</a></li>
+  <li><a href="#summary-of-model-output" id="toc-summary-of-model-output" class="nav-link" data-scroll-target="#summary-of-model-output">Summary of model output</a></li>
+  <li><a href="#convergence-diagnostics" id="toc-convergence-diagnostics" class="nav-link" data-scroll-target="#convergence-diagnostics">Convergence diagnostics</a></li>
+  <li><a href="#hpd-intervals" id="toc-hpd-intervals" class="nav-link" data-scroll-target="#hpd-intervals">HPD intervals</a></li>
+  <li><a href="#trace-plots-and-densities" id="toc-trace-plots-and-densities" class="nav-link" data-scroll-target="#trace-plots-and-densities">Trace plots and densities</a></li>
+  <li><a href="#fixed-and-random-effects-with-coef-fixef-and-ranef" id="toc-fixed-and-random-effects-with-coef-fixef-and-ranef" class="nav-link" data-scroll-target="#fixed-and-random-effects-with-coef-fixef-and-ranef">Fixed and random effects with coef, fixef and ranef</a></li>
+  <li><a href="#extracting-parameter-estimates-with-estim" id="toc-extracting-parameter-estimates-with-estim" class="nav-link" data-scroll-target="#extracting-parameter-estimates-with-estim">Extracting parameter estimates with estim</a></li>
+  <li><a href="#directly-assessing-parameter-estimates-in-the-output" id="toc-directly-assessing-parameter-estimates-in-the-output" class="nav-link" data-scroll-target="#directly-assessing-parameter-estimates-in-the-output">Directly assessing parameter estimates in the output</a></li>
+  <li><a href="#variance-components-and-pves" id="toc-variance-components-and-pves" class="nav-link" data-scroll-target="#variance-components-and-pves">Variance components and PVEs</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Using Bayz Output</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="line-block"><a href="#bayz-traced-parameters">Bayz traced parameters</a> | <a href="#fixed-and-random-effects-with%20coef,-fixef-and-ranef">Fixed and random effects (coef, fixef, ranef)</a> |<br>
+<a href="#summary-of-model-output">Summary of model output</a> | <a href="#Extracting-parameter-estimates-with-estim">Generic estim() to extract estimates</a> |<br>
+<a href="#convergence-diagnostics">Convergence diagnostics</a> | <a href="HelpIndex.html">Variance and hyper-parameters (vhest)</a> |<br>
+<a href="#hpd-intervals">HPD intervals</a> | <a href="">Contrasts and functions of var/hyper paramters</a> |<br>
+<a href="#trace-plots-and-densities">Trace plots and densities</a> | xxx |</div>
+<section id="bayz-traced-parameters" class="level1">
+<h1>Bayz traced parameters</h1>
+<p>The bayz output object contains a table with the full traces of sampled values for a small selection of model parameters (after burn-in and at specified ‘skip’ intervals). In the output object this is the $Samples table, and the manual refers to these as “traced” parameters. This selection of traced parameters is kept small (but can be manually tuned) because, firstly, these sample traces are held in memory and returned in the output in an R table; secondly, output processing tools summary() and plot() would get computing intensive for hundreds or thousands of traced parameters; and thirdly, the sample traces mainly serve to judge converge or compute contrast for main fixed effects and functions of variance and hyper-parameters, thus it is usually sufficient to keep these traces only for a small selection of parameters.</p>
+<p>There is an alternative ‘save’ option that writes a file with samples to disk, which can be useful if there is a need to keep the samples from model terms with large numbers of parameters but avoid that they automatically go into summary() and plot() tools.</p>
+<p>In detail, the default settings keep sample traces for: all variance and hyper-parameters including the residual variance, the model intercept (the ‘mean’ parameter), fixed effects with fewer than 5 levels, and single regression coefficients from the rg() wrapper. If tracing is not switched on by default, it can be switched on manually with a ‘trace’ option inside any of the model-term wrappers. This could, for instance, be relevant to allow computing contrasts between levels of a fixed effect with 5 or more levels where the tracing is not on by default:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bayz(glucose ~ fx(Group, trace) + ..., data=...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For parameters for which sample traces are stored, one can obtain:</p>
+<ul>
+<li>Convergence diagnostics (see summary)</li>
+<li>HPD intervals (see summary)</li>
+<li>Trace plots (see plot)</li>
+<li>Density plots (see plot)</li>
+<li>Contrast between levels of fixed effects (see contrast)</li>
+<li>Functions of variance and hyper-parameters (see contrast)</li>
+</ul>
+</section>
+<section id="summary-of-model-output" class="level1">
+<h1>Summary of model output</h1>
+<p>Use of summary() on the bayz output object produces a summary of parameter estimates from the fitted model including convergence diagnostics and Highest Posterior Density (HPD) regions. This summary is based on the “traced” parameters - by default variance and hyper-parameters and some fixed effects with few levels, see <a href="#bayz-traced-parameters">Bayz traced parameters</a> for details. The summary show some general model run statistics, errors and warnings, and a main table with with estimates (posterior mean and SD), <a href="#hpd-intervals">HPD intervals</a> and <a href="#convergence-diagnostics">convergence diagnostics</a> for all traced paramters.</p>
+<p>The full interface of summary() is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>summary(bayz-output, HPDprob=..., burnin=...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A default version can be run in a usual R way:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit &lt;- bayz(Yield ~ fx(Year:Site) + rn(Variety), data=...)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>summary(fit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>THe HPDprob argument can be used to modify the probability for the computed HPD intervals shown in summary; the default is 0.95. See more under <a href="#hpd-intervals">HPD intervals</a>.</p>
+<p>The burnin argument can be used to update (<em>increase</em>) the burn-in setting over the burn-in used in the model run. If there is indication of insufficient burn-in (see <a href="#convergence-diagnostics">Convergence diagnostics</a>), this allows to verify and find a suitable updated burn-in setting. Note: it is only possible to remove additional burn-in from the traced parameters shown in summary() and plot(), not from the stored estimates for fixed and random effects retrieved with fixed() or ranef() or estimates directly assessed in the model output. Once a satisfactory burn-in is found by playing with these updated burn-in settings in summary() or plot(), the whole model will need to be re-run to obtain ‘clean’ estimates for the whole model output.</p>
+</section>
+<section id="convergence-diagnostics" class="level1">
+<h1>Convergence diagnostics</h1>
+<p>The summary() method includes convergence diagnostics for all <a href="#bayz-traced-parameters">traced parameters</a>. Convergence diagnostics are based on tools from the R Coda package. The convergence diagnostics reported are:</p>
+<ul>
+<li>effSize: an estimate of effective size, based on coda::effectiveSize()</li>
+<li>GewekeZ: the absolute Geweke z-statistic, based on coda:geweke.diag()</li>
+<li>MCSE: Monte Carlo Standard Error, based on the effective size estimate</li>
+<li>MCCV%: The MCSE expressed as a coefficient of variation (SE/mean) in percent</li>
+</ul>
+<p>The effective size estimate is based on a serial correlation model, which works fine when the serial correlation is medium-high, but not very high. This is out basis for the <a href="BayzModels.html#mcmc-chain-settings">recommended chain settings</a>.</p>
+<p>The Geweke z-statistic compares first and last parts of each parameter trace and a significant GewekeZ (about 2 and higher) indicates either left-over burn-in effects, or a ‘drifting’ non-estimable parameter; inspection of trace plots can confirm which of these two seems to be the problem. If there are signs of left-over burn-in, one can play with the burn-in argument in summary (see comments in <a href="#summary-of-model-output">summary</a>). Drifting mean (intercept) or fixed effect levels are not immediately worrysome (but then need to be considered non-estimable, see more comments here), but drifting variance or hyper-parameters are a more serious problem and may need model re-formulation.</p>
+<p>The MCSE estimates left-over Monte Carlo noise on the posterior mean estimate. MCSE is useful to judge the reliability of the Monte Carlo approximation to the posterior distributions and to judge how many decimals on the posterior means could be reliably reported. If MCSE is around 0.1, reporting 2 or more decimals on a posterior mean is overselling its precision, but if MCSE is 0.01, surely the first decimal is quite certain. The MCSE is a reflection of the chain-length used, and as a rough rule of thump, doubling chain length should decrease MCSE by sqrt(2).</p>
+<p>The MCCV (Monte Carlo Coefficient of Variation) is the MCSE relative to the mean (given in percent). Like MCSE it expresses the reliability of the Monte Carlo approximation on the posterior mean estimates, but expressed relatively instead of absolutely. It is a good goal to get MCCV below 5% and maybe down to “a few” percent so that the Monte Carlo error on the posterior means is relatively small. But it can be strenuous to squeeze out the last little bits of noise because every halving of MCCV requires, roughly, quadrupling of the chain length. In the end it is a matter of subjective judgement whether absolute MCSE and relative MCCV are small enough to be confident in reporting, notably, posterior mean estimates of variance and hyper-parameters. Model intercept and fixed effect levels can show large (and remaining) Monte Carlo error, which usually indicates confoundment in the fixed effects specification. This is not immediately worrying if the focus of model inference is elsewhere (e.g.&nbsp;on variance parameters or random effects), but it implies fixed effect estimates are not reliable.</p>
+</section>
+<section id="hpd-intervals" class="level1">
+<h1>HPD intervals</h1>
+<p>The summary() method shows parameter estimates including default 95% HPD intervals for all <a href="#bayz-traced-parameters">traced parameters</a>, and contrast() adds HPD intervals to computed contrast and functions of variance and hyper-parameters. R/bayz implements properly computed HPD intervals - not simply the 2.5 and 97.5% quantiles. A proper Bayesian HPD interval is the smallest interval containing (by default) 95% of density, which implies they concentrate more on the mode and leave out more from the longer tail for skewed densities. The implementation also accounts for the natural left-boundary at zero for variances and the natural [0,1] boundaries for probabilities. HPD intervals can start from these boundaries, e.g.&nbsp;from zero for variances, which typically happens when the mode of the posterior distribution is near or at zero. This can usually be interpreted as the associated random effect not being important for the model (a REML estimate would likely also end up at zero). It is difficult to spot in other ways that a variance posterior covers zero; both posterior mean and a 2.5% quantile will by nature always be positive.</p>
+<p>The default 95% HPD interval probability is changeable using the HPDprob argument in the summary() method. The HPD interval computation relies on the HPDbayz function in the package and uses a reflection boundary approach to allow computing intervals up to parameter boundaries, but we have not documented this for public use.</p>
+</section>
+<section id="trace-plots-and-densities" class="level1">
+<h1>Trace plots and densities</h1>
+<p>The plot() method plots trace plots and posterior densities for all <a href="#bayz-traced-parameters">traced parameters</a>.</p>
+</section>
+<section id="fixed-and-random-effects-with-coef-fixef-and-ranef" class="level1">
+<h1>Fixed and random effects with coef, fixef and ranef</h1>
+<p>Rbayz supports generic R methods coef, fixef and ranef to extract, respectively, all model coefficients, the fixed effects, and the random effects. The model coefficients is interpret here as the combination of all fixed and random effects.</p>
+</section>
+<section id="extracting-parameter-estimates-with-estim" class="level1">
+<h1>Extracting parameter estimates with estim</h1>
+<p>Rbayz also uses a generic estim() method that can extract any parameter estimates from the output, both coefficients (fixed and or random effects) as well as variance and hyper-parameters. It also supports extracting multiple parameter vectors in one output, and do perform some manipulations of the output.</p>
+</section>
+<section id="directly-assessing-parameter-estimates-in-the-output" class="level1">
+<h1>Directly assessing parameter estimates in the output</h1>
+Apart from using extraction functions, it is also quite straightforward to extract estimates directly from the bayz output object. All estimates are stored in the output in a list called
+<output>
+<p>$Estimates, which has named elements according to parameter names.</p>
+<p>Especially interactively, using auto-completion and the pop-ups to find elements lists in Rstudio, one can quite quickly navigate to extract or view a parameter vector of interest.</p>
+</output></section>
+<section id="variance-components-and-pves" class="level1">
+<h1>Variance components and PVEs</h1>
+<p>The vcomp() method extracts variance estimates from the output.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

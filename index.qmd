@@ -1,0 +1,17 @@
+---
+title: "R/bayz Documentation"
+---
+
+# R/bayz Documentation
+
+R/bayz provides Bayesian mixed models, shrinkage regression, kernel-based random effects,
+interaction kernels, and feature-set regression through the main `bayz()` interface.
+
+Use the top navigation for the main documentation pages:
+
+- [Overview and installation](index.html)
+- [Bayz interface and model building](BayzModels.html)
+- [Using bayz output](UsingOutput.html)
+- [Help index](HelpIndex.html)
+
+The pages rendered through Quarto include a navigation bar at the top and a table of contents on the right.

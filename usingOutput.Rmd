@@ -1,40 +1,192 @@
 ---
-#title: "Bayesian mixed models, shrinkage, sparse and interaction kernel regression"
-#author: "Luc Janss, Maria Izabel Cavassim Alves and Marni Tausen"
-#date: "`r Sys.Date()`"
-output:
-  md_document:
-    variant: markdown_github
+title: "Using Bayz Output"
+format: html
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# R/bayz methods for summarizing, extracting and using output
+| [Bayz traced parameters](#bayz-traced-parameters)   | [Fixed and random effects (coef, fixef, ranef)](#fixed-and-random-effects-with coef,-fixef-and-ranef) |
+| [Summary of model output](#summary-of-model-output) | [Generic estim() to extract estimates](#Extracting-parameter-estimates-with-estim) |
+| [Convergence diagnostics](#convergence-diagnostics) | [Variance and hyper-parameters (vhest)](HelpIndex.html) |
+| [HPD intervals](#hpd-intervals)                     | [Contrasts and functions of var/hyper paramters]() |
+| [Trace plots and densities](#trace-plots-and-densities) | xxx |
 
--   [summary](#Summary of output)
--   [coef, fixef and ranef](#Coefficients estimates)
--   [vcomp](#Variance components and PVEs)
--   [Computing contrasts](#Computing constrasts)
 
-# Summary of output
+# Bayz traced parameters
+
+The bayz output object contains a table with the full traces
+of sampled values for a small selection of model parameters (after burn-in and at specified 'skip' intervals).
+In the output object this is the $Samples table, and the manual refers to these as "traced" parameters.
+This selection of traced parameters is kept small (but can be manually tuned) because, firstly, these
+sample traces are held in memory and returned in the output in an R table;
+secondly, output processing tools summary() and plot() would get 
+computing intensive for hundreds or thousands of traced parameters;
+and thirdly, the sample traces
+mainly serve to judge converge or compute contrast for main fixed effects and functions of
+variance and hyper-parameters, thus it is usually sufficient
+to keep these traces only for a small selection of parameters.
+
+There is an alternative 'save' option that writes a file with samples to disk,
+which can be useful if there is a need to keep the samples from model terms with large numbers
+of parameters but avoid that they automatically go into summary() and plot() tools.
+
+In detail, the default settings keep sample traces for: all variance and hyper-parameters including
+the residual variance, the model intercept (the 'mean' parameter), 
+fixed effects with fewer than 5 levels, and single regression coefficients from the rg() wrapper.
+If tracing is not switched on by default, it can be switched on manually with a 'trace' option inside
+any of the model-term wrappers.
+This could, for instance, be relevant to allow computing contrasts between levels of a fixed effect
+with 5 or more levels where the tracing is not on by default:
+
+```{verbatim}
+bayz(glucose ~ fx(Group, trace) + ..., data=...)
+```
+
+For parameters for which sample traces are stored, one can obtain:
+
+-  Convergence diagnostics (see summary)
+-  HPD intervals (see summary)
+-  Trace plots (see plot)
+-  Density plots (see plot)
+-  Contrast between levels of fixed effects (see contrast)
+-  Functions of variance and hyper-parameters (see contrast)
+
+# Summary of model output
 
 Use of summary() on the bayz output object produces a summary of parameter estimates from the fitted model
 including convergence diagnostics and Highest Posterior Density (HPD) regions. 
+This summary is based on the "traced" parameters - by default variance and hyper-parameters and some
+fixed effects with few levels, see [Bayz traced parameters](#bayz-traced-parameters) for details.
+The summary show some general model run statistics, errors and warnings, and a main table with
+with estimates (posterior mean and SD), [HPD intervals](#hpd-intervals) and 
+[convergence diagnostics](#convergence-diagnostics) for all traced paramters.
 
-The summary() method only lists a limited number of the so-called "traced" parameters - these are model-parameters
-for which all MCMC samples are saved in the output, allowing to compute convergence, HPD regions, and to plot traces
-and densities (using plot()). The traced parameters by default include: all scalar variance parameters, estimated
-variance-covariances up to dimension 4x4, the model mean, scalar regression coefficients,
-coefficient estimates from fixed effects with up to 4 levels, and nested regressions with up to 4 levels. 
+The full interface of summary() is:
+```{verbatim}
+summary(bayz-output, HPDprob=..., burnin=...)
+```
 
+A default version can be run in a usual R way:
+```{verbatim}
+fit <- bayz(Yield ~ fx(Year:Site) + rn(Variety), data=...)
+summary(fit)
+```
 
-# Coefficients estimates
+THe HPDprob argument can be used to modify the probability for the computed HPD intervals shown
+in summary; the default is 0.95. See more under [HPD intervals](#hpd-intervals).
 
-Apart from using these functions, it is also quite straightforward to extract estimates directly from the bayz output object.
-All estimates are stored in the output in a list called <output>$Estimates, which has named elements according to parameter names.
+The burnin argument can be used to update (*increase*) the burn-in
+setting over the burn-in used in the model run. If there is indication of insufficient burn-in
+(see [Convergence diagnostics]), this allows to verify and find a suitable updated burn-in setting.
+Note: it is only possible to remove additional burn-in
+from the traced parameters shown in summary() and plot(), not from the stored
+estimates for fixed and random effects retrieved with fixed() or ranef() or estimates directly
+assessed in the model output.
+Once a satisfactory burn-in is found by playing with these updated burn-in settings in summary() or plot(),
+the whole model will need to be re-run to obtain 'clean' estimates for the whole model output.
 
+# Convergence diagnostics
+
+The summary() method includes convergence diagnostics for
+all [traced parameters](#bayz-traced-parameters). 
+Convergence diagnostics are based on tools from the R Coda package.
+The convergence diagnostics reported are:
+
+-  effSize: an estimate of effective size, based on coda::effectiveSize()
+-  GewekeZ: the absolute Geweke z-statistic, based on coda:geweke.diag()
+-  MCSE: Monte Carlo Standard Error, based on the effective size estimate
+-  MCCV%: The MCSE expressed as a coefficient of variation (SE/mean) in percent
+
+The effective size estimate is based on a serial correlation model, which works fine
+when the serial correlation is medium-high, but not very high. This is out basis for
+the [recommended chain settings](BayzModels.html#mcmc-chain-settings).
+
+The Geweke z-statistic compares first and last parts of each parameter trace and
+a significant GewekeZ (about 2 and higher) indicates either left-over burn-in effects, or
+a 'drifting' non-estimable parameter; inspection of trace plots can confirm which of
+these two seems to be the problem. If there are signs of left-over burn-in, one
+can play with the burn-in argument in summary (see comments in [summary](#summary-of-model-output)).
+Drifting mean (intercept) or fixed effect levels are not immediately worrysome
+(but then need to be considered non-estimable, see more comments here), but drifting
+variance or hyper-parameters are a more serious problem and may need model re-formulation.
+
+The MCSE estimates left-over Monte Carlo noise on the posterior mean estimate.
+MCSE is useful to judge the reliability of the Monte Carlo approximation to the posterior
+distributions and to judge how many decimals on the posterior means could be reliably reported.
+If MCSE is around 0.1,
+reporting 2 or more decimals on a posterior mean is overselling its precision,
+but if MCSE is 0.01, surely the first decimal is quite certain. The MCSE is a reflection
+of the chain-length used, and as a rough rule
+of thump, doubling chain length should decrease MCSE by sqrt(2). 
+
+The MCCV (Monte Carlo Coefficient of Variation) is the MCSE relative to the mean (given
+in percent). Like MCSE it expresses the reliability of the Monte Carlo approximation on
+the posterior mean estimates, but expressed relatively instead of absolutely.
+It is a good goal to get MCCV below 5% and maybe down to "a few" percent so that the
+Monte Carlo error on the posterior means is relatively small. 
+But it can be strenuous to squeeze out the last little bits of noise because every halving of
+MCCV requires, roughly, quadrupling of the chain length. In the end it is a matter of
+subjective judgement whether absolute MCSE and relative MCCV are small enough to be
+confident in reporting, notably, posterior mean estimates of variance and hyper-parameters.
+Model intercept and fixed effect levels can show large (and remaining) Monte Carlo error,
+which usually indicates confoundment in the fixed effects specification. This is not immediately
+worrying if the focus of model inference is elsewhere (e.g. on variance parameters or random
+effects), but it implies fixed effect estimates are not reliable. 
+
+# HPD intervals
+
+The summary() method shows parameter estimates including default 95% HPD intervals for
+all [traced parameters](#bayz-traced-parameters), and contrast() adds HPD intervals
+to computed contrast and functions of variance and hyper-parameters.
+R/bayz implements properly computed HPD intervals - not simply the
+2.5 and 97.5% quantiles. A proper Bayesian HPD interval
+is the smallest interval containing (by default) 95% of density, which implies they
+concentrate more on the mode and leave out more from the longer tail for skewed densities.
+The implementation also accounts for the natural left-boundary at zero for variances and
+the natural [0,1] boundaries for probabilities. 
+HPD intervals can start from these boundaries, e.g. from zero for variances, which
+typically happens when the mode of the posterior distribution is near or at zero.
+This can usually be interpreted as the associated random effect not being important
+for the model (a REML estimate would likely also end up at zero). It is difficult
+to spot in other ways that a variance posterior covers zero; both posterior mean and
+a 2.5% quantile will by nature always be positive.
+
+The default 95% HPD interval probability is changeable using the HPDprob argument
+in the summary() method.
+The HPD interval computation relies on the HPDbayz function
+in the package and uses a reflection boundary approach to allow computing intervals
+up to parameter boundaries, but we have not documented this for public use.
+
+# Trace plots and densities
+
+The plot() method plots trace plots and posterior densities for all
+[traced parameters](#bayz-traced-parameters). 
+
+# Fixed and random effects with coef, fixef and ranef
+
+Rbayz supports generic R methods coef, fixef and ranef to extract, respectively,
+all model coefficients, the fixed effects, and the random effects. The model coefficients
+is interpret here as the combination of all fixed and random effects.
+
+# Extracting parameter estimates with estim
+
+Rbayz also uses a generic estim() method that can extract any parameter estimates
+from the output, both coefficients (fixed and or random effects) as well as variance and hyper-parameters.
+It also supports extracting multiple parameter vectors in one output, and do perform some
+manipulations of the output.
+
+# Directly assessing parameter estimates in the output
+
+Apart from using extraction functions, it is also quite straightforward to extract estimates
+directly from the bayz output object.
+All estimates are stored in the output in a list called <output>$Estimates, which has named
+elements according to parameter names. 
+
+Especially interactively,
+using auto-completion and the pop-ups to find elements lists in Rstudio, one can quite
+quickly navigate to extract or view a parameter vector of interest.
 
 # Variance components and PVEs
 

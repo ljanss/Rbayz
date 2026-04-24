@@ -38,3 +38,5 @@ vignettes/*.pdf
 
 # Mac Generated files
 .DS_Store
+/.quarto/
+**/*.quarto_ipynb
