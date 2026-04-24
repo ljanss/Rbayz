@@ -6,13 +6,11 @@ Status](https://travis-ci.org/ljanss/Rbayz.svg?branch=master)](https://travis-ci
 Status
 coveralls](https://coveralls.io/repos/github/ljanss/Rbayz/badge.svg?branch=master)](https://coveralls.io/github/ljanss/Rbayz?branch=master)
 
-Jump to:
-
-- [R/bayz overview and features](#rbayz-overview-and-features)
-- [Downloading and installing R/bayz](#downloading-and-installing-rbayz)
-- [Quick tour and help](#quick-tour-and-help)
-
-For various help check the [Help Index page](HelpIndex.html).
+| On this page | Other help pages |
+|----|----|
+| [R/bayz overview and features](#rbayz-overview-and-features) | [Bayz interface and models](BayzModels.html) |
+| [Downloading and installing R/bayz](#downloading-and-installing-rbayz) | [Using bayz output](UsingOutput.html) |
+| [Quick tour and help](#quick-tour-and-help) | [Help Index](HelpIndex.html) |
 
 # R/bayz overview and features
 
@@ -139,7 +137,8 @@ supported, and main effects, if desired, should be explicitly added in
 the model.
 
 More on the basic syntax for model building (including using
-regressions) here:
+regressions) on the page [Bayz function and model
+building](BayzModels.html#main-function-bayz).
 
 ## Use of model output
 
