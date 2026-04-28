@@ -10,7 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Bayesian mixed models, shrinkage, sparse and interaction kernel regression
-[![Build Status](https://travis-ci.org/ljanss/Rbayz.svg?branch=master)](https://travis-ci.org/ljanss/Rbayz)[![Coverage Status coveralls](https://coveralls.io/repos/github/ljanss/Rbayz/badge.svg?branch=master)](https://coveralls.io/github/ljanss/Rbayz?branch=master)
 
 | On this page | Other help pages |
 |--------------|------------------|

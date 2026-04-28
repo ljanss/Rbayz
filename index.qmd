@@ -2,16 +2,38 @@
 title: "R/bayz Documentation"
 ---
 
-# R/bayz Documentation
+# R/bayz overview and features
 
 R/bayz provides Bayesian mixed models, shrinkage regression, kernel-based random effects,
-interaction kernels, and feature-set regression through the main `bayz()` interface.
+interaction kernels, and feature-set regression. The R package is called Rbayz, and its main
+modelling function is `bayz()`.
 
-Use the top navigation for the main documentation pages:
+R/bayz
 
-- [Overview and installation](index.html)
-- [Bayz interface and model building](BayzModels.html)
-- [Using bayz output](UsingOutput.html)
-- [Help index](HelpIndex.html)
+- covers mixed models in a Bayesian framework with uncertainty estimates on coefficients and variance parameters,
+  MCMC convergence diagnostics, HPD intervals and trace plots.
+- allows to add kernels (relationship / similarity matrices) on random effects, and multiple kernels
+  on interactions, fitted as reduced rank tensors.
+- can learn sparse multi-dimensional kernels as tensor decompositions, smooth kernels, sparsify kernels,
+  and borrow information across kernels.
+- directly models large sets of multiple features with different shrinkage regression options, and can obtain
+  significances for individual features as "p-values from random effects".
+- offers standard R methods for summary, extraction of estimates, plot, predict and contrasts.
+- is computationally efficient and can be used on large datasets, with parallelization options for MCMC sampling.
 
-The pages rendered through Quarto include a navigation bar at the top and a table of contents on the right.
+R/bayz has been developed in agriculture and ecology for various modeling and prediction needs using genomics, multi-omics,
+phenomics, enviromics, time-series images and spectral data, multi-time multi-tissue transcriptomics data,
+and more. This includes basic applications such as genomic and genomic-by-enviromic prediction and multi-trait modeling using
+a Bayesian factor-analytic approach. The approach used in R/bayz
+is extendable to efficiently learn covariance structures in higher order interactions such as trait x time x environment,
+and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.
+
+For further help check links in the text above, and the [Quick tour and help](#quick-tour-and-help)
+section below that can help finding relevant
+documentation. 
+
+
+
+
+
+

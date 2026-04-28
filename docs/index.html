@@ -124,7 +124,7 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#rbayz-documentation" id="toc-rbayz-documentation" class="nav-link active" data-scroll-target="#rbayz-documentation">R/bayz Documentation</a></li>
+  <li><a href="#rbayz-overview-and-features" id="toc-rbayz-overview-and-features" class="nav-link active" data-scroll-target="#rbayz-overview-and-features">R/bayz overview and features</a></li>
   </ul>
 </nav>
     </div>
@@ -150,17 +150,20 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="rbayz-documentation" class="level1">
-<h1>R/bayz Documentation</h1>
-<p>R/bayz provides Bayesian mixed models, shrinkage regression, kernel-based random effects, interaction kernels, and feature-set regression through the main <code>bayz()</code> interface.</p>
-<p>Use the top navigation for the main documentation pages:</p>
+<section id="rbayz-overview-and-features" class="level1">
+<h1>R/bayz overview and features</h1>
+<p>R/bayz provides Bayesian mixed models, shrinkage regression, kernel-based random effects, interaction kernels, and feature-set regression. The R package is called Rbayz, and its main modelling function is <code>bayz()</code>.</p>
+<p>R/bayz</p>
 <ul>
-<li><a href="index.html">Overview and installation</a></li>
-<li><a href="BayzModels.html">Bayz interface and model building</a></li>
-<li><a href="UsingOutput.html">Using bayz output</a></li>
-<li><a href="HelpIndex.html">Help index</a></li>
+<li>covers mixed models in a Bayesian framework with uncertainty estimates on coefficients and variance parameters, MCMC convergence diagnostics, HPD intervals and trace plots.</li>
+<li>allows to add kernels (relationship / similarity matrices) on random effects, and multiple kernels on interactions, fitted as reduced rank tensors.</li>
+<li>can learn sparse multi-dimensional kernels as tensor decompositions, smooth kernels, sparsify kernels, and borrow information across kernels.</li>
+<li>directly models large sets of multiple features with different shrinkage regression options, and can obtain significances for individual features as “p-values from random effects”.</li>
+<li>offers standard R methods for summary, extraction of estimates, plot, predict and contrasts.</li>
+<li>is computationally efficient and can be used on large datasets, with parallelization options for MCMC sampling.</li>
 </ul>
-<p>The pages rendered through Quarto include a navigation bar at the top and a table of contents on the right.</p>
+<p>R/bayz has been developed in agriculture and ecology for various modeling and prediction needs using genomics, multi-omics, phenomics, enviromics, time-series images and spectral data, multi-time multi-tissue transcriptomics data, and more. This includes basic applications such as genomic and genomic-by-enviromic prediction and multi-trait modeling using a Bayesian factor-analytic approach. The approach used in R/bayz is extendable to efficiently learn covariance structures in higher order interactions such as trait x time x environment, and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.</p>
+<p>For further help check links in the text above, and the <a href="#quick-tour-and-help">Quick tour and help</a> section below that can help finding relevant documentation.</p>
 
 
 </section>
