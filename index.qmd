@@ -28,8 +28,6 @@ a Bayesian factor-analytic approach. The approach used in R/bayz
 is extendable to efficiently learn covariance structures in higher order interactions such as trait x time x environment,
 and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.
 
-
-
 ## R/bayz technical details
 
 R/Bayz is implemented in C++ using Rcpp and uses MCMC-based inference in Bayesian models.
@@ -86,6 +84,7 @@ devtools::install_github("ljanss/Rbayz")
 # Further help and documentation
 
 Use the main tabs at the top of the page or navigate directly to:
+
 - [R/bayz: this tab for download and install instructions](https://ljanss.github.io/Rbayz/).
 - [Modeling: for the bayz function interface and model-building with bayz()](https://ljanss.github.io/Rbayz/BayzModels.html).
 - [Output: tools to use the output for convergence diagnostics, plots, summaries, p-values, and more](https://ljanss.github.io/Rbayz/UsingOutput.html).

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>R/Bayz: Bayesian mixed models, shrinkage, sparse and interaction kernel regression – R/bayz</title>
+<title>Bayesian mixed models, shrinkage, sparse and interaction kernel regression – R/bayz</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -128,20 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
-<span class="menu-text">Overview</span></a>
-  </li>  
-  <li class="nav-item">
     <a class="nav-link" href="./BayzModels.html"> 
-<span class="menu-text">Models</span></a>
+<span class="menu-text">Modeling</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./UsingOutput.html"> 
-<span class="menu-text">Output</span></a>
-  </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./HelpIndex.html"> 
-<span class="menu-text">Help Index</span></a>
+<span class="menu-text">Output-use</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -177,7 +169,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">R/Bayz: Bayesian mixed models, shrinkage, sparse and interaction kernel regression</h1>
+<h1 class="title">Bayesian mixed models, shrinkage, sparse and interaction kernel regression</h1>
 </div>
 
 
@@ -207,7 +199,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>is computationally efficient and can be used on large datasets, with parallelization options for MCMC sampling.</li>
 </ul>
 <p>R/bayz has been developed in agriculture and ecology for various modeling and prediction needs using genomics, multi-omics, phenomics, enviromics, time-series images and spectral data, multi-time multi-tissue transcriptomics data, and more. This includes basic applications such as genomic and genomic-by-enviromic prediction and multi-trait modeling using a Bayesian factor-analytic approach. The approach used in R/bayz is extendable to efficiently learn covariance structures in higher order interactions such as trait x time x environment, and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.</p>
-<p>For further help check links in the text above, and the <a href="#quick-tour-and-help">Quick tour and help</a> section below that can help finding relevant documentation.</p>
 <section id="rbayz-technical-details" class="level2">
 <h2 class="anchored" data-anchor-id="rbayz-technical-details">R/bayz technical details</h2>
 <p>R/Bayz is implemented in C++ using Rcpp and uses MCMC-based inference in Bayesian models. Current version: 0.12 (March 2026).</p>
@@ -252,7 +243,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="further-help-and-documentation" class="level1">
 <h1>Further help and documentation</h1>
-<p>Use the main tabs at the top of the page or navigate directly to: - <a href="https://ljanss.github.io/Rbayz/BayzModels.html">The bayz function interface and model building with bayz()</a>.</p>
+<p>Use the main tabs at the top of the page or navigate directly to:</p>
+<ul>
+<li><a href="https://ljanss.github.io/Rbayz/">R/bayz: this tab for download and install instructions</a>.</li>
+<li><a href="https://ljanss.github.io/Rbayz/BayzModels.html">Modeling: for the bayz function interface and model-building with bayz()</a>.</li>
+<li><a href="https://ljanss.github.io/Rbayz/UsingOutput.html">Output: tools to use the output for convergence diagnostics, plots, summaries, p-values, and more</a>.</li>
+</ul>
 
 
 </section>
