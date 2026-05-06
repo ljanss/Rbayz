@@ -1,5 +1,5 @@
 ---
-title: "R/Bayz: Bayesian mixed models, shrinkage, sparse and interaction kernel regression"
+title: "Bayesian mixed models, shrinkage, sparse and interaction kernel regression"
 --- 
 
 # R/bayz overview and features
@@ -28,9 +28,7 @@ a Bayesian factor-analytic approach. The approach used in R/bayz
 is extendable to efficiently learn covariance structures in higher order interactions such as trait x time x environment,
 and may be useful in any domain where mixed models, (multiple) kernels and/or large sets of predictors are relevant.
 
-For further help check links in the text above, and the [Quick tour and help](#quick-tour-and-help)
-section below that can help finding relevant
-documentation. 
+
 
 ## R/bayz technical details
 
@@ -88,7 +86,9 @@ devtools::install_github("ljanss/Rbayz")
 # Further help and documentation
 
 Use the main tabs at the top of the page or navigate directly to:
-- [The bayz function interface and model building with bayz()](https://ljanss.github.io/Rbayz/BayzModels.html).
+- [R/bayz: this tab for download and install instructions](https://ljanss.github.io/Rbayz/).
+- [Modeling: for the bayz function interface and model-building with bayz()](https://ljanss.github.io/Rbayz/BayzModels.html).
+- [Output: tools to use the output for convergence diagnostics, plots, summaries, p-values, and more](https://ljanss.github.io/Rbayz/UsingOutput.html).
 
 
 

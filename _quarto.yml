@@ -12,14 +12,10 @@ website:
   page-navigation: true
   navbar:
     left:
-      - href: index.qmd
-        text: Overview
       - href: BayzModels.Rmd
-        text: Models
+        text: Modeling
       - href: UsingOutput.Rmd
-        text: Output
-      - href: HelpIndex.Rmd
-        text: Help Index
+        text: Output-use
 
 format:
   html:
