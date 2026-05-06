@@ -1,6 +1,6 @@
 ---
-title: "R/bayz Documentation"
----
+title: "R/Bayz: Bayesian mixed models, shrinkage, sparse and interaction kernel regression"
+--- 
 
 # R/bayz overview and features
 
@@ -32,7 +32,63 @@ For further help check links in the text above, and the [Quick tour and help](#q
 section below that can help finding relevant
 documentation. 
 
+## R/bayz technical details
 
+R/Bayz is implemented in C++ using Rcpp and uses MCMC-based inference in Bayesian models.
+Current version: 0.12 (March 2026).
+
+# Downloading and installing R/bayz
+
+R/bayz us not yet released as a cran R package. It can be downloaded and installed with the options
+shown below.
+
+### 1. Precompiled binary versions (Windows, Mac)
+
+There are precompiled binary packages for Windows and MacOS, which can be installed using install.packages() or with
+devtools-tools. The MacOS precompiled version is built on Mac silicon architecture, the Windows version on Windows 11.
+If these precompiled versions do not work
+on your Windows or MacOS system, use option 2 below to install from github source.
+
+Using install.packages() requires to use repos=NULL to circumvent use of cran, but which requires then to manually
+install dependencies:
+```{r, eval=FALSE}
+install.packages("Rcpp")
+install.packages("nlme")
+install.packages("coda")
+install.packages("https://ljanss.github.io/Rbayz/Rbayz_0.9.0.zip", repos=NULL, type="win.binary") # Windows
+install.packages("https://ljanss.github.io/Rbayz/Rbayz_0.9.0.tgz", repos=NULL, type="mac.binary") # MacOS
+```
+
+Alternatively, if you have devtools installed, you can use devtools::install_url(), which automatically does install dependencies as well: 
+```{r, eval=FALSE}
+devtools::install_url("https://ljanss.github.io/Rbayz/Rbayz_0.9.0.zip", type="win.binary") # Windows
+devtools::install_url("https://ljanss.github.io/Rbayz/Rbayz_0.9.0.tgz", type="mac.binary") # MacOS
+```
+
+### 2. Install source from Github repository (all systems including linux)
+
+This requires a development environment in R, which needs Rtools on Windows, or "command line tools" on MacOS,
+and the devtools package. On linux the development tools may often be pre-installed. The below commands run
+in the R terminal.
+
+Installing devtools and package dependencies:
+```{r, eval=FALSE}
+install.packages("devtools")
+install.packages("Rcpp")
+install.packages("nlme")
+install.packages("coda")
+```
+
+Download and install/compile Rbayz using:
+```{r, eval=FALSE}
+library(devtools)
+devtools::install_github("ljanss/Rbayz")
+```
+
+# Further help and documentation
+
+Use the main tabs at the top of the page or navigate directly to:
+- [The bayz function interface and model building with bayz()](https://ljanss.github.io/Rbayz/BayzModels.html).
 
 
 
