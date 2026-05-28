@@ -2,21 +2,23 @@
 % Please edit documentation in R/ranef.R
 \name{ranef.bayz}
 \alias{ranef.bayz}
-\title{Extract posterior means and SDs for `random´ effects}
+\title{Extract posterior means and SDs for "random" effects from a bayz model output}
 \usage{
-\method{ranef}{bayz}(object, splitLabels = TRUE, ...)
+\method{ranef}{bayz}(object, ...)
 }
 \arguments{
-\item{object}{A bayz model output}
-
-\item{splitLabels}{Whether labels that contain % (in interactions) such as a%b should be split
-in multiple columns (default TRUE).}
-
-\item{...}{Additional parameters passed onto the Model function.}
+\item{object}{A bayz model output.}
 }
 \value{
-a list with one member (a data frame) for each random effect
+A data frame with estimates for all random effects.
 }
 \description{
-Extract from the Bayz output the coefficients (posterior mean and SD) for rn() model terms.
+The ranef() function extracts estimates (posterior mean and SD) for all
+random effects from the bayz output. Random effects are here defined as the
+coefficients for the rn() and rr() model terms.
+The ranef() function is a wrapper around estim() and 'unlists' the output to
+return a single data frame.
+To extract estimates for one, or a subset, of the random effects, use the
+more generic estim(). Use fixef() to extract estimates for all fixed
+effects.
 }

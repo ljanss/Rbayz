@@ -2,25 +2,25 @@
 % Please edit documentation in R/coef.R
 \name{coef.bayz}
 \alias{coef.bayz}
-\title{Extract posterior means and SDs for all or a selection of coefficients}
+\title{Extract posterior means and SDs for all coefficients from a bayz model
+output}
 \usage{
-\method{coef}{bayz}(object, which = NULL, splitLabels = TRUE, ...)
+\method{coef}{bayz}(bayz_output, ...)
 }
 \arguments{
-\item{object}{A bayz model output}
-
-\item{which}{A vector TRUE/FALSE to indicate which model coefficients to extract (should match the rows
-in the $Parameters table in a bayz output object). It can be omitted to extract all coefficients.}
-
-\item{splitLabels}{Whether labels that contain % (in interactions) such as a%b should be split
-in multiple columns (default TRUE).}
-
 \item{...}{Additional parameters.}
+
+\item{object}{A bayz model output}
 }
 \value{
-a list with one member (a data frame) for each coefficient
+A data.frame with estimates for all model coefficients
 }
 \description{
-Extract from the Bayz output all or a selection of coefficients (posterior mean and SD), i.e. estimates from the
-fx(), rg() and rn() terms.
+Rbayz::coef() extracts estimates (posterior mean and SD) for all
+coefficients from the bayz output. Coefficients is here defined as all fixed
+and random effects, i.e. "regression coefficients" in a broad meaning.
+The coef() function is a wrapper around estim() and 'unlists' the output to
+return a single data frame.
+Other functions to extract estimates from the bayz output are fixef(),
+ranef(), vhest(), and the generic estim().
 }

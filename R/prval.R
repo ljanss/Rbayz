@@ -23,7 +23,6 @@
 #' @return a data frame with parameter estimates (posterior mean and SD), the
 #'                      backtransformed z-statistic and its pr (p) -value.
 #' @export
-#'
 prval <- function(object, param = NULL, splitlabels = FALSE, ...) {
   par = object$Parameters
     est = object$Estimates

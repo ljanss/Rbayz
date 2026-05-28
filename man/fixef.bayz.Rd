@@ -2,22 +2,25 @@
 % Please edit documentation in R/fixef.R
 \name{fixef.bayz}
 \alias{fixef.bayz}
-\title{Extract posterior means and SDs for `fixed´ effects}
+\title{Extract posterior means and SDs for "fixed" effects from a bayz model output}
 \usage{
-\method{fixef}{bayz}(object, splitLabels = TRUE, ...)
+\method{fixef}{bayz}(object, ...)
 }
 \arguments{
 \item{object}{A bayz model output}
 
-\item{splitLabels}{Whether labels that contain % (in interactions) such as a%b should be split
-in multiple columns (default TRUE).}
-
 \item{...}{Additional parameters passed onto the Model function.}
 }
 \value{
-a list with one member (a data frame) for each fixed effect
+a data frame with estimates for all fixed effects
 }
 \description{
-Extract from the Bayz output the coefficients (posterior mean and SD) for terms fitted with fx() and rg().
-With the default splitLabels=TRUE, labels for interactions such as a%b will be split in multiple columns.
+The fixef() function extracts estimates (posterior mean and SD) for all
+fixed effects from the bayz output. Fixed effects are here defined as the
+coefficients for the intercept and fx() and rg() model terms.
+The fixef() function is a wrapper around estim() and 'unlists' the output to
+return a single data frame.
+To extract estimates for one, or a subset, of the fixed effects, use the
+more generic estim(). Use ranef() to extract estimates for all random
+effects.
 }
