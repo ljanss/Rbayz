@@ -28,7 +28,7 @@ summary.bayz <- function(object, HPDprob=0.95, burnin=NULL, ...) {
   output <- list()
   class(output) <- "summarybayz"
 
-  if (object$Runinfo["Nerror"] > 0) {
+  if (object$Runinfo["Errors"] > 0) {
     output[["Errors"]] <- object[["Errors"]]
     output[["Runinfo"]] <- object[["Runinfo"]]
     return(output)
@@ -52,7 +52,7 @@ summary.bayz <- function(object, HPDprob=0.95, burnin=NULL, ...) {
   # This summary now only lists the "traced" parameters that are in the Samples
   # table.
   output_cycles <- as.numeric(rownames(object$Samples))
-  if (!is.null(burnin) && burnin > object$Runinfo["Burn-In"]) {
+  if (!is.null(burnin) && burnin > object$Runinfo["BurnIn"]) {
     samples_used <- object$Samples[which(output_cycles > burnin), ,
                                    drop = FALSE]
     output_cycles <- output_cycles[which(output_cycles > burnin)]

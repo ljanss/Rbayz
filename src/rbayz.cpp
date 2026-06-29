@@ -29,7 +29,7 @@ std::vector<parVector**> Rbayz::parList;
 std::vector<std::string> Rbayz::Messages;
 bool Rbayz::needStop=false;
 Rcpp::DataFrame Rbayz::mainData;
-Rcpp::IntegerVector Rbayz::RunInfo(9);
+Rcpp::IntegerVector Rbayz::RunInfo(10);
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
@@ -47,9 +47,9 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::needStop=false;
    Rbayz::mainData=inputData;
    Rbayz::RunInfo.fill(0);
-   Rbayz::RunInfo.names() = Rcpp::CharacterVector::create("Nerror","Nwarning","Nnote",
-                            "Data Size","Nmissing","Nparameters","Chain Length","Burn-In",
-                            "Chain Skip");
+   Rbayz::RunInfo.names() = Rcpp::CharacterVector::create("Errors","Warnings","Notes",
+                            "DataSize","Nmissing","Nparameters","ChainLength","BurnIn",
+                            "ChainSkip","SamplesSaved");
 
    // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
@@ -148,7 +148,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       size_t nResiduals = (*(Rbayz::parList[0]))->nelem;
       size_t nParameters = 0;
       size_t nNAs = sum(modelR->missing);
-      Rbayz::RunInfo["Data Size"] = nResiduals;
+      Rbayz::RunInfo["DataSize"] = nResiduals;
       Rbayz::RunInfo["Nmissing"] = nNAs;
       Rbayz::RunInfo["Nparameters"] = nParameters;
       if(verbose > 2) {
@@ -205,7 +205,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       if (chain[0]==0 && chain[1]==0 && chain[2]==0) {  // chain was not set
          chain[0]=1100; chain[1]=100; chain[2]=10;
          Rbayz::Messages.push_back("Warning: chain was not set, running 1100 cycles but it may be too short for many analyses");
-         Rbayz::RunInfo["Nwarning"] = Rbayz::RunInfo["Nwarning"] + 1;
+         Rbayz::RunInfo["Warnings"] = Rbayz::RunInfo["Warnings"] + 1;
       }
       if (chain.size() != 3) throw (generalRbayzError("The chain settings do not have 3 elements"));
       if (chain[0] <= 0) throw (generalRbayzError("The chain length is zero or negative"));
@@ -218,9 +218,10 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       }
       size_t nSamples = outputCycleNumbers.size();
       if (nSamples==0) throw (generalRbayzError("The chain settings do not make any output"));
-      Rbayz::RunInfo["Chain Length"] = chain[0];
-      Rbayz::RunInfo["Burn-In"] = chain[1];
-      Rbayz::RunInfo["Chain Skip"] = chain[2];
+      Rbayz::RunInfo["ChainLength"] = chain[0];
+      Rbayz::RunInfo["BurnIn"] = chain[1];
+      Rbayz::RunInfo["ChainSkip"] = chain[2];
+      Rbayz::RunInfo["SamplesSaved"] = nSamples;
       if (verbose>4) Rcpp::Rcout << "Chain checks done\n";
 
       // Find the number of traced parameters and set-up matrix to store samples of traced parameters
@@ -329,7 +330,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
 
       // 1. "Parameter" information table
       Rcpp::CharacterVector parNames, parModelFunc, parVariables, parVarStruct;
-      Rcpp::IntegerVector parSizes, parTraced;
+      Rcpp::IntegerVector parSizes, parTraced, parSaved;
       for(size_t i=0; i<Rbayz::parList.size(); i++) {
          parNames.push_back((*(Rbayz::parList[i]))->Name);
          parModelFunc.push_back((*(Rbayz::parList[i]))->modelFunction);
@@ -337,11 +338,12 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
          parVarStruct.push_back((*(Rbayz::parList[i]))->varianceStruct);
          parSizes.push_back((*(Rbayz::parList[i]))->nelem);
          parTraced.push_back((*(Rbayz::parList[i]))->traced);
+         parSaved.push_back((*(Rbayz::parList[i]))->saveSamples);
       }
       Rcpp::DataFrame parInfo = Rcpp::DataFrame::create
                (Rcpp::Named("ModelTerm")=parModelFunc, Rcpp::Named("Variables")=parVariables, 
                 Rcpp::Named("Param")=parNames,Rcpp::Named("Variance")=parVarStruct,
-                Rcpp::Named("Size")=parSizes, Rcpp::Named("Traced")=parTraced);
+                Rcpp::Named("Size")=parSizes, Rcpp::Named("Traced")=parTraced, Rcpp::Named("Saved")=parSaved);
 //      parInfo.attr("row.names") = parNames;
 
       // 2. "Estimates": now a list with a data frame for each parameter-vector

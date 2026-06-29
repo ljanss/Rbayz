@@ -9,7 +9,7 @@
 #' @import stats
 #' @export
 print.summarybayz <- function(object, ...) {
-  if (object$Runinfo["Nerror"] > 0) {
+  if (object$Runinfo["Errors"] > 0) {
     cat("Bayz encountered errors while running:\n")
     for (errormsg in object$Errors){
       cat("  ", errormsg, "\n")
