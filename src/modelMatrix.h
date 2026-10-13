@@ -79,7 +79,15 @@ public:
    }
 
    // adjust residuals and fit for a change in scale, this works on total fit
-   // (no argument for the column of the covar to use)
+   // (no argument for the column of the covar to use).
+   // Notes:
+   // 1) This could 'move up' to modelCoeff as it could be a generic function to
+   //    update variances (obsviously only for random effects, but probably useful
+   //    for mixture, lasso and ridge models).
+   // 2) Now I'm doubting of the need to adjust fit-vector, it's like a known covariate
+   //    here where we update a regression on that covariate, and that should not modify
+   //    the covariate itself. But it can be this code has been 'harmless' so far because
+   //    this fit is not used in other places and will be rebuilt in modelMatrix implementations.
    void resid_fit_scaleUpdate(double scale_old, double scale_new) {
       double resid_adjust = (1.0l - scale_new/scale_old);
       double fit_adjust = scale_new/scale_old;
@@ -105,6 +113,7 @@ public:
       }
    }
    
+   // Note sure what I was making this one for, it is not (yet) used anywhere.
    void collect_sse(double & sse) {
       sse=0.0l;
       for (size_t obs=0; obs < F->nelem; obs++)

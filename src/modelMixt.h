@@ -1,6 +1,6 @@
 //
 //  Rbayz --- modelMixt.h
-//  Object to modify mixture class indicator for MIXT variance structure.
+//  Modelling of Variable Selection / mixture prior models.
 //
 //  Created by Luc Janss on 03/08/2018.
 //
@@ -11,12 +11,12 @@
 #include <Rcpp.h>
 #include "modelBase.h"
 
-class modelMixt : public modelBase {
+class modelMixt : public modelMatrix {
 
 public:
 
    modelMixt(parsedModelTerm & modeldescr, modelRreg * rrmod)
-         : modelBase()
+         : modelMatrix(modeldescr, rrmod)
    {
 
    }
