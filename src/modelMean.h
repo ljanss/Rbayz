@@ -36,8 +36,8 @@ public:
 
    void sample() {
       resid.add(fit);
-      comp.collectLhsRhs(resid, residPrec, lhs, rhs);
-      par->val[0] = R::rnorm((rhs[0]/lhs[0]), sqrt(1.0/lhs[0]));
+      comp.collectLhsRhs(resid, residPrec, lhs_sc, rhs_sc);
+      par->val[0] = R::rnorm((rhs_sc/lhs_sc), sqrt(1.0/lhs_sc));
       comp.fillFit(fit, par);
       resid.sub(fit);
    }
@@ -47,6 +47,8 @@ public:
    void restart() {}
 
    dataAlgoIntercept comp;
+
+   double lhs_sc, rhs_sc; // scalar versions of lhs and rhs used here
 
 private:
 };

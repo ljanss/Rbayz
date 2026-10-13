@@ -20,22 +20,12 @@ void dataAlgoIntercept::fillFit(simpleDblVec& fit, simpleDblVector& beta, double
      fit[obs] = beta->val[0] * scale;
 }
 
-void dataAlgoIntercept::resid_correct(simpleDblVec& resid, simpleDblVector& beta) {
-   for (size_t obs=0; obs < resid.nelem; obs++)
-     resid[obs] -= beta->val[0];
-}
-
-void dataAlgoIntercept::resid_decorrect(simpleDblVec& resid, simpleDblVector& beta) {
-   for (size_t obs=0; obs < resid.nelem; obs++)
-     resid[obs] += beta->val[0];
-}
-
-void dataAlgoIntercept::collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs) {
-   lhs[0] = 0.0;
-   rhs[0] = 0.0;
+void dataAlgoIntercept::collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs_sc, double& rhs_sc) {
+   lhs_sc = 0.0;
+   rhs_sc = 0.0;
    for (size_t obs=0; obs < resid.nelem; obs++) {
-      lhs[0] += residprec[obs];
-      rhs[0] += resid[obs]*residprec[obs];
+      lhs_sc += residprec[obs];
+      rhs_sc += resid[obs]*residprec[obs];
    }
 }
 

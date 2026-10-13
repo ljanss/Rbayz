@@ -23,11 +23,7 @@ public:
 
    void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale);
 
-   void resid_correct(simpleDblVec& resid, simpleDblVector& beta);
-
-   void resid_decorrect(simpleDblVec& resid, simpleDblVector& beta);
-
-   void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs);
+   void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs);
 
 };
 

@@ -31,15 +31,13 @@ public:
    virtual void fillFit(simpleDblVec& fit, simpleDblVector& beta) = 0;
    virtual void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale) = 0;
 
-   // Collect LHS and RHS statistics; to make a common interface this is not defined to
-   // use lhs and rhs vectors (in a few cases such as intercept and simple regression it is
-   // a single element only).
-   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs) = 0;
+   // Note: methods to collect LHS and RHS statistics have different interfaces in different
+   // dataAlgorithm classes and are therefore not part of the base class. 
+   // Note: I'm also no longer including residual correct/decorrect methods because the code
+   // gets updated to do this through adding/subtracting the fit-vectors, which can be done in one statement. 
+//   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs) { }
+//   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs, size_t column) { }
 
-   // I have not yet considered putting residual correction/decorrection methods in the base
-   // class here, mainly because some work by column (when working a dataMatrix structures), and
-   // unlike fillFit is makes less sense that all derived classes should need to implement two
-   // versions, or that the common interface has a 'column' argument that is not used in many cases.
 };
 
 #endif /* dataAlgorithm_h */
