@@ -1,7 +1,7 @@
 //
-//  BayzR -- dataAlgorithm.h
+// BayzR -- dataAlgorithm.h
 //
-// Base class for data-algorithm classes - classes that define
+// Base class for dataAlgorithm classes - classes that define
 // computational algorithms (MCMC related) on the different data classes.
 // This mainly defines common methods; the data and helper vectors are very
 // particular for the different algorithms. 
@@ -34,7 +34,7 @@ public:
    // Collect LHS and RHS statistics; to make a common interface this is not defined to
    // use lhs and rhs vectors (in a few cases such as intercept and simple regression it is
    // a single element only).
-   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& lhs, simpleDblVec& rhs) = 0;
+   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs) = 0;
 
    // I have not yet considered putting residual correction/decorrection methods in the base
    // class here, mainly because some work by column (when working a dataMatrix structures), and

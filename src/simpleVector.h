@@ -47,6 +47,8 @@ public:
    void initWith(size_t n, double initvalue);
    void initWith(simpleDblVector & X);
    void swap(simpleDblVector* other);
+   void add(simpleDblVector & other);
+   void sub(simpleDblVector & other);
    double *data=0;
    size_t nelem=0;
 private:

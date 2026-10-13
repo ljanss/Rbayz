@@ -96,6 +96,22 @@ void simpleDblVector::swap(simpleDblVector* other) {
    other->nelem  = oldnelem;
 }
 
+void simpleDblVector::add(simpleDblVector & other) {
+   if (nelem != other.nelem) {
+      throw(generalRbayzError("Vector sizes do not match in simpleDblVector::add"));
+   }
+   for (size_t i=0; i<nelem; i++)
+      data[i] += other.data[i];
+}
+
+void simpleDblVector::sub(simpleDblVector & other) {
+   if (nelem != other.nelem) {
+      throw(generalRbayzError("Vector sizes do not match in simpleDblVector::sub"));
+   }
+   for (size_t i=0; i<nelem; i++)
+      data[i] -= other.data[i];
+}
+
 void simpleDblVector::doalloc(size_t n) {
    if (n <= 0) {
       throw(generalRbayzError("Zero or negative size in initialisation in simpleVector"));
