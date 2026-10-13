@@ -23,7 +23,7 @@ class modelMean : public modelCoeff {
 public:
 
    modelMean(parsedModelTerm & modeldescr, modelResp * rmod)
-         : modelCoeff(modeldescr, rmod) {
+         : modelCoeff(modeldescr, rmod), comp() {
       par = new parVector(modeldescr, 0.0l);
       par->Name="mean";       // a little repair because the
       par->Labels[0]="mean";  // constructor has not set it right
@@ -35,25 +35,18 @@ public:
    }
 
    void sample() {
-      size_t obs;
-      double sum=0.0, temp=0.0;
-      for (obs=0; obs < Nresid; obs++) resid[obs] += par->val[0];
-      for (obs=0; obs< Nresid; obs++) {
-         sum += resid[obs]*residPrec[obs];
-         temp += residPrec[obs];
-      }
-      par->val[0] = R::rnorm((sum/temp), sqrt(1.0/temp));
-      for (obs=0; obs < Nresid; obs++) resid[obs] -= par->val[0];
-   }
-
-   void fillFit() {
-      for (size_t obs=0; obs < Nresid; obs++)
-        fit[obs] = par->val[0];
+      resid.add(fit);
+      comp.collectLhsRhs(resid, residPrec, lhs, rhs);
+      par->val[0] = R::rnorm((rhs[0]/lhs[0]), sqrt(1.0/lhs[0]));
+      comp.fillFit(fit, par);
+      resid.sub(fit);
    }
 
    void sampleHpars() {}
 
    void restart() {}
+
+   dataAlgoIntercept comp;
 
 private:
 };
