@@ -93,7 +93,7 @@ diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indep
         throw(generalRbayzError("ERROR V=DIAG[] is missing variable name in "+modeldescr.shortModelTerm));
     }
     try {
-        dataCovar tempDiag(varlist[0].varOptions[0].varObject, false, false);
+        dataCovar tempDiag(varlist[0].varOptions[0].varObject, false, false, varlist[0]["varname"].valstring);
         if(coefpar->nelem != tempDiag.nelem) {
             throw(generalRbayzError("ERROR dimension of DIAG does not fit random effect size"));
         }

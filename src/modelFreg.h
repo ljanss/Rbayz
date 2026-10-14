@@ -25,11 +25,9 @@ public:
    
    modelFreg(parsedModelTerm & modeldescr, modelResp * rmod)
          : modelCoeff(modeldescr, rmod),
-           C(modeldescr.variableObjects[0]),
+           C(modeldescr.variableObjects[0], modeldescr.variableNames[0]),
            comp(C)
    {
-      if(modeldescr.variableTypes[0] != 3)
-         throw generalRbayzError("Not a numeric vector input: "+modeldescr.variableNames[0]);
       par = new parVector(modeldescr, 0.0l);
       par->traced=1;
    }
