@@ -14,6 +14,7 @@
 
 #include <Rcpp.h>
 #include <cmath>
+#include "dataAlgorithm.h"
 #include "modelCoeff.h"
 #include "dataFactor.h"
 #include "optionsInfo.h"
@@ -24,27 +25,28 @@ class modelFactor : public modelCoeff {
 public:
    
    modelFactor(parsedModelTerm & modeldescr, modelResp * rmod)
-         : modelCoeff(modeldescr, rmod)
+         : modelCoeff(modeldescr, rmod),
+           F(modeldescr.variableObjects, modeldescr.variableNames),
+           comp(F)
    {
-      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames);
-      par = new parVector(modeldescr, 0.0l, F->labels);
-      lhs.resize(F->labels.size(),0);
-      rhs.resize(F->labels.size(),0);
+      par = new parVector(modeldescr, 0.0l, F.labels);
+      lhs.resize(F.labels.size(),0);
+      rhs.resize(F.labels.size(),0);
    }
 
    // constructor with a variance list used by (some) random effect models; it is used to
    // take labels for the factors if there are kernels in the variance list.
    modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, std::vector<varianceSpec> varlist)
-         : modelCoeff(modeldescr, rmod)
+         : modelCoeff(modeldescr, rmod),
+           F(modeldescr.variableObjects, modeldescr.variableNames, varlist),
+           comp(F)
    {
-      F = new dataFactor(modeldescr.variableObjects, modeldescr.variableNames, varlist);
-      par = new parVector(modeldescr, 0.0l, F->labels);
-      lhs.resize(F->labels.size(),0);
-      rhs.resize(F->labels.size(),0);
+      par = new parVector(modeldescr, 0.0l, F.labels);
+      lhs.resize(F.labels.size(),0);
+      rhs.resize(F.labels.size(),0);
    }
    
    ~modelFactor() {
-      delete F;
       delete par;
    }
 
@@ -79,7 +81,8 @@ protected:
       }
    }
 
-   dataFactor *F;
+   dataFactor F;
+   dataAlgoFactor comp;
    std::vector<double> lhs, rhs;          // working vectors to collect LHS an RHS of equations
                                           // maybe faster using the simpleVector class?
 

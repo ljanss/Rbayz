@@ -16,6 +16,7 @@
 #define modelMean_h
 
 #include <Rcpp.h>
+#include "dataAlgorithm.h"
 #include "modelCoeff.h"
 
 class modelMean : public modelCoeff {

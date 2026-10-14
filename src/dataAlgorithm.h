@@ -1,10 +1,22 @@
 //
 // BayzR -- dataAlgorithm.h
 //
-// Base class for dataAlgorithm classes - classes that define
-// computational algorithms (MCMC related) on the different data classes.
-// This mainly defines common methods; the data and helper vectors are very
-// particular for the different algorithms. 
+// Data algorithm classes: classes the define the computations on the interface of
+// data containers and coefficient models, typically by supplying the statistics needed
+// for sampling (and PCG updating too?). 
+// 
+// The base class is relatively empty but defines the requirement for fillFit
+// methods to be implemented: all classes need to define a fillFit with and
+// without scale; this is essential for correct working of residual de/corrections,
+// which is done with the fit-vectors and don't account for scale directly.
+//
+// Concrete classes are needed for every combination of data containers that can
+// arise in model terms. Thus a single covariate regression (one dataCovar container)
+// needs different algorithms than a nested covariate regression (needs a dataFactor
+// and a dataCovar container). But the nested covariate algorithm can be re-used across
+// fixed nested regression and random slope models.
+// The concrete classes usually implement a collectLhsRhs() method, but argument
+// signatures differ, and some container-combination may need more or other methods.
 //
 // Created by Luc Janss on 09/10/2026.
 
@@ -12,6 +24,9 @@
 #define dataAlgorithm_h
 
 #include "simpleVector.h"
+#include "dataFactor.h"
+#include "dataCovar.h"
+#include "dataMatrix.h"
 
 class dataAlgorithm {
    
@@ -31,13 +46,38 @@ public:
    virtual void fillFit(simpleDblVec& fit, simpleDblVector& beta) = 0;
    virtual void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale) = 0;
 
-   // Note: methods to collect LHS and RHS statistics have different interfaces in different
-   // dataAlgorithm classes and are therefore not part of the base class. 
-   // Note: I'm also no longer including residual correct/decorrect methods because the code
-   // gets updated to do this through adding/subtracting the fit-vectors, which can be done in one statement. 
 //   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs) { }
 //   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs, size_t column) { }
 
 };
+
+// Data algorithms for intercept fit. As an exception, this is not connected to a data
+// container, the intercept is trivial and implied (bayz does not explicitly store a vector
+// of 1's to work on).
+class dataAlgoIntercept : public dataAlgorithm {
+public:
+   dataAlgoIntercept() = default;
+   ~dataAlgoIntercept() = default;
+   void fillFit(simpleDblVec& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale);
+   void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs);
+};
+
+// Data algorithms for dataFactor. Note the dataFactor standardly re-codes interactions
+// of factors to behave again as one factor, so this also covers multi-factor interactions.
+// Note: there is also a "not collapsed" dataFactorNC, but I will see if that also needs its
+// own algorithm class.
+class dataAlgoFactor : public dataAlgorithm {
+public:
+   dataAlgoFactor(dataFactor& Fdata_) : Fdata(Fdata_) {}
+   ~dataAlgoFactor() = default;
+   void fillFit(simpleDblVec& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale);
+   void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs);
+private:
+   dataFactor& Fdata;
+};
+
+
 
 #endif /* dataAlgorithm_h */
