@@ -71,9 +71,9 @@ class dataAlgoFactor : public dataAlgorithm {
 public:
    dataAlgoFactor(dataFactor& Fdata_) : Fdata(Fdata_) {}
    ~dataAlgoFactor() = default;
-   void fillFit(simpleDblVec& fit, simpleDblVector& beta);
-   void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale);
-   void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
+   void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, simpleDblVector& lhs, simpleDblVector& rhs);
 private:
    dataFactor& Fdata;
 };

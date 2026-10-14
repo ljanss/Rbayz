@@ -51,37 +51,6 @@ public:
       delete par;
    }
 
-   void fillFit() {
-      for (size_t obs=0; obs < F.nelem; obs++)
-        fit[obs] = par->val[F.data[obs]];
-   }
-
-   
-protected:
-
-   void resid_correct() {
-      for (size_t obs=0; obs < F.nelem; obs++)
-        resid[obs] -= par->val[F.data[obs]];
-   }
-
-   void resid_decorrect() {
-      for (size_t obs=0; obs < F.nelem; obs++)
-        resid[obs] += par->val[F.data[obs]];
-   }
-
-   void collect_lhs_rhs() {
-      size_t k;
-      for(k=0; k<par->nelem; k++) {
-         rhs[k] = 0.0;
-         lhs[k] = 0.0;
-      }
-      for (size_t obs=0; obs < F.nelem; obs++) {
-         k=F.data[obs];
-         rhs[k] += residPrec[obs] * resid[obs];
-         lhs[k] += residPrec[obs];
-      }
-   }
-
    dataFactor F;
    dataAlgoFactor comp;
    simpleDblVector lhs, rhs;

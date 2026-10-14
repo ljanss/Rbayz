@@ -29,3 +29,26 @@ void dataAlgoIntercept::collectLhsRhs(simpleDblVec& resid, simpleDblVec& residpr
    }
 }
 
+// Implementations of dataAlgoFactor methods
+// -----------------------------------------
+
+void dataAlgoFactor::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
+   for (size_t obs=0; obs < Fdata.nelem; obs++)
+     fit[obs] = beta->val[Fdata.data[obs]];
+}
+
+void dataAlgoFactor::fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale) {
+   for (size_t obs=0; obs < Fdata.nelem; obs++)
+     fit[obs] = beta->val[Fdata.data[obs]] * scale;
+}
+
+void dataAlgoFactor::collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec,
+                                   simpleDblVector& lhs, simpleDblVector& rhs) {
+   rhs.fill(0.0);
+   lhs.fill(0.0);
+   for (size_t obs=0; obs < Fdata.nelem; obs++) {
+      size_t k = Fdata.data[obs];
+      rhs.data[k] += residprec[obs] * resid[obs];
+      lhs.data[k] += residprec[obs];
+   }
+}
