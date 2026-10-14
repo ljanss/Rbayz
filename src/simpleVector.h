@@ -49,6 +49,7 @@ public:
    void swap(simpleDblVector* other);
    void add(simpleDblVector & other);
    void sub(simpleDblVector & other);
+   void fill(double value);
    double *data=0;
    size_t nelem=0;
 private:

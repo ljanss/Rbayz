@@ -18,6 +18,7 @@
 #include "modelCoeff.h"
 #include "dataFactor.h"
 #include "optionsInfo.h"
+#include "simpleVector.h"
 //#include <unistd.h>
 
 class modelFactor : public modelCoeff {
@@ -27,11 +28,11 @@ public:
    modelFactor(parsedModelTerm & modeldescr, modelResp * rmod)
          : modelCoeff(modeldescr, rmod),
            F(modeldescr.variableObjects, modeldescr.variableNames),
-           comp(F)
+           comp(F),
+           lhs(F.labels.nelem,0),
+           rhs(F.labels.nelem,0)
    {
       par = new parVector(modeldescr, 0.0l, F.labels);
-      lhs.resize(F.labels.size(),0);
-      rhs.resize(F.labels.size(),0);
    }
 
    // constructor with a variance list used by (some) random effect models; it is used to
@@ -39,11 +40,11 @@ public:
    modelFactor(parsedModelTerm & modeldescr, modelResp * rmod, std::vector<varianceSpec> varlist)
          : modelCoeff(modeldescr, rmod),
            F(modeldescr.variableObjects, modeldescr.variableNames, varlist),
-           comp(F)
+           comp(F),
+           lhs(F.labels.nelem,0),
+           rhs(F.labels.nelem,0)
    {
       par = new parVector(modeldescr, 0.0l, F.labels);
-      lhs.resize(F.labels.size(),0);
-      rhs.resize(F.labels.size(),0);
    }
    
    ~modelFactor() {
@@ -51,21 +52,21 @@ public:
    }
 
    void fillFit() {
-      for (size_t obs=0; obs < F->nelem; obs++)
-        fit[obs] = par->val[F->data[obs]];
+      for (size_t obs=0; obs < F.nelem; obs++)
+        fit[obs] = par->val[F.data[obs]];
    }
 
    
 protected:
 
    void resid_correct() {
-      for (size_t obs=0; obs < F->nelem; obs++)
-        resid[obs] -= par->val[F->data[obs]];
+      for (size_t obs=0; obs < F.nelem; obs++)
+        resid[obs] -= par->val[F.data[obs]];
    }
 
    void resid_decorrect() {
-      for (size_t obs=0; obs < F->nelem; obs++)
-        resid[obs] += par->val[F->data[obs]];
+      for (size_t obs=0; obs < F.nelem; obs++)
+        resid[obs] += par->val[F.data[obs]];
    }
 
    void collect_lhs_rhs() {
@@ -74,8 +75,8 @@ protected:
          rhs[k] = 0.0;
          lhs[k] = 0.0;
       }
-      for (size_t obs=0; obs < F->nelem; obs++) {
-         k=F->data[obs];
+      for (size_t obs=0; obs < F.nelem; obs++) {
+         k=F.data[obs];
          rhs[k] += residPrec[obs] * resid[obs];
          lhs[k] += residPrec[obs];
       }
@@ -83,8 +84,7 @@ protected:
 
    dataFactor F;
    dataAlgoFactor comp;
-   std::vector<double> lhs, rhs;          // working vectors to collect LHS an RHS of equations
-                                          // maybe faster using the simpleVector class?
+   simpleDblVector lhs, rhs;
 
 };
 

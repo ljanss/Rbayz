@@ -111,6 +111,10 @@ void simpleDblVector::sub(simpleDblVector & other) {
    for (size_t i=0; i<nelem; i++)
       data[i] -= other.data[i];
 }
+void simpleDblVector::fill(double value) {
+   for (size_t i=0; i<nelem; i++)
+      data[i] = value;
+}
 
 void simpleDblVector::doalloc(size_t n) {
    if (n <= 0) {
