@@ -1,8 +1,11 @@
 //
-//  BayzR -- dataCovar.h
-//  Storage class to hold a covariate
+// BayzR -- dataCovar.h
+// Storage class to hold a covariate.
+// The constructors take an R-object, attempts to convert it to a numerical vector, and
+// throw error when this fails. With an update, the original variable name needs to be passed
+// too to allow printing a meaninful error message when conversion fails.
 //
-//  Created by Luc Janss on 14/01/2020.
+// Created by Luc Janss on 14/01/2020.
 //
 
 #ifndef dataCovar_h
@@ -17,7 +20,7 @@ class dataCovar : public simpleDblVector {
 public:
 
    // Default one centering and filling NA
-   dataCovar(Rcpp::RObject x) : simpleDblVector() {
+   dataCovar(Rcpp::RObject x, std::string varname) : simpleDblVector() {
       try {
          Rcpp::NumericVector temp = Rcpp::as<Rcpp::NumericVector>(x);
          Rcpp::LogicalVector missing = Rcpp::is_na(temp);
@@ -39,12 +42,13 @@ public:
          }
       }
    	catch(std::exception &err) {
-         throw(generalRbayzError("Error in dataCovar getting numerical vector: "+std::string(err.what())));
+         throw(generalRbayzError("Error in dataCovar transforming variable " + varname + 
+                                 " to a numerical vector: "+std::string(err.what())));
    	}
    }
 
    // constructor with optional center and filling NA
-   dataCovar(Rcpp::RObject x, bool center, bool fillNA) : simpleDblVector() {
+   dataCovar(Rcpp::RObject x, bool center, bool fillNA, std::string varname) : simpleDblVector() {
       try {
          Rcpp::NumericVector temp = Rcpp::as<Rcpp::NumericVector>(x);
          Rcpp::LogicalVector missing = Rcpp::is_na(temp);
@@ -58,7 +62,8 @@ public:
             }
          }
          if(countnoNA < nelem && !fillNA)
-            throw(generalRbayzError("Error in dataCovar: covariate vector has missing values"));
+            throw(generalRbayzError("Error in dataCovar: covariate " + varname + 
+                                    " has missing values which is not allowed here"));
          double meancovar = sumnoNA / double(countnoNA);
          if (center) {
             offset = meancovar;   // store meancovar in 'offset' only when data is centered
@@ -78,7 +83,8 @@ public:
          }
       }
    	catch(std::exception &err) {
-         throw(generalRbayzError("Error in dataCovar getting numerical vector: "+std::string(err.what())));
+         throw(generalRbayzError("Error in dataCovar transforming variable " + varname + 
+                                 " to a numerical vector: "+std::string(err.what())));
    	}
    }
 
