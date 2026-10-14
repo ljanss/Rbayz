@@ -22,8 +22,44 @@
 #include "nameTools.h"
 #include "indexTools.h"
 
+// Helper class to check if the variable pattern in the model-term is
+// compatible with modelMatrix needs.
+class modelMatrixVariableChecker {
+public:
+   modelMatrixVariableChecker(parsedModelTerm & modeldescr) {
+      OK = false;
+      // also check if there are two variables ...
+      if(modeldescr.variableTypes.size() != 2)
+         throw generalRbayzError("modelMatrix requires two variables: a factor and a matrix.");
+      bool acceptable0VarType = modeldescr.variableTypes[0]==1 || modeldescr.variableTypes[0]==2 ||
+                              modeldescr.variableTypes[0]==4 || modeldescr.variableTypes[0]==5;
+      if( acceptable0VarType && modeldescr.variableTypes[1]==6 )
+         OK = true;
+      else
+         throw generalRbayzError("variable types in rr() model are not (convertable to) <factor>/<matrix>");
+
+   }
+   bool OK;
+};
+
+// Now modelMatrix can include a variableCheck member and initialize it in the constructor with
+// the model-description. If that passes without throwing an error, the pattern is OK.
+// If needed the status of the variable check can always be accessed as variableCheck.OK, but if
+// no error was thrown it should have value True.
+
 class modelMatrix : public modelCoeff {
-   
+
+/* working here ...
+I'm trying to change F and M to member variables, which are then nicest initialized in the
+initialization list (if not I would have to add 'empty' constructors and add methods to set them later).
+To allow use in the initialization list, the checks done in the constructor may need to move to the
+main bayz() function before calling these object constructors.... (is now done ...)
+I'm seeing a disadvantage of moving it to main bayz(), this check is generic for Rreg, Lasso, Mixt
+and all other cases that could work on a matrix of covariates. When these are split on the model allocation
+tree, the check may need to be repeated when done in the main function. When staying here and all these
+cases you modelMatrix as framework, it can be done only once here.
+This then may need some checking function / class, that can also go in the initialization list....
+*/
 public:
    
    modelMatrix(parsedModelTerm & modeldescr, modelResp * rmod)
@@ -32,10 +68,6 @@ public:
       // For now only allowing a matrix input where there is an index variable (model
       // made with id/matrix). It could be extended to allow for no id, so that matrix needs to
       // be aliged 1:1 with data records, then the 'id' is bascially a 1:1 link.
-      bool acceptable0VarType = modeldescr.variableTypes[0]==1 || modeldescr.variableTypes[0]==2 ||
-                              modeldescr.variableTypes[0]==4 || modeldescr.variableTypes[0]==5;
-      if( ! (acceptable0VarType && modeldescr.variableTypes[1]==6) )
-         throw generalRbayzError("variable types in rr() model are not (convertable to) <factor>/<matrix>");
       F = new dataFactor(modeldescr.variableObjects[0], modeldescr.variableNames[0]);
       M = new dataMatrix(modeldescr.variableObjects[1], modeldescr.variableNames[1]);
       par = new parVector(modeldescr, 0.0l, M->colnames);

@@ -112,6 +112,13 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
          else if (pmt.funcName=="rr") {
             // Note: varianceStruct DIAG, LASS, MIXT are always single (for now) - see parsedModelTerm.
             //       If there would be multiple with a DIAG it would be annotated as "mixed" varianceStruct.
+            // Note 2: checking here if the variables are can be converted to the needed factor and matrix;
+            //       this is using the current syntax id/mat, where 'id' is assigned in parsing as variable 0,
+            //       and the 'mat' as variable 1.
+            // Note 3: I'm thinking to modify the rr() syntax to have an idlink option, and optionally also
+            //       allow no idlink, implying 1:1 link.
+            // Note 4: the IDEN and DIAG can probably be collapsed to one case and handled in a modelRreg
+            //       general class. THe LASS and MIXT may need there own model term acronyms? (ls and mx?).
             if(pmt.varianceStruct=="IDEN" || pmt.varianceStruct=="notgiven")
                model.push_back(new modelRregIden(pmt, modelR));
             else if (pmt.varianceStruct=="DIAG")
