@@ -24,57 +24,35 @@ class modelFreg : public modelCoeff {
 public:
    
    modelFreg(parsedModelTerm & modeldescr, modelResp * rmod)
-         : modelCoeff(modeldescr, rmod)
+         : modelCoeff(modeldescr, rmod),
+           C(modeldescr.variableObjects[0]),
+           comp(C)
    {
       if(modeldescr.variableTypes[0] != 3)
          throw generalRbayzError("Not a numeric vector input: "+modeldescr.variableNames[0]);
-      C = new dataCovar(modeldescr.variableObjects[0]);
       par = new parVector(modeldescr, 0.0l);
       par->traced=1;
    }
    
    ~modelFreg() {
-      delete C;
       delete par;
    }
    
    void sample() {
-      resid_decorrect();
-      collect_lhs_rhs();
+      resid.add(fit);
+      comp.collectLhsRhs(resid, residPrec, lhs, rhs);
       par->val[0] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
-      resid_correct();
+      comp.fillFit(fit, par->val[0]);
+      resid.sub(fit);
    }
 
    void sampleHpars() {}
 
    void restart() {}
 
-   void fillFit() {
-      for (size_t obs=0; obs < C->nelem; obs++)
-        fit[obs] = par->val[0] * C->data[obs];
-   }
-
-   void resid_correct() {
-      for (size_t obs=0; obs < C->nelem; obs++)
-        resid[obs] -= par->val[0] * C->data[obs];
-   }
-
-   void resid_decorrect() {
-      for (size_t obs=0; obs < C->nelem; obs++)
-        resid[obs] += par->val[0] * C->data[obs];
-   }
-
-   void collect_lhs_rhs() {
-      lhs = 0.0; rhs=0.0;
-      for (size_t obs=0; obs < C->nelem; obs++) {
-         rhs += residPrec[obs] * resid[obs] * C->data[obs];
-         lhs += C->data[obs] * residPrec[obs] * C->data[obs];
-      }
-   }
-
-   dataCovar *C;
+   dataCovar C;
+   dataAlgoCovar comp;
    double lhs, rhs;
-   std::vector<double> fit;  // not used yet
    
 };
 
