@@ -52,3 +52,29 @@ void dataAlgoFactor::collectLhsRhs(simpleDblVector& resid, simpleDblVector& resi
       lhs.data[k] += residprec[obs];
    }
 }
+
+// Implementations of dataAlgoCovar methods
+// -----------------------------------------
+
+void dataAlgoCovar::fillFit(simpleDblVector& fit, double& beta) {
+   for (size_t obs=0; obs < Cdata.nelem; obs++)
+     fit[obs] = beta * Cdata.data[obs];
+}
+
+void dataAlgoCovar::fillFit(simpleDblVector& fit, double& beta, double scale) {
+   for (size_t obs=0; obs < Cdata.nelem; obs++)
+     fit[obs] = beta * Cdata.data[obs] * scale;
+}
+
+void dataAlgoCovar::collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs) {
+   lhs = 0.0;
+   rhs = 0.0;
+   for (size_t obs=0; obs < Cdata.nelem; obs++) {
+      lhs += residprec[obs] * Cdata.data[obs] * Cdata.data[obs];
+      rhs += residprec[obs] * resid[obs] * Cdata.data[obs];
+   }
+}
+
+// Implementations of nested regressions ... to be done
+
+

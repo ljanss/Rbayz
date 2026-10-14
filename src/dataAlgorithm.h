@@ -78,6 +78,21 @@ private:
    dataFactor& Fdata;
 };
 
+// Data algorithms for a single covariate (one dataCovar data container).
+// For a single covariate, beta must be a scalar and lhs and rhs too.
+class dataAlgoCovar : public dataAlgorithm {
+public:
+   dataAlgoCovar(dataCovar& Cdata_) : Cdata(Cdata_) {}
+   ~dataAlgoCovar() = default;
+   void fillFit(simpleDblVector& fit, double& beta);
+   void fillFit(simpleDblVector& fit, double& beta, double scale);
+   void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs);
+private:
+   dataCovar& Cdata;
+};
+
+// Can here now develop nested regression too, a case with two types of data containers.
+
 
 
 #endif /* dataAlgorithm_h */
