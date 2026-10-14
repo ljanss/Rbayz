@@ -19,23 +19,26 @@ class modelFixf : public modelFactor {
 public:
    
    modelFixf(parsedModelTerm & modeldescr, modelResp * rmod)
-      : modelFactor(modeldescr, rmod) {
-         if(par->nelem < 5) par->traced=1;
+      : modelFactor(modeldescr, rmod)
+   {
+      if(par->nelem < 5) par->traced=1;
    }
 
    // no need for destructor here because parent class destructor is doing all that's needed
 
    // [ToDo] Heterogeneous residual var not implemented here??
+   //        - maybe now it is because new dataAlgoFactor does it.
    void sample() {
-      resid_decorrect();
-      collect_lhs_rhs();
+      resid.add(fit);
+      comp.collectLhsRhs(resid, residprec, lhs, rhs);
       for(size_t k=1; k<par->nelem; k++) {  // in fixf par[0] remains zero!, this runs from k=1
-         if (lhs[k]>0)                     // if lhs is zero estimate will be set to 0
+         if (lhs[k]>0)                      // if lhs is zero estimate will be set to 0
             par->val[k] = R::rnorm( (rhs[k]/lhs[k]), sqrt(1.0/lhs[k]));
          else
             par->val[k]=0.0;
       }
-      resid_correct();
+      comp.fillFit(fit, par);
+      resid.sub(fit);
    }
 
    void sampleHpars() {}
