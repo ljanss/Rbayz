@@ -7,6 +7,54 @@
 #include "indexTools.h"
 #include "optionsInfo.h"
 
+// ******* modelCoeff methods and constructor *******
+// --------------------------------------------------
+
+modelCoeff::modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : modelBase(), fit() {
+   // updating bayzR to handle hierarchical models can imply some (large?) changes here,
+   // because then the "response model" can be another coefficient model.
+   // modelResp and modelCoeff are in different branches of the class hierarchy, and cannot
+   // be cast from one to the other.
+   // Maybe it needs a special interface class to help presenting a modelCoeff object
+   // "as if" it is a modelResp class for the hierarchical model?
+   respModel=rmod;
+   resid = respModel->resid->val;
+   if(respModel->varModel==0) Rcpp::Rcout << "!respModel->varModel pointer is zero!\n";
+   residPrec = respModel->varModel->weights.data;
+   Nresid = respModel->resid->nelem;
+   fit.initWith(Nresid, 0.0l);
+}
+
+// make statistics to estimate scale of fitted values:
+// lhs=sum(fit^2), rhs=sum(fit*resid) with resid de-corrected for fit.
+void modelCoeff::getFitScaleStats(double & lhs, double & rhs) {
+   lhs=0.0l;
+   rhs=0.0l;
+   for(size_t i=0; i < Nresid; i++) {
+      lhs += fit.data[i] * fit.data[i];
+      rhs += fit.data[i] * (resid[i] + fit.data[i]);
+   }
+}
+
+// Adjust residuals and fit for a change in scale for models fitting variance as
+// as scaling factor (like sXb where s is scale). The random effects in such models
+// are on a standard scale, and variance is updated by resetting scale and
+// modifying the total fitted value sXb and residuals accordingly. 
+void modelCoeff::resid_fit_scaleUpdate(double scale_old, double scale_new) {
+   double resid_adjust = (1.0l - scale_new/scale_old);
+   double fit_adjust = scale_new/scale_old;
+   for (size_t obs=0; obs < resid->nelem; obs++) {
+      resid[obs] += fit[obs]*resid_adjust;
+      fit[obs] = fit[obs]*fit_adjust;
+   }
+}
+
+void modelCoeff::collect_sse(double & sse) {
+   sse=0.0l;
+   for (size_t obs=0; obs < Nresid; obs++)
+      sse += resid[obs]*resid[obs]*residPrec[obs];
+}
+
 /* ------------- some helper functions --------------------- 
    Used by multiple modelRanfc classes
 */
@@ -190,6 +238,7 @@ void modelRanfc1::sample() {
       lhsl += varmodel->weights[col];
       regcoeff->val[col] = R::rnorm( (rhsl/lhsl), sqrt(1.0/lhsl));
       // residual correction for this column with updated regression
+      // This could now be replaced by accumFit() method from the new algoMatrix class
       for (size_t obs=0; obs < F->nelem; obs++)
          fit.data[obs] += regcoeff->val[col] * colptr[F->data[obs]];
    }

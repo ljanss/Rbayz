@@ -24,6 +24,7 @@
 #define dataAlgorithm_h
 
 #include "simpleVector.h"
+#include "parVector.h"
 #include "dataFactor.h"
 #include "dataCovar.h"
 #include "dataMatrix.h"
@@ -58,8 +59,8 @@ class dataAlgoIntercept : public dataAlgorithm {
 public:
    dataAlgoIntercept() = default;
    ~dataAlgoIntercept() = default;
-   void fillFit(simpleDblVec& fit, simpleDblVector& beta);
-   void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale);
+   void fillFit(simpleDblVec& fit, parVector& beta);
+   void fillFit(simpleDblVec& fit, parVector& beta, double scale);
    void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs);
 };
 
@@ -71,8 +72,8 @@ class dataAlgoFactor : public dataAlgorithm {
 public:
    dataAlgoFactor(dataFactor& Fdata_) : Fdata(Fdata_) {}
    ~dataAlgoFactor() = default;
-   void fillFit(simpleDblVector& fit, simpleDblVector& beta);
-   void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
+   void fillFit(simpleDblVector& fit, parVector& beta);
+   void fillFit(simpleDblVector& fit, parVector& beta, double scale);
    void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, simpleDblVector& lhs, simpleDblVector& rhs);
 private:
    dataFactor& Fdata;
@@ -92,6 +93,29 @@ private:
 };
 
 // Can here now develop nested regression too, a case with two types of data containers.
+
+// Data algorithms for working on a matrix of covariates/features. In bayz this this uses
+// a combination of a Factor and Matrix data container, the factor is for linking the
+// rows of the data matrix to the rows in the main data.
+// The fillFit() methods are supplied to remain consistent with other algorithm classes,
+// but maybe are not used now?? Instead, current implementations use column-wise residual
+// de/correction methods, and column-wise fit accumulation.
+class dataAlgoMatrix : public dataAlgorithm {
+public:
+   dataAlgoMatrix(dataFactor& Fdata_, dataMatrix& Mdata_) : Fdata(Fdata_), Mdata(Mdata_) {}
+   ~dataAlgoMatrix() = default;
+   void fillFit(simpleDblVector& fit, parVector& beta);
+   void fillFit(simpleDblVector& fit, parVector& beta, double scale);
+   void accumFit(simpleDblVector& fit, double& beta, size_t& col);
+   void accumFit(simpleDblVector& fit, double& beta, size_t& col, double scale);
+   void resid_correct(simpleDblVector& resid, double& beta, size_t col);
+   void resid_decorrect(simpleDblVector& resid, double& beta, size_t col);
+   void resid_fit_betaUpdate(simpleDblVector& resid, double beta_diff, size_t col);
+   void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs, size_t col);
+private:
+   dataFactor& Fdata;
+   dataMatrix& Mdata;
+};
 
 
 

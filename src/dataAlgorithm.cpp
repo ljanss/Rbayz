@@ -10,12 +10,12 @@
 // Implementations of dataAlgoIntercept methods
 // --------------------------------------------
 
-void dataAlgoIntercept::fillFit(simpleDblVec& fit, simpleDblVector& beta) {
+void dataAlgoIntercept::fillFit(simpleDblVec& fit, parVector& beta) {
    for (size_t obs=0; obs < fit.nelem; obs++)
      fit[obs] = beta->val[0];
 }
 
-void dataAlgoIntercept::fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale) {
+void dataAlgoIntercept::fillFit(simpleDblVec& fit, parVector& beta, double scale) {
    for (size_t obs=0; obs < fit.nelem; obs++)
      fit[obs] = beta->val[0] * scale;
 }
@@ -32,12 +32,12 @@ void dataAlgoIntercept::collectLhsRhs(simpleDblVec& resid, simpleDblVec& residpr
 // Implementations of dataAlgoFactor methods
 // -----------------------------------------
 
-void dataAlgoFactor::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
+void dataAlgoFactor::fillFit(simpleDblVector& fit, parVector& beta) {
    for (size_t obs=0; obs < Fdata.nelem; obs++)
      fit[obs] = beta->val[Fdata.data[obs]];
 }
 
-void dataAlgoFactor::fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale) {
+void dataAlgoFactor::fillFit(simpleDblVector& fit, parVector& beta, double scale) {
    for (size_t obs=0; obs < Fdata.nelem; obs++)
      fit[obs] = beta->val[Fdata.data[obs]] * scale;
 }
@@ -77,4 +77,72 @@ void dataAlgoCovar::collectLhsRhs(simpleDblVector& resid, simpleDblVector& resid
 
 // Implementations of nested regressions ... to be done
 
+// Implementations of dataAlgoMatrix methods
+// -----------------------------------------
 
+void dataAlgoMatrix::fillFit(simpleDblVector& fit, parVector& beta) {
+   double * colptr;
+   for (size_t obs=0; obs < Fdata.nelem; obs++) fit[obs] = 0.0l;
+   for(size_t k=0; k < Mdata.ncol; k++) {
+      colptr = Mdata.data[k];
+      for (size_t obs=0; obs < Fdata.nelem; obs++)
+         fit[obs] += beta->val[k] * colptr[Fdata.data[obs]];
+   }
+}
+
+void dataAlgoMatrix::fillFit(simpleDblVector& fit, parVector& beta, double scale) {
+   double * colptr;
+   for (size_t obs=0; obs < Fdata.nelem; obs++) fit[obs] = 0.0l;
+   for(size_t k=0; k < Mdata.ncol; k++) {
+      colptr = Mdata.data[k];
+      for (size_t obs=0; obs < Fdata.nelem; obs++)
+         fit[obs] += beta->val[k] * colptr[Fdata.data[obs]] * scale;
+   }
+}
+
+void dataAlgoMatrix::accumFit(simpleDblVector& fit, double& beta, size_t& col) {
+   double * colptr = Mdata.data[col];
+   for (size_t obs=0; obs < Fdata.nelem; obs++)
+      fit[obs] += beta * colptr[Fdata.data[obs]];
+}
+
+void dataAlgoMatrix::accumFit(simpleDblVector& fit, double& beta, size_t& col, double scale) {
+   double * colptr = Mdata.data[col];
+   for (size_t obs=0; obs < Fdata.nelem; obs++)
+      fit[obs] += beta * colptr[Fdata.data[obs]] * scale;
+}
+
+void dataAlgoMatrix::resid_correct(simpleDblVector& resid, double& beta, size_t col) {
+   if(beta==0.0l) return;
+   double * colptr = Mdata.data[col];
+   for (size_t obs=0; obs < Fdata.nelem; obs++) {
+      resid[obs] -= beta * colptr[Fdata.data[obs]];
+   }
+}
+void dataAlgoMatrix::resid_decorrect(simpleDblVector& resid, double& beta, size_t col) {
+   if(beta==0.0l) return;
+   double * colptr = Mdata.data[col];
+   for (size_t obs=0; obs < Fdata.nelem; obs++)
+      resid[obs] += beta * colptr[Fdata.data[obs]];
+}
+void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, double beta_diff, size_t col) {
+   double * colptr = Mdata.data[col];
+   for (size_t obs=0; obs < Fdata.nelem; obs++) {
+      resid[obs] += beta_diff * colptr[obsIndex[obs]];
+      fit[obs] -= beta_diff * colptr[obsIndex[obs]];
+   }
+}
+
+void dataAlgoMatrix::collectLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,
+         double& lhs, double& rhs, size_t col) {
+   size_t matrixrow;
+   lhs = 0.0l; rhs = 0.0l;
+   double * colptr = Mdata.data[col];
+   double temp1;
+   for (size_t obs=0; obs < Fdata.nelem; obs++) {
+      matrixrow = obsIndex[obs];
+      temp1 = colptr[matrixrow] * residPrec[obs];
+      rhs += temp1 * resid[obs];
+      lhs += temp1 * colptr[matrixrow];
+   }
+}

@@ -18,7 +18,8 @@
 class parVector {
 
 public:
-
+// I'm not sure now why I made this include a simpleDblVector instead of deriving
+// it from simpleDblVector??
    simpleDblVector Values;
    std::string Name="";
    std::string variables="";
