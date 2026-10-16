@@ -104,8 +104,8 @@ class dataAlgoMatrix : public dataAlgorithm {
 public:
    dataAlgoMatrix(dataFactor& Fdata_, dataMatrix& Mdata_) : Fdata(Fdata_), Mdata(Mdata_) {}
    ~dataAlgoMatrix() = default;
-   void fillFit(simpleDblVector& fit, parVector& beta);
-   void fillFit(simpleDblVector& fit, parVector& beta, double scale);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
    void accumFit(simpleDblVector& fit, double& beta, size_t& col);
    void accumFit(simpleDblVector& fit, double& beta, size_t& col, double scale);
    void resid_correct(simpleDblVector& resid, double& beta, size_t col);

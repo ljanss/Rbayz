@@ -60,7 +60,8 @@ public:
          : modelCoeff(modeldescr, rmod),
            variableCheck(modeldescr),
            F(modeldescr.variableObjects[0], modeldescr.variableNames[0]),
-           M(modeldescr.variableObjects[1], modeldescr.variableNames[1])
+           M(modeldescr.variableObjects[1], modeldescr.variableNames[1]),
+           comp(F, M)
    {
       par = new parVector(modeldescr, 0.0l, M->colnames);
 //      weights.initWith(M->ncol,1.0l);  // I think weights is not used (but using varmodel->weights)
@@ -71,39 +72,6 @@ public:
       delete par;
    }
    
-   // adjust residuals and fit for a change in scale, this works on total fit
-   // (no argument for the column of the covar to use).
-   // Notes:
-   // 1) This could 'move up' to modelCoeff as it could be a generic function to
-   //    update variances (obsviously only for random effects, but probably useful
-   //    for mixture, lasso and ridge models).
-   // 2) Now I'm doubting of the need to adjust fit-vector, it's like a known covariate
-   //    here where we update a regression on that covariate, and that should not modify
-   //    the covariate itself. But it can be this code has been 'harmless' so far because
-   //    this fit is not used in other places and will be rebuilt in modelMatrix implementations.
-   void resid_fit_scaleUpdate(double scale_old, double scale_new) {
-      double resid_adjust = (1.0l - scale_new/scale_old);
-      double fit_adjust = scale_new/scale_old;
-      for (size_t obs=0; obs < F->nelem; obs++) {
-         resid[obs] += fit[obs]*resid_adjust;
-         fit[obs] = fit[obs]*fit_adjust;
-      }
-   }
-
-   // [ToDo] I thought there could be some efficiency gain making a method that combined resis_decorrect()
-   // and collect_lhs_rhs() because it is the same loops and some computations are re-used, but it looks more
-   // difficult to take advantage of skipping zero regcoeff (which also partly happens in sample()) ....
-   
-   // Note sure what I was making this one for, it is not (yet) used anywhere.
-   void collect_sse(double & sse) {
-      sse=0.0l;
-      for (size_t obs=0; obs < F->nelem; obs++)
-         sse += resid[obs]*resid[obs]*residPrec[obs];
-   }
-
-   // [ToDo] OBS: this fillFit is not right if the variance of random effect
-   // is modelled with a scale. In that case fit = scale * par[] * covar[]
-
    // The evec fit (but not yet rr-fit) works with resid_decorrect per column, then
    // accumulate fit per column, uses corrected residual as current resid minus so-far
    // accumualted fit, and in the end does resisual correction by subtractin the whole
@@ -116,6 +84,7 @@ public:
    modelMatrixVariableCheck variableCheck;
    dataFactor F;
    dataMatrix M;
+   dataAlgoMatrix comp;
    double lhs, rhs;          // lhs, rhs will be scalar here (per iteration)
    std::vector<size_t> obsIndex;
 

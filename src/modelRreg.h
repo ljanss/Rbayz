@@ -39,17 +39,18 @@ public:
       double inf = std::numeric_limits<double>::infinity();
       double lhs, rhs;
       for(size_t k=0; k < M->ncol; k++) {
-         resid_decorrect(k);
+         comp.resid_decorrect(resid, par->val[k], k);
          if(varmodel->weights[k]==inf) {
             par->val[k]=0;
          }
          else {
-            collect_lhs_rhs(lhs, rhs, k);
+            comp.collectLhsRhs(resid, residprec, lhs, rhs, k);
             lhs += varmodel->weights[k];
             par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
          }
-         resid_correct(k);
+         comp.resid_correct(resid, par->val[k], k);
       }
+      comp.fillFit(fit, par->Values);
       // need some thinking how to store sample info in file; likely every "saved" cycle.
       // main runs prepForOutput, and on a parVector main runs collectStats at the save intervals,
       // or it needs a new mechanism to switch on saving samples from output (which can be generic feature).
