@@ -18,7 +18,7 @@ modelCoeff::modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : modelBa
    // Maybe it needs a special interface class to help presenting a modelCoeff object
    // "as if" it is a modelResp class for the hierarchical model?
    respModel=rmod;
-   resid = respModel->resid->val;
+   resid = respModel->resid->Values;
    if(respModel->varModel==0) Rcpp::Rcout << "!respModel->varModel pointer is zero!\n";
    residPrec = respModel->varModel->weights.data;
    Nresid = respModel->resid->nelem;
@@ -30,9 +30,9 @@ modelCoeff::modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : modelBa
 void modelCoeff::getFitScaleStats(double & lhs, double & rhs) {
    lhs=0.0l;
    rhs=0.0l;
-   for(size_t i=0; i < Nresid; i++) {
+   for(size_t i=0; i < resid.nelem; i++) {
       lhs += fit.data[i] * fit.data[i];
-      rhs += fit.data[i] * (resid[i] + fit.data[i]);
+      rhs += fit.data[i] * (resid.data[i] + fit.data[i]);
    }
 }
 
@@ -43,16 +43,16 @@ void modelCoeff::getFitScaleStats(double & lhs, double & rhs) {
 void modelCoeff::resid_fit_scaleUpdate(double scale_old, double scale_new) {
    double resid_adjust = (1.0l - scale_new/scale_old);
    double fit_adjust = scale_new/scale_old;
-   for (size_t obs=0; obs < resid->nelem; obs++) {
-      resid[obs] += fit[obs]*resid_adjust;
-      fit[obs] = fit[obs]*fit_adjust;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      resid.data[obs] += fit.data[obs]*resid_adjust;
+      fit.data[obs] = fit.data[obs]*fit_adjust;
    }
 }
 
 void modelCoeff::collect_sse(double & sse) {
    sse=0.0l;
-   for (size_t obs=0; obs < Nresid; obs++)
-      sse += resid[obs]*resid[obs]*residPrec[obs];
+   for (size_t obs=0; obs < resid.nelem; obs++)
+      sse += resid.data[obs]*resid.data[obs]*residPrec[obs];
 }
 
 /* ------------- some helper functions --------------------- 

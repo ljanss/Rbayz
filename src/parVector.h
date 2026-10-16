@@ -18,8 +18,9 @@
 class parVector {
 
 public:
-// I'm not sure now why I made this include a simpleDblVector instead of deriving
-// it from simpleDblVector??
+// parVetor is not derived from simpleDblVector (it could make some sense as a simpleDblVector
+// with added functionality), because parVetor includes multiple simpleDblVector members.
+// If you want to access the 'bare' parameter vector values, this is the 'Values' member.
    simpleDblVector Values;
    std::string Name="";
    std::string variables="";

@@ -38,7 +38,8 @@ public:
    // here in modelCoeff cstr'or.
    // [ToDo] It is a bit old-style C that these resid and residPrec are raw pointers and
    // then used as arrays, it would be nicer if this was e.g. a reference to simpleDblVector.
-   double *resid=NULL, *residPrec=NULL;
+   simpleDblVector& resid;
+   double *residPrec=NULL;
    size_t Nresid=0;
    simpleDblVector fit;
 
