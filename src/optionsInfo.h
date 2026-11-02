@@ -93,8 +93,8 @@ private:
    std::vector<optionSpec> optionList;        // stores all options on a model-term with V= as string (if available)
    std::vector<varianceSpec> varstructList;   // stores decomposed variance structure (if V is given and not V=~)
    std::vector<modOptPair> modterm2option {
-      {"mn","trace",false},
-      {"fx","trace",false},
+      {"mn","trace",false},                  // The last element indicates if the option is required
+      {"fx","trace",false},                  // For this and the following table also see OneNote notebook.
       {"rn","trace",false},
       {"rr","trace",false},
       {"mn","save",false},
@@ -105,8 +105,8 @@ private:
       {"rr","V",false},
       {"rn","prior",false},
       {"rr","prior",false},
-      {"MIXT","vars",true},
-      {"MIXT","counts",true},
+      {"mx","vars",true},
+      {"mx","counts",true},
       {"KERN","dim",false},
       {"KERN","dimp",false},
       {"rn","alpha_est",false},
@@ -115,13 +115,13 @@ private:
    };
    std::map<std::string, int> option2format
    {
-      std::make_pair("trace",4),
-      std::make_pair("save",4),
-      std::make_pair("V",1),
-      std::make_pair("prior",6),
-      std::make_pair("vars",5),
-      std::make_pair("counts",5),
-      std::make_pair("dim",3),
+      std::make_pair("trace",4),         // 1: text, and 2 for opt=<text>
+      std::make_pair("save",4),          //    (not sure why V is labeled here as 1, but it is treated
+      std::make_pair("V",1),             //     separately in optionsInfo constr'or and then set to 2
+      std::make_pair("prior",6),         // 3: opt=<value>
+      std::make_pair("vars",5),          // 4: opt=<bool-value>
+      std::make_pair("counts",5),        // 5: opt(val1, val2, ...)
+      std::make_pair("dim",3),           // 6: opt=keyw(val1, val2, ...)
       std::make_pair("dimp",3),
       std::make_pair("vdimp",3),
       std::make_pair("alpha_est",4),

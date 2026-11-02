@@ -141,6 +141,12 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
             else
                throw generalRbayzError("Regression with the variable syntax " + pmt.variableString + " not yet supported\n");
          }
+         else if (pmt.funcName=="mx") {
+            if(pmt.variablePattern=="onevar")
+               model.push_back(new modelMixt(pmt, modelR));
+            else
+               throw generalRbayzError("Mixture model with the variable syntax " + pmt.variableString + " not supported\n");
+         }
          else {
            throw generalRbayzError("Unknown model-function \'" + pmt.funcName + "\' at "+pmt.shortModelTerm);
          }

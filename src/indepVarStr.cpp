@@ -17,12 +17,27 @@ indepVarStr::indepVarStr(parsedModelTerm & modeldescr, parVector* cpar)
 // In that case, lhs and rhs are zero, which leads to zero-division.
 // A solution can be to adjust the scale downwards. The problem with no acceptance in an MH sampler
 // can happen when initial scale is too large, so that all proposals are not acceptable.
-void indepVarStr::sampleScale(double lhs, double rhs) {
+//  -> this is now done.
+// [ToDo] There is also a possibilitiy the scale could get negative! This is now avoided as
+// the stored variance is always scale^2 and positive, and the returned scale is abs(scale), but
+// this may not be an appropriate MCMC update. A correct approach is probably to sample from
+// truncated Normal. This is like saying it has a likelihood contribution that is a full Normal,
+// but a prior that restricts it to be positive.
+double indepVarStr::sampleScale(double lhs, double rhs) {
     double curr_scale = sqrt(par->val[0]);
-    double sample_mean = curr_scale*rhs/lhs;
-    double sample_sd = curr_scale/sqrt(lhs);
-    double scale = R::rnorm( sample_mean, sample_sd);
+    double scale;
+    if(lhs == 0.0l || rhs == 0.0l) {
+        scale = 0.9*curr_scale;
+        par->val[0] = scale*scale;
+        return scale;
+    }
+    else {
+       double sample_mean = curr_scale*rhs/lhs;
+       double sample_sd = curr_scale/sqrt(lhs);
+       scale = R::rnorm( sample_mean, sample_sd);
+    }
     par->val[0] = scale*scale;
+    return abs(scale);
 }
 
 // ---- idenVarStr class ----
@@ -122,6 +137,30 @@ void diagVarStr::sample() {
   par->val[0] = gprior.samplevar(ssq,coefpar->nelem);
   double invvar = 1.0l/par->val[0];
   for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
+}
+
+// The scaleVarStr is currently quite limited, it sets-up a variance object with one parameter,
+// but its sample() is disabled.
+// It can be an idea to expand this to have a fixed 'grid' of proportional variances, which can
+// be useful in mixture models and also informative for output. The variance in the output can
+// then be scale*(grid), however it would produce a zero variance when one of the grid values is zero
+// (which gives a bit ugly post-processing with missing postVar and MCMC stats).
+scaleVarStr::scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
+    par = new parVector(modeldescr, 1.0l, "var");
+    par->traced=1;
+    par->varianceStruct="scale";
+}
+
+scaleVarStr::~scaleVarStr() {
+    delete par;
+}
+
+void scaleVarStr::restart() { }
+
+// The class hierarchy requires defining sample(), but variance in this class needs to be
+// updated using sampleScale(). The coefficient class sampleHpars() should do this appropriately.
+void scaleVarStr::sample() {
+    throw generalRbayzError("Incorrect calling of scaleVarStr::sample()");
 }
 
 /* ---- grid-LASSO ----

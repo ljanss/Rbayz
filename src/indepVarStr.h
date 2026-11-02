@@ -48,6 +48,24 @@ public:
     simpleDblVector diag;
 };
 
+// scaleVarStr: a variance for random or shrinkage effects modelled as a scale.
+// The variance structure has a single scale only, the real variance structure can be
+// more complicated, but that is not relevant here.
+// The scaleVarStr does not use the 'weight' vector used by other random effects (but
+// it is difficult to avoid it being allocated in the parent class),
+// and the standard sample() methods is disabled. Scale should be updated by calling
+// the general updateScale() method with statistics that can be collected in coefficient
+// model using getFitScaleStats() methods. I made an implementation for the modelRregGRL
+// class in modelRreg, but I will probably revise that one.
+
+class scaleVarStr : public indepVarStr {
+public:
+    scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
+     ~scaleVarStr();
+     void restart();
+     void sample();
+};
+
 class gridLVarStr : public indepVarStr {
 public:
     gridLVarStr(parsedModelTerm & modeldescr, parVector* coefpar);

@@ -34,7 +34,7 @@ public:
    // sample() now updated to handle zero variance (inf weight) from the variance model:
    // - decorrect() runs to correct for old estimate, but skips if old one was already zero
    // - for inf weight, regcoeff is set to zero, else it will go through the sampling procedure
-   // - correct() runs in case regcoeff != zero, but skips if it is zero
+   // - resid_correct() runs in case regcoeff != zero, but skips if it is zero
    void sample() {
       double inf = std::numeric_limits<double>::infinity();
       double lhs, rhs;
