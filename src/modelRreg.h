@@ -87,6 +87,8 @@ public:
    }
 };
 
+/* I have disabled for Grid LASSO
+
 class modelRregGRL : public modelRreg {                                      // *** GRid Lasso ***
 
    public:
@@ -174,7 +176,7 @@ class modelRregGRL : public modelRreg {                                      // 
    double p[7] {0.005, 0.023, 0.089, 0.767, 0.089, 0.023, 0.005};
    double logp[7] {-5.278, -3.771, -2.424, -0.266, -2.424, -3.771, -5.278}; } grid;
    */
-
+/*
    // Epow(0.5) grid
    struct {size_t n {7}; size_t mid {3}; size_t last {6};
             double x[7] {-20, -10, -5, 0, 5, 10, 20}; 
@@ -191,6 +193,7 @@ class modelRregGRL : public modelRreg {                                      // 
    modelHelper* ppi;
 
 };
+*/
 
 class modelRregMixt : public modelRreg {
 public:

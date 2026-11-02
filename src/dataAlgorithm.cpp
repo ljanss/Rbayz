@@ -5,22 +5,57 @@
 //
 // Created by Luc Janss on 13/10/2026.
 
-#include "dataAlgoIntercept.h"
+#include "dataAlgorithm.h"
+
+// Utility functions
+// -----------------
+// buildObsIndex used in dataAlgoMatrix and a helper function for searching.
+
+// Comparison function to search for a string in a vector of pair<string, number>
+inline bool compString2Pair(const std::pair<std::string, size_t> & p, const std::string & s)
+{
+    return p.first < s;
+}
+
+void builObsIndex(simpleSizeVector& obsIndex, dataFactor& F, labeledMatrix& M) {
+   int errors=0;
+   // Build a sorted list of the matrix rownames paired with matrix entry-rows
+   std::vector< std::pair<std::string, size_t> > matLabelsSorted;
+   for(size_t i=0; i< M.rownames.size(); i++)
+      matLabelsSorted.push_back(std::make_pair(M.rownames[i], i));
+   std::sort(matLabelsSorted.begin(),matLabelsSorted.end()); // shoud be enough
+   // Make the index that links observations to matrix rows
+   std::string s;
+   std::vector< std::pair<std::string, size_t> >::iterator it;
+   for(size_t i=0; i<F.nelem; i++) {
+      s = F.labels[F.data[i]];
+      if ( (it = std::lower_bound(matLabelsSorted.begin(), matLabelsSorted.end(), s, compString2Pair)) != matLabelsSorted.end()) {
+         obsIndex[i]=it->second;
+      }
+      else {
+         // error [ToDo] can be nicer in messages list
+         Rcpp::Rcout << "ID " << s << " is not available in similarity/kernel matrix\n";
+         errors++;
+      }
+   }
+   if(errors)
+      throw (generalRbayzError("Some IDs not found in similarity/kernel matrix"));
+}
 
 // Implementations of dataAlgoIntercept methods
 // --------------------------------------------
 
-void dataAlgoIntercept::fillFit(simpleDblVec& fit, simpleDblVector& beta) {
+void dataAlgoIntercept::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
    for (size_t obs=0; obs < fit.nelem; obs++)
      fit[obs] = beta.data[0];
 }
 
-void dataAlgoIntercept::fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale) {
+void dataAlgoIntercept::fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale) {
    for (size_t obs=0; obs < fit.nelem; obs++)
      fit[obs] = beta.data[0] * scale;
 }
 
-void dataAlgoIntercept::collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs_sc, double& rhs_sc) {
+void dataAlgoIntercept::collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs_sc, double& rhs_sc) {
    lhs_sc = 0.0;
    rhs_sc = 0.0;
    for (size_t obs=0; obs < resid.nelem; obs++) {
@@ -56,14 +91,14 @@ void dataAlgoFactor::collectLhsRhs(simpleDblVector& resid, simpleDblVector& resi
 // Implementations of dataAlgoCovar methods
 // -----------------------------------------
 
-void dataAlgoCovar::fillFit(simpleDblVector& fit, double& beta) {
+void dataAlgoCovar::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
    for (size_t obs=0; obs < Cdata.nelem; obs++)
-     fit[obs] = beta * Cdata.data[obs];
+     fit[obs] = beta.data[0] * Cdata.data[obs];
 }
 
-void dataAlgoCovar::fillFit(simpleDblVector& fit, double& beta, double scale) {
+void dataAlgoCovar::fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale) {
    for (size_t obs=0; obs < Cdata.nelem; obs++)
-     fit[obs] = beta * Cdata.data[obs] * scale;
+     fit[obs] = beta.data[0] * Cdata.data[obs] * scale;
 }
 
 void dataAlgoCovar::collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs) {
@@ -125,7 +160,7 @@ void dataAlgoMatrix::resid_decorrect(simpleDblVector& resid, double& beta, size_
    for (size_t obs=0; obs < resid.nelem; obs++)
       resid.data[obs] += beta * colptr[Fdata.data[obs]];
 }
-void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, double beta_diff, size_t col) {
+void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col) {
    double * colptr = Mdata.data[col];
    for (size_t obs=0; obs < resid.nelem; obs++) {
       resid.data[obs] += beta_diff * colptr[obsIndex[obs]];

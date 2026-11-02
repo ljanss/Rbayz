@@ -65,7 +65,6 @@ public:
    {
       par = new parVector(modeldescr, 0.0l, M->colnames);
 //      weights.initWith(M->ncol,1.0l);  // I think weights is not used (but using varmodel->weights)
-      builObsIndex(obsIndex,F,M);
    }
    
    ~modelMatrix() {
@@ -85,8 +84,6 @@ public:
    dataFactor F;
    dataMatrix M;
    dataAlgoMatrix comp;
-   double lhs, rhs;          // lhs, rhs will be scalar here (per iteration)
-   std::vector<size_t> obsIndex;
 
 };
 

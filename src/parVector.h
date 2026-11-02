@@ -18,9 +18,14 @@
 class parVector {
 
 public:
-// parVetor is not derived from simpleDblVector (it could make some sense as a simpleDblVector
-// with added functionality), because parVetor includes multiple simpleDblVector members.
-// If you want to access the 'bare' parameter vector values, this is the 'Values' member.
+// I made parVector not derived from simpleDblVector, initially thinking it may not be
+// allowed to also include members of simpleDblVector. But this should be OK! And it
+// makes sense to allow in some parts of the code to treat a parVector object as a
+// simpleDblVector. This happens now a.o. in fillFit() methods of algorithm classes that
+// are defined to take a simpleDblVector, and that would work perfectly fine when passing
+// a parVector object.
+// For now to pass the 'bare' parameter vector values as a simpleDblVector, this requires
+// to pass the 'Values' member.
    simpleDblVector Values;
    std::string Name="";
    std::string variables="";

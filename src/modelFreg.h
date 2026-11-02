@@ -40,7 +40,7 @@ public:
       resid.add(fit);
       comp.collectLhsRhs(resid, residPrec, lhs, rhs);
       par->val[0] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
-      comp.fillFit(fit, par->val[0]);
+      comp.fillFit(fit, par->Values);
       resid.sub(fit);
    }
 

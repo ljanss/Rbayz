@@ -37,7 +37,7 @@ public:
          lhs[k] += varmodel->weights[k];
          par->val[k] = R::rnorm((rhs[k]/lhs[k]), sqrt(1.0/lhs[k]));
       }
-      comp.fillFit(fit, par);
+      comp.fillFit(fit, par->Values);
       resid.sub(fit);
    }
 

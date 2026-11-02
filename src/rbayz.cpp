@@ -33,7 +33,7 @@ Rcpp::IntegerVector Rbayz::RunInfo(10);
 
 // [[Rcpp::export]]
 Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData,
-                     Rcpp::IntegerVector chain, SEXP methodArg, int verbose,
+                     Rcpp::IntegerVector chain, SEXP methodArg, uint32_t seed, int verbose,
                      Rcpp::Nullable<Rcpp::List> initVals_ = R_NilValue
                      )
 //                   note VE and method are strings, it will be converted below
@@ -50,6 +50,16 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    Rbayz::RunInfo.names() = Rcpp::CharacterVector::create("Errors","Warnings","Notes",
                             "DataSize","Nmissing","Nparameters","ChainLength","BurnIn",
                             "ChainSkip","SamplesSaved");
+
+   // Setting or generating random engine seed and engine initialsation.
+   // Note: rand::init_thread() should be moved within threads if I come to implement multi-threading.
+   if(seed == (uint32_t)(-1)) {
+      rand::use_hardware_entropy();
+   }
+   else {
+      rand::set_master_seed(seed);
+   }
+   rand::init_thread();
 
    // rbayz retains a small string describing last executed code that is sometimes added in errors
    std::string lastDone;
@@ -123,8 +133,8 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                model.push_back(new modelRregIden(pmt, modelR));
             else if (pmt.varianceStruct=="DIAG")
                model.push_back(new modelRregDiag(pmt, modelR));
-            else if (pmt.varianceStruct=="LASS")
-               model.push_back(new modelRregGRL(pmt, modelR));
+//            else if (pmt.varianceStruct=="LASS")
+//               model.push_back(new modelRregGRL(pmt, modelR));
             else if (pmt.varianceStruct=="MIXT") {
                modelRreg* rrmodel = new modelRregMixt(pmt, modelR);
                model.push_back(rrmodel);
@@ -424,6 +434,7 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
       result.push_back(estimates,"Estimates");
       result.push_back(residuals,"Residuals");
       result.push_back(Rbayz::RunInfo,"Runinfo");
+      result.push_back(rand::get_master_seed(),"MasterSeed");
       lastDone="Filling return list";
       if (verbose>1) Rcpp::Rcout << "Ready filling return list\n";
 
@@ -448,10 +459,11 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
    catch (...) {
       Rbayz::Messages.push_back("An unknown error occured in bayz after: "+lastDone);
    }
-   // Build a return list that only has the error messages list.
+   // Build a return list that only has the error messages list and seed in it.
    Rcpp::List result = Rcpp::List::create();
    result.push_back(Rbayz::Messages.size(),"nError");
    result.push_back(Rbayz::Messages,"Messages");
+   result.push_back(rand::get_master_seed(),"MasterSeed");
    Rcpp::Rcout << "Bayz finished with (last) error: " << Rbayz::Messages[Rbayz::Messages.size()-1] << std::endl;
    Rcpp::Rcout << "There may be more messages or errors - use summary() or check <output>$Errors to see all" << std::endl;
 //   if(modelR != 0) delete modelR;

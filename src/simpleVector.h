@@ -1,16 +1,7 @@
 //
 //  simpleVector.h
 //  Wrapper around a basic C-style vector (pointer to block of memory), but with
-//  C++ allocation using new. Version for Integer data (simpleIntVector, alternative for Rcpp
-//  IntegerVector) and a one for doubles (SimpleDblVector, alternative for Rcpp NumericVector).
-//  Developing now two uses:
-//   - if at declaration size is known, can use constructor with size and it will initialise with 0
-//   - if vector is class member and size is not known at construction, constructor with no arguments
-//     can be used, it will not allocated the vector yet. Then use initWith() to both allocated and
-//     initialise it with inpput from an Rcpp vector.
-//  To access the vector elements use .data[i] or ->data[i], size is stored as member variable nelem.
-//
-// NOTE: the int version uses 'int', the regular 4-byte signed version. This has limit of 2 billion.
+//  C++ allocation using new.
 //
 //  Created by Luc Janss on 23/10/2020.
 //
@@ -19,42 +10,103 @@
 #define simpleVector_h
 
 #include <Rcpp.h>
+#include <algorithm>
+#include "rbayzExceptions.h"
 
-class simpleIntVector {
+template <typename T>
+class simpleVector {
 public:
-   simpleIntVector() { }
-   simpleIntVector(size_t n);
-   virtual ~simpleIntVector();
-   int& operator[](size_t i);    // retrieving and setting value using []
-   void initWith(Rcpp::IntegerVector v);
-   void initWith(size_t n, int initvalue);
-   // [ToDo] The Int version does not have an initWith(another simpleIntVector),
-   // this could simplify some code in dataFactor.
-   int *data=0;
-   size_t nelem=0;
+   simpleVector() = default;
+   explicit simpleVector(size_t n) {
+      doalloc(n);
+      std::fill_n(data, n, T{});
+   }
+   virtual ~simpleVector() {
+      if (nelem > 0) {
+         delete[] data;
+      }
+   }
+
+   T& operator[](size_t i) { return data[i]; }   // retrieving and setting value using []
+   const T& operator[](size_t i) const { return data[i]; }
+
+   void initWith(size_t n, T initvalue) {
+      doalloc(n);
+      for (size_t i = 0; i < nelem; i++) {
+         data[i] = initvalue;
+      }
+   }
+
+   template <typename T2>
+   void initWith(const T2& v, size_t useElem) {
+      if (useElem > static_cast<size_t>(v.size())) {
+         throw(generalRbayzError("useElem is larger than actual nelem in simpleVector"));
+      }
+      doalloc(useElem);
+      for (size_t i = 0; i < useElem; i++) {
+         data[i] = static_cast<T>(v[i]);
+      }
+   }
+
+   template <typename T2>
+   void initWith(const T2& v) {
+      initWith(v, static_cast<size_t>(v.size()));
+   }
+
+   void initWith(const simpleVector<T>& X) {
+      doalloc(X.nelem);
+      for (size_t i = 0; i < nelem; i++) {
+         data[i] = X.data[i];
+      }
+   }
+
+   void swap(simpleVector<T>* other) {
+      std::swap(data, other->data);
+      std::swap(nelem, other->nelem);
+   }
+
+   void add(const simpleVector<T>& other) {
+      if (nelem != other.nelem) {
+         throw(generalRbayzError("Vector sizes do not match in simpleVector::add"));
+      }
+      for (size_t i = 0; i < nelem; i++) {
+         data[i] += other.data[i];
+      }
+   }
+
+   void sub(const simpleVector<T>& other) {
+      if (nelem != other.nelem) {
+         throw(generalRbayzError("Vector sizes do not match in simpleVector::sub"));
+      }
+      for (size_t i = 0; i < nelem; i++) {
+         data[i] -= other.data[i];
+      }
+   }
+
+   void fill(T value) {
+      for (size_t i = 0; i < nelem; i++) {
+         data[i] = value;
+      }
+   }
+
+   T* data = 0;
+   size_t nelem = 0;
+
 private:
-   void doalloc(size_t n);
+   void doalloc(size_t n) {
+      if (n == 0) {
+         throw(generalRbayzError("Zero size in initialisation in simpleVector"));
+      }
+      if (nelem > 0) {  // already allocated
+         throw(generalRbayzError("Attempting realloc in simpleVector not supported"));
+      }
+      data = new T[n];
+      nelem = n;
+   }
 };
 
-class simpleDblVector {
-public:
-   simpleDblVector() { }
-   simpleDblVector(size_t n);
-   virtual ~simpleDblVector();
-   double& operator[](size_t i);
-   void initWith(Rcpp::NumericVector v, size_t useElem);
-   void initWith(Rcpp::NumericVector v);
-   void initWith(size_t n, double initvalue);
-   void initWith(simpleDblVector & X);
-   void swap(simpleDblVector* other);
-   void add(simpleDblVector & other);
-   void sub(simpleDblVector & other);
-   void fill(double value);
-   double *data=0;
-   size_t nelem=0;
-private:
-   void doalloc(size_t n);
-};
-
+using simpleIntVector = simpleVector<int>;
+using simpleDblVector = simpleVector<double>;
+using simpleSizeVector = simpleVector<size_t>;
 
 #endif /* simpleVector_h */

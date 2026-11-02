@@ -37,7 +37,7 @@ public:
          else
             par->val[k]=0.0;
       }
-      comp.fillFit(fit, par);
+      comp.fillFit(fit, par->Values);
       resid.sub(fit);
    }
 

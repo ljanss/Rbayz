@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // rbayz_cpp
-Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData, Rcpp::IntegerVector chain, SEXP methodArg, int verbose, Rcpp::Nullable<Rcpp::List> initVals_);
-RcppExport SEXP _Rbayz_rbayz_cpp(SEXP modelFormulaSEXP, SEXP VESEXP, SEXP inputDataSEXP, SEXP chainSEXP, SEXP methodArgSEXP, SEXP verboseSEXP, SEXP initVals_SEXP) {
+Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputData, Rcpp::IntegerVector chain, SEXP methodArg, uint32_t seed, int verbose, Rcpp::Nullable<Rcpp::List> initVals_);
+RcppExport SEXP _Rbayz_rbayz_cpp(SEXP modelFormulaSEXP, SEXP VESEXP, SEXP inputDataSEXP, SEXP chainSEXP, SEXP methodArgSEXP, SEXP seedSEXP, SEXP verboseSEXP, SEXP initVals_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,15 +21,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type inputData(inputDataSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type chain(chainSEXP);
     Rcpp::traits::input_parameter< SEXP >::type methodArg(methodArgSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type initVals_(initVals_SEXP);
-    rcpp_result_gen = Rcpp::wrap(rbayz_cpp(modelFormula, VE, inputData, chain, methodArg, verbose, initVals_));
+    rcpp_result_gen = Rcpp::wrap(rbayz_cpp(modelFormula, VE, inputData, chain, methodArg, seed, verbose, initVals_));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_Rbayz_rbayz_cpp", (DL_FUNC) &_Rbayz_rbayz_cpp, 7},
+    {"_Rbayz_rbayz_cpp", (DL_FUNC) &_Rbayz_rbayz_cpp, 8},
     {NULL, NULL, 0}
 };
 

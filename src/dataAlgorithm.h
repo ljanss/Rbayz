@@ -29,6 +29,8 @@
 #include "dataCovar.h"
 #include "dataMatrix.h"
 
+void builObsIndex(simpleSizeVector& obsIndex, dataFactor& F, labeledMatrix& M);
+
 class dataAlgorithm {
    
 public:
@@ -44,8 +46,8 @@ public:
    // Two pure virtual versions of fillFit, one with an extra scale parameter, so all
    // derived classes must implement both versions! This kind of makes sense because some
    // coefficient models may need one, and other may need the other, even for the same data class.
-   virtual void fillFit(simpleDblVec& fit, simpleDblVector& beta) = 0;
-   virtual void fillFit(simpleDblVec& fit, simpleDblVector& beta, double scale) = 0;
+   virtual void fillFit(simpleDblVector& fit, simpleDblVector& beta) = 0;
+   virtual void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale) = 0;
 
 //   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, simpleDblVec& lhs, simpleDblVec& rhs) { }
 //   virtual void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs, size_t column) { }
@@ -59,9 +61,9 @@ class dataAlgoIntercept : public dataAlgorithm {
 public:
    dataAlgoIntercept() = default;
    ~dataAlgoIntercept() = default;
-   void fillFit(simpleDblVec& fit, parVector& beta);
-   void fillFit(simpleDblVec& fit, parVector& beta, double scale);
-   void collectLhsRhs(simpleDblVec& resid, simpleDblVec& residprec, double& lhs, double& rhs);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
+   void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs);
 };
 
 // Data algorithms for dataFactor. Note the dataFactor standardly re-codes interactions
@@ -72,8 +74,8 @@ class dataAlgoFactor : public dataAlgorithm {
 public:
    dataAlgoFactor(dataFactor& Fdata_) : Fdata(Fdata_) {}
    ~dataAlgoFactor() = default;
-   void fillFit(simpleDblVector& fit, parVector& beta);
-   void fillFit(simpleDblVector& fit, parVector& beta, double scale);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
    void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, simpleDblVector& lhs, simpleDblVector& rhs);
 private:
    dataFactor& Fdata;
@@ -85,8 +87,8 @@ class dataAlgoCovar : public dataAlgorithm {
 public:
    dataAlgoCovar(dataCovar& Cdata_) : Cdata(Cdata_) {}
    ~dataAlgoCovar() = default;
-   void fillFit(simpleDblVector& fit, double& beta);
-   void fillFit(simpleDblVector& fit, double& beta, double scale);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta);
+   void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
    void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs);
 private:
    dataCovar& Cdata;
@@ -102,7 +104,13 @@ private:
 // de/correction methods, and column-wise fit accumulation.
 class dataAlgoMatrix : public dataAlgorithm {
 public:
-   dataAlgoMatrix(dataFactor& Fdata_, dataMatrix& Mdata_) : Fdata(Fdata_), Mdata(Mdata_) {}
+   dataAlgoMatrix(dataFactor& Fdata_, dataMatrix& Mdata_) :
+         Fdata(Fdata_),
+         Mdata(Mdata_),
+         obsIndex(Fdata.nelem)
+   {
+      builObsIndex(obsIndex, Fdata, Mdata);
+   }
    ~dataAlgoMatrix() = default;
    void fillFit(simpleDblVector& fit, simpleDblVector& beta);
    void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
@@ -110,13 +118,12 @@ public:
    void accumFit(simpleDblVector& fit, double& beta, size_t& col, double scale);
    void resid_correct(simpleDblVector& resid, double& beta, size_t col);
    void resid_decorrect(simpleDblVector& resid, double& beta, size_t col);
-   void resid_fit_betaUpdate(simpleDblVector& resid, double beta_diff, size_t col);
+   void resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col);
    void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs, size_t col);
 private:
    dataFactor& Fdata;
    dataMatrix& Mdata;
+   simpleSizeVector obsIndex;
 };
-
-
 
 #endif /* dataAlgorithm_h */

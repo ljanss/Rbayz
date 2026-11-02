@@ -5,7 +5,7 @@
 #' covariance structures using an extended R-formula syntax.
 #' The basic R formula response ~ terms is extended by wrapping
 #' every 'term' by a function that controls the type of variable(s) fitted, how
-#' they are fitted, to add variance structures or shrinkage distribtions,
+#' they are fitted, to add variance structures or shrinkage distributions,
 #' and options. As an example:
 #' Yield ~ fx(Year:Site) + rn(Variety:Year:Site, V=Kv*Ky*Ks)
 #' specifies a fixed Year:site interaction, and a random Variety:Year:Site
@@ -20,27 +20,34 @@
 #' heterogeneous shrinkage and significances of individual features as
 #' $p_r$ values (p-values from random effects). The Rbayz package supports many
 #' common R model summary and extraction methods, such as summary(), coef(),
-#' fixef(), ranef(), estim() (retrieval of any set(s) of model paramteres),
+#' fixef(), ranef(), estim() (retrieval of any set(s) of model parameters),
 #' vcomp() (variance and hyper paramters and functions thereof), predict(),
 #' conv() and plot(). The latter two use the R Coda package to diagnose MCMC
 #' convergence and plot posterior distributions.
 #' Full details are available in the github site ljanss.github.io/Rbayz.
 #'
-#' @param model   An R formula describing the model to be fitted using an
+#' @param model   Required R formula describing the model to be fitted using an
 #'                extended R formula syntax (see details).
-#' @param data    Data frame with variables (responses, explanatory variables)
-#'                to build the model. Kernel matrices and matrices with large
-#'                sets of features are typically not in this data frame.
-#' @param Ve      Model for the residual variance as formula or string (see
-#'                details).
+#' @param data    Required data frame with variables (responses, explanatory
+#'                variables) to build the model. Kernel matrices and matrices
+#'                with large sets of features are typically not in this data
+#'                frame.
+#' @param Ve      Optional model for the residual variance as formula or string
+#'                (see details). Can be omitted to use a uniform and
+#'                independent (iid) residual variance structure.
 #' @param chain   Vector c(length, burn-in, skip) with total chain length to
 #'                run, burn-in, and skip-interval for saving samples and
-#'                collecting posterior statistics.
-#' @param method  String to indicate analysis method: "Bayes" (full Bayesian,
-#'                default) or "BLUPMC" (BLUE/BLUP solutions with Monte Carlo
-#'                to get SD/SE).
-#' @param verbose Integer to regulate printing to R console: 0 (quiet), 1
-#'                (some), >=2 (more). Default verbose=1.
+#'                collecting posterior statistics. Can be omited to run a
+#'                short test run.
+#' @param method  Optional string to indicate analysis method: "Bayes" (full
+#'                Bayesian, default) or "BLUPMC" (BLUE/BLUP solutions with
+#'                Monte Carlo-based posterior SD).
+#' @param seed    Optional integer to set the random number generator seed (e.g.
+#'                for testing or to reproduce errors). For regular use omit
+#'                setting the seed and bayz will generate a seed from machine
+#'                entropy.
+#' @param verbose Optional integer to regulate printing to R console: 0 (quiet),
+#'                1 (some), >=2 (more). Default verbose=1.
 #' @param workdir  Optional string with path to a directory where bayz
 #'                can write output files (currently only used when the 'save'
 #'                flag is added on a model term to save samples). When omitted
@@ -60,7 +67,7 @@
 #' @useDynLib Rbayz, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 bayz <- function(model, Ve = "", data = NULL, chain = c(0, 0, 0), method = "",
-                 verbose = 1, workdir = NULL, init = NULL) {
+                 seed = -1, verbose = 1, workdir = NULL, init = NULL) {
   if (!inherits(model, "formula")) {
     stop("The first argument is not a valid formula")
   }
@@ -79,6 +86,7 @@ bayz <- function(model, Ve = "", data = NULL, chain = c(0, 0, 0), method = "",
   if (method == "") {
     method <- "Bayes"
   }
+  seed <- as.integer(seed)
   if (!is.null(workdir)) {
     currdir <- getwd()
     on.exit(setwd(currdir))
@@ -91,7 +99,7 @@ bayz <- function(model, Ve = "", data = NULL, chain = c(0, 0, 0), method = "",
     )
   }
   chain <- as.integer(chain)
-  result <- rbayz_cpp(model, Ve, data, chain, method, verbose, init)
+  result <- rbayz_cpp(model, Ve, data, chain, method, seed, verbose, init)
   result[["workdir"]] <- getwd()
   class(result) <- "bayz"
   return(result)
