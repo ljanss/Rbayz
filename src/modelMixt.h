@@ -16,8 +16,8 @@ class modelMixt : public modelMatrix {
 
 public:
 
-   modelMixt(parsedModelTerm & modeldescr, modelRreg * rrmod)
-         : modelMatrix(modeldescr, rrmod), pi()
+   modelMixt(parsedModelTerm & modeldescr, modelResp* rmod)
+         : modelMatrix(modeldescr, rmod), pi()
    {
       // These problems should be caught already in model parsing ....
       if (! ( modeldescr.allOptions["vars"].isgiven && modeldescr.allOptions["counts"].isgiven) ) {
@@ -41,12 +41,12 @@ public:
       std::vector<std::string> piNames(2);
       piNames[0] = "pi0." + modeldescr.variableString;
       piNames[1] = "pi1." + modeldescr.variableString;
-      pi = new parVector(modeldescr, 0.5l, piNames);   // extra parameter that will not be auto-
-      Rbayz::parList.push_back(&pi);                   // matically added in the global parList!
+      pi = new parVector(modeldescr, 0.5l, piNames);   // extra parameter that is here manually
+      Rbayz::parList.push_back(&pi);                   // added in the global parList!
       double sum_counts = counts[0] + counts[1];
       pi->val[0] = counts[0] / sum_counts;
       pi->val[1] = counts[1] / sum_counts;
-      varmodel = new scaleVarStr(modeldescr, rrmod->coefpar);
+      varmodel = new scaleVarStr(modeldescr, this->par);
       p_incl = 0.05;
       p_excl = 0.20;
    }
@@ -58,21 +58,21 @@ public:
    
    void sample() {
       // Start with relatively simple Include-Move-Exclude strategy.
-      
-      for(size_t k=0; k < M->ncol; k++) {
+      double inf = std::numeric_limits<double>::infinity();
+      double lhs, rhs;
+      for(size_t k=0; k < M.ncol; k++) {
          comp.resid_decorrect(resid, par->val[k], k);
          if(varmodel->weights[k]==inf) {
             par->val[k]=0;
          }
          else {
-            comp.collectLhsRhs(resid, residprec, lhs, rhs, k);
+            comp.collectLhsRhs(resid, residPrec, lhs, rhs, k);
             lhs += varmodel->weights[k];
             par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
          }
          comp.resid_correct(resid, par->val[k], k);
       }
       comp.fillFit(fit, par->Values);
-
    }
 
    void sampleHpars() {

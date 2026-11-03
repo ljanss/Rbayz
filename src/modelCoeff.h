@@ -19,8 +19,6 @@ public:
    ~modelCoeff() {
    }
 
-   virtual void fillFit() = 0;
-
    // The modelCoeff class has some methods that can be used to fit variance as
    // a scaling factor. These methods do not rely on the underlying data and only
    // use residuals and fitted values. These methods therefore are best placed here
@@ -33,13 +31,13 @@ public:
    void collect_sse(double & sse);
 
    modelResp* respModel;
-   // The following is for convenience so that all modelCoeff objects have direct
-   // pointers to residuals and residual variance, and it only needs to be set once
-   // here in modelCoeff cstr'or.
-   // [ToDo] It is a bit old-style C that these resid and residPrec are raw pointers and
-   // then used as arrays, it would be nicer if this was e.g. a reference to simpleDblVector.
+   // Use of resid, residPrec and Nresid is for convenience so that all modelCoeff objects
+   // have easy access to these vectors and their size. It only needs to be set once
+   // here in modelCoeff ctor to be uniformly available in all derived classes.
+   // It is implemented as a reference to the 'Values' member of the residuals (which are
+   // actually parVector type), and a reference to the 'weights' of the variance model.
    simpleDblVector& resid;
-   double *residPrec=NULL;
+   simpleDblVector& residPrec;
    size_t Nresid=0;
    simpleDblVector fit;
 

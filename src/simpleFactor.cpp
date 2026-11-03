@@ -78,7 +78,7 @@ simpleFactor::simpleFactor(Rcpp::RObject col, std::string inp_name) : simpleIntV
       size_t lev = 0; // Code the merged levels in the map
       for (p = unique_levels.begin(); p != unique_levels.end(); p++)
          p->second = lev++;
-      initWith(Rtempvec.size(), 0.0l);
+      initWith(static_cast<size_t>(Rtempvec.size()), 0.0l);
       for (int i = 0; i < Rtempvec.size(); i++)
       { // code the data
          if (missing[i])

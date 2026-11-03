@@ -16,11 +16,23 @@
 template <typename T>
 class simpleVector {
 public:
+
    simpleVector() = default;
+   
+   // explicit should mean ONLY accepting a size_t argument, not allowing
+   // something else to be implicitly converted to size_t.
+   // explicit is only possible for constructors with a single argument.
    explicit simpleVector(size_t n) {
       doalloc(n);
       std::fill_n(data, n, T{});
    }
+
+   simpleVector(size_t n, T initvalue) {
+      doalloc(n);
+      std::fill_n(data, n, initvalue);
+
+   }
+   
    virtual ~simpleVector() {
       if (nelem > 0) {
          delete[] data;
@@ -37,6 +49,10 @@ public:
       }
    }
 
+   // These two following init were originally for use with Rcpp::NumericVector, will that
+   // still work OK with these templates? Maybe it needs initWith<Rcpp::NumericVector> explicitly.
+   // However, it does not mean that you can just throw any type at it; the type must have a size()
+   // method and support indexing, and when compiling all actual uses will be checked if they comply.
    template <typename T2>
    void initWith(const T2& v, size_t useElem) {
       if (useElem > static_cast<size_t>(v.size())) {

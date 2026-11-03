@@ -4,23 +4,52 @@
 #include <Rcpp.h>
 #include "Rbayz.h"
 #include "modelRanfc.h"
-#include "indexTools.h"
 #include "optionsInfo.h"
+
+// Function defined in dataAlgorithm.cpp, but also used here which is a bit messy.
+// [ToDo] I can review the need for building this obsindex, and for building it again
+// here. The original need arose from kernels that can have more levels than what is
+// seen in the data when the factor is being processed, but I made an extension for
+// dataFactor to allow feeding in the levels of a kernel, so in the end obsindex
+// may not be needed to be rebuild here, and may not be needed at all.
+void builObsIndex(simpleSizeVector& obsIndex, dataFactor& F, labeledMatrix& M);
+
+namespace {
+
+simpleDblVector& get_resid_ref(modelResp* rmod) {
+   if (rmod == nullptr) {
+      throw(generalRbayzError("Internal error: null modelResp pointer in modelCoeff constructor"));
+   }
+   if (rmod->resid == nullptr) {
+      throw(generalRbayzError("Internal error: null residual model pointer in modelCoeff constructor"));
+   }
+   return rmod->resid->Values;
+}
+
+simpleDblVector& get_residprec_ref(modelResp* rmod) {
+   if (rmod == nullptr) {
+      throw(generalRbayzError("Internal error: null modelResp pointer in modelCoeff constructor"));
+   }
+   if (rmod->varModel == nullptr) {
+      throw(generalRbayzError("Internal error: null variance model pointer in modelCoeff constructor"));
+   }
+   return rmod->varModel->getWeights();
+}
+
+}
 
 // ******* modelCoeff methods and constructor *******
 // --------------------------------------------------
 
-modelCoeff::modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : modelBase(), fit() {
+modelCoeff::modelCoeff(parsedModelTerm & modeldescr, modelResp * rmod) : 
+      modelBase(), respModel(rmod), resid(get_resid_ref(rmod)), residPrec(get_residprec_ref(rmod)), fit()
+{
    // updating bayzR to handle hierarchical models can imply some (large?) changes here,
    // because then the "response model" can be another coefficient model.
    // modelResp and modelCoeff are in different branches of the class hierarchy, and cannot
    // be cast from one to the other.
    // Maybe it needs a special interface class to help presenting a modelCoeff object
    // "as if" it is a modelResp class for the hierarchical model?
-   respModel=rmod;
-   resid = respModel->resid->Values;
-   if(respModel->varModel==0) Rcpp::Rcout << "!respModel->varModel pointer is zero!\n";
-   residPrec = respModel->varModel->weights.data;
    Nresid = respModel->resid->nelem;
    fit.initWith(Nresid, 0.0l);
 }
@@ -103,7 +132,7 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
 {
 
    std::vector<varianceSpec> varianceList = modeldescr.allOptions.Vlist();
-   if(varianceList.size() != F->Nvar) {
+   if(varianceList.size() != F.Nvar) {
       throw(generalRbayzError("The number of interaction variables in [" + modeldescr.shortModelTerm + "] does not match the number of variance terms"));
    }
 
@@ -202,7 +231,7 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
    // in principle replace the F->data and no need for the obsIndex vector.
    // I'm leaving it for a moment to see in debugging if obsIndex is indeed the same as F->data,
    // in the sample code it is already removed.
-   builObsIndex(obsIndex,F,K);
+   builObsIndex(obsIndex, F, static_cast<labeledMatrix&>(*K));
 
    // [ToDo] create the variance object - may need to move out as in ranfi when allowing for
    // different variance structures. But this is the variance structure for the alpha coefficients,
@@ -220,17 +249,17 @@ void modelRanfc1::sample() {
    double lhsl, rhsl;
    size_t matrixrow;
    double* colptr;
-   for (size_t obs=0; obs < F->nelem; obs++)
+   for (size_t obs=0; obs < F.nelem; obs++)
       fit.data[obs] = 0.0l;
    for(size_t col=0; col < K->ncol; col++) {
       colptr = K->data[col];
       // residual de-correction for this evec column
-      for (size_t obs=0; obs < F->nelem; obs++)
-         resid[obs] += regcoeff->val[col] * colptr[F->data[obs]];
+      for (size_t obs=0; obs < F.nelem; obs++)
+         resid[obs] += regcoeff->val[col] * colptr[F.data[obs]];
       // Make the lhs and rhs and update this column regression
       lhsl = 0.0l; rhsl=0.0l;
-      for (size_t obs=0; obs < F->nelem; obs++) {
-         matrixrow = F->data[obs];
+      for (size_t obs=0; obs < F.nelem; obs++) {
+         matrixrow = F.data[obs];
          rhsl += colptr[matrixrow] * residPrec[obs] * (resid[obs]-fit.data[obs]);
          lhsl += colptr[matrixrow] * colptr[matrixrow] * residPrec[obs];
       }
@@ -239,10 +268,10 @@ void modelRanfc1::sample() {
       regcoeff->val[col] = R::rnorm( (rhsl/lhsl), sqrt(1.0/lhsl));
       // residual correction for this column with updated regression
       // This could now be replaced by accumFit() method from the new algoMatrix class
-      for (size_t obs=0; obs < F->nelem; obs++)
-         fit.data[obs] += regcoeff->val[col] * colptr[F->data[obs]];
+      for (size_t obs=0; obs < F.nelem; obs++)
+         fit.data[obs] += regcoeff->val[col] * colptr[F.data[obs]];
    }
-   for (size_t obs=0; obs < F->nelem; obs++)
+   for (size_t obs=0; obs < F.nelem; obs++)
       resid[obs] -= fit.data[obs];
 }
 

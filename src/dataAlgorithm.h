@@ -29,6 +29,7 @@
 #include "dataCovar.h"
 #include "dataMatrix.h"
 
+// This function now included in dataAlgorithm.cpp
 void builObsIndex(simpleSizeVector& obsIndex, dataFactor& F, labeledMatrix& M);
 
 class dataAlgorithm {
@@ -109,6 +110,7 @@ public:
          Mdata(Mdata_),
          obsIndex(Fdata.nelem)
    {
+      // [ToDo] Is this still needed? Maybe the factor data supplies the same information?
       builObsIndex(obsIndex, Fdata, Mdata);
    }
    ~dataAlgoMatrix() = default;

@@ -115,7 +115,7 @@ diagVarStr::diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indep
         par = new parVector(modeldescr, 1.0l, "var");
         par->traced=1;
         par->varianceStruct="DIAG";
-        diag.initWith(tempDiag);
+        diag.initWith(static_cast<const simpleDblVector&>(tempDiag));
     }
     catch(std::exception &err) {
         Rbayz::Messages.push_back(std::string(err.what()));

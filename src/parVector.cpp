@@ -74,7 +74,7 @@ void parVector::common_constructor_items(parsedModelTerm & modeldescr, std::stri
 parVector::parVector(parsedModelTerm & modeldescr, double initval)
       : Values(), postMean(), postVar(), sumSqDiff() {
    nelem=1;
-   Values.initWith(1, initval);
+   Values.initWith(size_t(1), initval);
    Labels.push_back(modeldescr.variableString);
    common_constructor_items(modeldescr, "");
 }
@@ -83,7 +83,7 @@ parVector::parVector(parsedModelTerm & modeldescr, double initval)
 parVector::parVector(parsedModelTerm & modeldescr, double initval, std::string namePrefix)
       : Values(), postMean(), postVar(), sumSqDiff() {
    nelem=1;
-   Values.initWith(1, initval);
+   Values.initWith(size_t(1), initval);
    std::string templabel = modeldescr.variableString;
    size_t pos;
    if( (pos=templabel.find('/')) != std::string::npos ) templabel.erase(0, pos+1);   

@@ -19,6 +19,7 @@
 #include "simpleVector.h"
 #include "modelVar.h"
 #include "indepVarStr.h"
+#include "rand.h"
 #include <unistd.h>
 
 // [[Rcpp::plugins("cpp11")]]
@@ -135,11 +136,6 @@ Rcpp::List rbayz_cpp(Rcpp::Formula modelFormula, SEXP VE, Rcpp::DataFrame inputD
                model.push_back(new modelRregDiag(pmt, modelR));
 //            else if (pmt.varianceStruct=="LASS")
 //               model.push_back(new modelRregGRL(pmt, modelR));
-            else if (pmt.varianceStruct=="MIXT") {
-               modelRreg* rrmodel = new modelRregMixt(pmt, modelR);
-               model.push_back(rrmodel);
-               model.push_back(new modelMixt(pmt, rrmodel));
-            }
             else
                throw generalRbayzError("There is no class to model rr(...) with Variance structure " + pmt.allOptions["V"].valstring);
          }

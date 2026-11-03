@@ -32,7 +32,7 @@ public:
    void prepForOutput();
    kernelMatrix* K;
    parVector *regcoeff;
-   std::vector<size_t> obsIndex;
+   simpleSizeVector obsIndex;
    indepVarStr* varmodel;
 };
 

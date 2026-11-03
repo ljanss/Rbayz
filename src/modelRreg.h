@@ -23,6 +23,9 @@ class modelRreg : public modelMatrix {
 
 public:
 
+   // Note: this is not a concrete class, the objects to use are modelRregIden and modelRregDiag,
+   // and it is in those classes that varmodel is allocated.
+   // But I think choosing between Iden and Diag can be moved here, and removed from rbayz main.
    modelRreg(parsedModelTerm & modeldescr, modelResp * rmod)
          : modelMatrix(modeldescr, rmod)   {
    }
@@ -38,13 +41,13 @@ public:
    void sample() {
       double inf = std::numeric_limits<double>::infinity();
       double lhs, rhs;
-      for(size_t k=0; k < M->ncol; k++) {
+      for(size_t k=0; k < M.ncol; k++) {
          comp.resid_decorrect(resid, par->val[k], k);
          if(varmodel->weights[k]==inf) {
             par->val[k]=0;
          }
          else {
-            comp.collectLhsRhs(resid, residprec, lhs, rhs, k);
+            comp.collectLhsRhs(resid, residPrec, lhs, rhs, k);
             lhs += varmodel->weights[k];
             par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
          }
@@ -74,7 +77,8 @@ public:
 class modelRregIden : public modelRreg {
 public:
    modelRregIden(parsedModelTerm & pmdescr, modelResp * rmod)
-      : modelRreg(pmdescr, rmod) {
+      : modelRreg(pmdescr, rmod)
+   {
       varmodel = new idenVarStr(pmdescr, this->par);
    }
 };
@@ -82,7 +86,8 @@ public:
 class modelRregDiag : public modelRreg {
 public:
    modelRregDiag(parsedModelTerm & pmdescr, modelResp * rmod)
-      : modelRreg(pmdescr, rmod) {
+      : modelRreg(pmdescr, rmod)
+   {
       varmodel = new diagVarStr(pmdescr, this->par);
    }
 };
@@ -162,21 +167,17 @@ class modelRregGRL : public modelRreg {                                      // 
    }
 
    // Standard Bayesian LASSO-based grid
-   /*
    struct {size_t n {7}; size_t mid {3}; size_t last {6};
             double x[7] {-5, -3.5, -2, 0, 2, 3.5, 5}; 
             double p[7] {0.005, 0.022, 0.101, 0.744, 0.101, 0.022, 0.005};
             double logp[7] {-5.296, -3.796, -2.296, -0.296, -2.296, -3.796, -5.296}; } grid;
-   */
 
    // Epow(0.7) grid
-   /*
    struct {size_t n {7}; size_t mid {3}; size_t last {6};
    double x[7] {-10, -6, -3, 0, 3, 6, 10}; 
    double p[7] {0.005, 0.023, 0.089, 0.767, 0.089, 0.023, 0.005};
    double logp[7] {-5.278, -3.771, -2.424, -0.266, -2.424, -3.771, -5.278}; } grid;
-   */
-/*
+
    // Epow(0.5) grid
    struct {size_t n {7}; size_t mid {3}; size_t last {6};
             double x[7] {-20, -10, -5, 0, 5, 10, 20}; 

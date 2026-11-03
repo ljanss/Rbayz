@@ -9,8 +9,10 @@ prval(object, param = NULL, splitlabels = FALSE, ...)
 \arguments{
 \item{object}{A bayz model output}
 
-\item{param}{Parameter name for which to extract r-values (if in
-doubt about naming, check $Parameters from the output)}
+\item{param}{Parameter name for which to extract r-values. Can be
+omitted if there is only one rr() term in the model.
+(for parameter naming, check $Parameters from the
+model output).}
 
 \item{splitlabels}{If the estimates come from an interaction, whether
 labels should be split to allow easy matching to levels
@@ -34,5 +36,8 @@ as if they were fitted one by one in turn as fixed in a linear mixed model
 with all other effects remaining random.
 The reported pr-value is based on a z-test.
 Note that the model-term for which pr-values are to be computed should have
-set a 'save' or 'prval' option.
+set a 'save' option.
+If there is only one rr() term in the model, prval() will automatically use
+that one to compute pr-values, otherwise the user will need to specify which
+parameter to use with the 'param' (or second) argument.
 }

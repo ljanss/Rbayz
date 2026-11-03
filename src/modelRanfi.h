@@ -32,7 +32,7 @@ public:
       // inverse variance (weight) from variance model in the LHS.
       // This code as is now does not allow for a mixture prior where variance can be zero.
       resid.add(fit);
-      comp.collectLhsRhs(resid, residprec, lhs, rhs);
+      comp.collectLhsRhs(resid, residPrec, lhs, rhs);
       for(size_t k=0; k<par->nelem; k++) {
          lhs[k] += varmodel->weights[k];
          par->val[k] = R::rnorm((rhs[k]/lhs[k]), sqrt(1.0/lhs[k]));

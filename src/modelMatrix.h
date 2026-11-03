@@ -27,7 +27,6 @@
 #include "simpleVector.h"
 #include "modelCoeff.h"
 #include "nameTools.h"
-#include "indexTools.h"
 
 // Helper class to check if the obtained variables are two variables (convertable to)
 // type factor and matrix as needed in modelMatrix classes.
@@ -63,8 +62,7 @@ public:
            M(modeldescr.variableObjects[1], modeldescr.variableNames[1]),
            comp(F, M)
    {
-      par = new parVector(modeldescr, 0.0l, M->colnames);
-//      weights.initWith(M->ncol,1.0l);  // I think weights is not used (but using varmodel->weights)
+      par = new parVector(modeldescr, 0.0l, M.colnames);
    }
    
    ~modelMatrix() {
@@ -80,7 +78,7 @@ public:
    // Here no sample() yet, modelMatrix remains virtual. The derived classes implement sample()
    // by combining update_regressions() with update of hyper-paramters for that derived class.
 
-   modelMatrixVariableCheck variableCheck;
+   modelMatrixVariableChecker variableCheck;
    dataFactor F;
    dataMatrix M;
    dataAlgoMatrix comp;

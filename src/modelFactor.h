@@ -29,8 +29,8 @@ public:
          : modelCoeff(modeldescr, rmod),
            F(modeldescr.variableObjects, modeldescr.variableNames),
            comp(F),
-           lhs(F.labels.nelem,0),
-           rhs(F.labels.nelem,0)
+           lhs(F.labels.size(),0),
+           rhs(F.labels.size(),0)
    {
       par = new parVector(modeldescr, 0.0l, F.labels);
    }
@@ -41,8 +41,8 @@ public:
          : modelCoeff(modeldescr, rmod),
            F(modeldescr.variableObjects, modeldescr.variableNames, varlist),
            comp(F),
-           lhs(F.labels.nelem,0),
-           rhs(F.labels.nelem,0)
+           lhs(F.labels.size(),0),
+           rhs(F.labels.size(),0)
    {
       par = new parVector(modeldescr, 0.0l, F.labels);
    }

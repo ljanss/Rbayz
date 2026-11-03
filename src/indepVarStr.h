@@ -26,8 +26,9 @@ class indepVarStr : public modelVar {
 public:
    indepVarStr(parsedModelTerm & modeldescr, parVector* cpar);
    virtual ~indepVarStr() { }
-   void sampleScale(double lhs, double rhs);
+   double sampleScale(double lhs, double rhs);
    simpleDblVector weights;
+   simpleDblVector& getWeights() { return weights; }
 };
 
 class idenVarStr : public indepVarStr {
