@@ -15,9 +15,9 @@ indepVarStr::indepVarStr(parsedModelTerm & modeldescr, parVector* cpar)
 // Note: at the start of an MCMC it can happen that lhs is zero (lhs is sum(fit^2)). One
 // case is an MH sampler in mxi model where nothing has been accepted to change from the initial
 // zero starting value, which can happen when initial variance (started at 1) is too large.
-// If this lhs equals zero, getFitScaleStats will return the SSE in rhs, which allows to make
-// a quite reasonable initial estimate as 0.5 * SSE / (parameter size). If this still does not
-// work to get lhs <> 0, further adjustments shrink scale by 0.8, up til 20 total adjustments.
+// I'm expecting this problem is mostly solved by now using a good initial variance in the
+// concerned models (currently Rreg and Mixt), but if it still occurs, the code here make
+// 0.8 factor shrinkages for a max of 20 times (about 0.01 of the original value) to try to adjust.
 // [ToDo] There is also a possibilitiy the scale could get negative! This is now avoided as
 // the stored variance is always scale^2 and positive, and the returned scale is abs(scale), but
 // this may not be an appropriate MCMC update. A correct approach is probably to sample from
@@ -28,11 +28,7 @@ double indepVarStr::sampleScale(double lhs, double rhs) {
     double scale;
     static int lhs_zero_adj=0;
     if(lhs == 0.0l) {
-        if (lhs_zero_adj < 2) {
-            scale = 0.5*rhs/par->nelem;
-            lhs_zero_adj++;
-        }
-        else if (lhs_zero_adj < 20) {
+        if (lhs_zero_adj < 20) {
             scale = 0.8*curr_scale;
             lhs_zero_adj++;
         }
