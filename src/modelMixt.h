@@ -52,8 +52,10 @@ public:
       // Or it could be both - then use prepForOutput() method to copy from
       // internal Size vector or 'public' double par vector.
       mxi = new parVector(modeldescr, 0.0, par, "mxi");
-      Rbayz::parList.push_back(&pi);
-      varmodel = new scaleVarStr(modeldescr, this->par);
+      Rbayz::parList.push_back(&mxi);
+      // Compute a sensible initial variance for the scaleVarStr class, note it is variance!
+      double initvar = 0.5 * M.sumColVar / double(M.ncol);
+      varmodel = new scaleVarStr(modeldescr, this->par, initvar);
       p_incl = 0.05;
       p_excl = 0.20;
       // This mixture model may have difficulty starting when all initial
@@ -63,6 +65,7 @@ public:
       // make variance much smaller.
       // Option 2: try to set some sensible initial variance. I could maybe manage
       // that in the scale-sampling algorithm.
+
    }
 
    ~modelMixt() {

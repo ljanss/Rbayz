@@ -156,10 +156,10 @@ void diagVarStr::sample() {
 // be useful in mixture models and also informative for output. The variance in the output can
 // then be scale*(grid), however it would produce a zero variance when one of the grid values is zero
 // (which gives a bit ugly post-processing with missing postVar and MCMC stats).
-scaleVarStr::scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar, double initScale)
+scaleVarStr::scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar, double initvar)
         : indepVarStr(modeldescr, coefpar)
 {
-    par = new parVector(modeldescr, initScale, "var");
+    par = new parVector(modeldescr, initvar, "var");
     par->traced=1;
     par->varianceStruct="scale";
 }
