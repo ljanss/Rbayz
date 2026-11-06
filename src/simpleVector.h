@@ -125,4 +125,13 @@ using simpleIntVector = simpleVector<int>;
 using simpleDblVector = simpleVector<double>;
 using simpleSizeVector = simpleVector<size_t>;
 
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const simpleVector<T>& p)
+{
+    os << "[" << p.nelem << "] ";
+    size_t loopsize = (p.nelem<10)? p.nelem : 10;
+    for(size_t i=0; i<loopsize; i++) os << p.data[i] << " ";
+    if(p.nelem >10 ) os << "...";
+    return os;
+}
 #endif /* simpleVector_h */

@@ -43,7 +43,8 @@ public:
          OK = true;
       else
          throw generalRbayzError("Variables in " + modeldescr.shortModelTerm + 
-               " are not (convertable to) <factor>/<matrix>");
+               " are not (convertable to) <factor>/<matrix>" + " " + std::to_string(modeldescr.variableTypes[0])
+               + "/" + std::to_string(modeldescr.variableTypes[1]) );
    }
    bool OK;
 };

@@ -97,7 +97,7 @@ private:
 
 // Can here now develop nested regression too, a case with two types of data containers.
 
-// Data algorithms for working on a matrix of covariates/features. In bayz this this uses
+// Data algorithms for working on a matrix of covariates/features. In bayz this uses
 // a combination of a Factor and Matrix data container, the factor is for linking the
 // rows of the data matrix to the rows in the main data.
 // The fillFit() methods are supplied to remain consistent with other algorithm classes,

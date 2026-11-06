@@ -28,7 +28,7 @@ public:
 
    // Note sure what I was making this one for, it is not (yet) used anywhere, but
    // it also is a general method that could belong to modelCoeff, or else modelResp.
-   void collect_sse(double & sse);
+   double collect_sse();
 
    modelResp* respModel;
    // Use of resid, residPrec and Nresid is for convenience so that all modelCoeff objects

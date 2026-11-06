@@ -46,9 +46,23 @@ public:
       double sum_counts = counts[0] + counts[1];
       pi->val[0] = counts[0] / sum_counts;
       pi->val[1] = counts[1] / sum_counts;
+      // little dount here if mxi vector could best be integer or double;
+      // when averaged it gets double, but as integer (or simpleSizeVector) or
+      // can be used directly as indexes to indicate mixture group.
+      // Or it could be both - then use prepForOutput() method to copy from
+      // internal Size vector or 'public' double par vector.
+      mxi = new parVector(modeldescr, 0.0, par, "mxi");
+      Rbayz::parList.push_back(&pi);
       varmodel = new scaleVarStr(modeldescr, this->par);
       p_incl = 0.05;
       p_excl = 0.20;
+      // This mixture model may have difficulty starting when all initial
+      // mxi are zero, and initial beta variance is too big (e.g. default start 1).
+      // Option 1: initialize some random mxi at 1, even though effect samples
+      // are difficult to make realistic? This should trigger variance updates to
+      // make variance much smaller.
+      // Option 2: try to set some sensible initial variance. I could maybe manage
+      // that in the scale-sampling algorithm.
    }
 
    ~modelMixt() {
@@ -57,10 +71,17 @@ public:
    }
    
    void sample() {
-      // Start with relatively simple Include-Move-Exclude strategy.
+      // Start with Daniel's full gibbs implementation, this is
+      // two mixture model with spike at zero.
       double inf = std::numeric_limits<double>::infinity();
       double lhs, rhs;
       for(size_t k=0; k < M.ncol; k++) {
+         if (mxi[k] == 0.0l) {
+
+         }
+         else {
+
+         }
          comp.resid_decorrect(resid, par->val[k], k);
          if(varmodel->weights[k]==inf) {
             par->val[k]=0;
@@ -94,6 +115,7 @@ public:
    std::vector<double> vars;
    std::vector<double> counts;
    parVector* pi;
+   parVector* mxi;
    indepVarStr* varmodel;
    double p_incl, p_excl;
 

@@ -63,6 +63,11 @@ void modelCoeff::getFitScaleStats(double & lhs, double & rhs) {
       lhs += fit.data[i] * fit.data[i];
       rhs += fit.data[i] * (resid.data[i] + fit.data[i]);
    }
+   // The lhs can remain zero when all fit is zero, which can happen at the start of
+   // the MCMC. In that case return SSE in rhs, and sampleScale will make some sensible update.
+   if (lhs == 0.0l) {
+      rhs = collect_sse();
+   }
 }
 
 // Adjust residuals and fit for a change in scale for models fitting variance as
@@ -78,10 +83,11 @@ void modelCoeff::resid_fit_scaleUpdate(double scale_old, double scale_new) {
    }
 }
 
-void modelCoeff::collect_sse(double & sse) {
-   sse=0.0l;
+double modelCoeff::collect_sse() {
+   double sse=0.0l;
    for (size_t obs=0; obs < resid.nelem; obs++)
       sse += resid.data[obs]*resid.data[obs]*residPrec[obs];
+   return sse;
 }
 
 /* ------------- some helper functions --------------------- 

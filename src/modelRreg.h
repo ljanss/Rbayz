@@ -49,14 +49,12 @@ public:
          else {
             comp.collectLhsRhs(resid, residPrec, lhs, rhs, k);
             lhs += varmodel->weights[k];
+//            lhs += 10000l;
             par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
          }
          comp.resid_correct(resid, par->val[k], k);
       }
       comp.fillFit(fit, par->Values);
-      // need some thinking how to store sample info in file; likely every "saved" cycle.
-      // main runs prepForOutput, and on a parVector main runs collectStats at the save intervals,
-      // or it needs a new mechanism to switch on saving samples from output (which can be generic feature).
    }
 
    void sampleHpars() {
