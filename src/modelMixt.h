@@ -51,21 +51,21 @@ public:
       // can be used directly as indexes to indicate mixture group.
       // Or it could be both - then use prepForOutput() method to copy from
       // internal Size vector or 'public' double par vector.
-      mxi = new parVector(modeldescr, 0.0, par, "mxi");
+      mxi = new parVector(modeldescr, 0.0l, par, "mxi");
       Rbayz::parList.push_back(&mxi);
-      // Compute a sensible initial variance for the scaleVarStr class, note it is variance!
+      // The mixture model can have difficulty starting when initial variance is too
+      // large (and the default start value of 1 is often far too large). This causes no
+      // acceptances / switches of beta's to the '1' class, all betas stay 0, and fit stays 0.
+      // For now I'm trying to get around this problem by computing a sensible initial starting
+      // variance below, and on top of that the sampleScale() method of the variance class
+      // will make up to 20 shrinkage adjustments (and then gives up with an error).
+      // If all this is not enough, the alternative would be an initial sampling of beta's
+      // and mixture indicators to get a non-zero fit from the start.
       double initvar = 0.5 * M.sumColVar / double(M.ncol);
       varmodel = new scaleVarStr(modeldescr, this->par, initvar);
+      // parameters for MH sampler (under development)
       p_incl = 0.05;
       p_excl = 0.20;
-      // This mixture model may have difficulty starting when all initial
-      // mxi are zero, and initial beta variance is too big (e.g. default start 1).
-      // Option 1: initialize some random mxi at 1, even though effect samples
-      // are difficult to make realistic? This should trigger variance updates to
-      // make variance much smaller.
-      // Option 2: try to set some sensible initial variance. I could maybe manage
-      // that in the scale-sampling algorithm.
-
    }
 
    ~modelMixt() {
@@ -74,29 +74,76 @@ public:
    }
    
    void sample() {
-      // Start with Daniel's full gibbs implementation, this is
-      // two mixture model with spike at zero.
+      // Start with Daniel's full gibbs implementation for a 2-mixture model.
+      // The set-up for the mixture model is now that one class handles two sets of parameters:
+      // the mixture indicators (mxi) and the 'betas' (par vector). And similarly in the hyper
+      // paramters it handles variance and pi's.
+      // Formally updating mxi and beta is two different tasks doing mxi|beta, and then
+      // beta|mxi, but done here per-column in a single loop. The first part is the mxi|beta
+      // update. Here if current mxi is zero, the generated new_beta is formally the current
+      // beta (it could have been generated the previous round and stored, but it's
+      // enough to make it just before it is needed). The second part in the loop then
+      // updates beta|mxi, which considers all mxi that are 1 (either just set to 1 or
+      // already 1 before). This second loop can skip all cases where mxi is 0, as it implies
+      // beta is zero.
+      // Note: this now uses a model with scale, so it is fitting scale*sum(b_i x_i), and
+      // the beta samples are on N(0,1) scale. So there is some juggling with this scale:
+      // the betaUpdate and resid_correct/decorrect functions don't know about this scale,
+      // and it must be explicitly added; the beta stored, though, is on the N(0,1) scale;
+      // the collectLhsRhs function also don't include the scale when making their statistics,
+      // and scale needs to be added afterwards as an extra scale^2 in lhs, and an extra scale
+      // in rhs (considering that the covariate used is scale*x_i). This simplifies in
+      // rhs/lhs to an extra divition by scale, and in sqrt(1.0/lhs) can add an extra division
+      // by scale outside the sqrt(). For fit-functions there are versions that do take the scale
+      // into account and can work with the N(0,1) beta's. Note: fillFit with scale skips
+      // zero beta's but not other fit-functions!
       double inf = std::numeric_limits<double>::infinity();
       double lhs, rhs;
+      double sse0, sse1;
+      double beta_new, temp;
+      double log_prob_ratio;
+      double log_pi_ratio = log(pi->val[0]/pi->val[1]);
+      double scale = sqrt(varmodel->par->val[0]);
       for(size_t k=0; k < M.ncol; k++) {
+         // Part 1: updating mxi[i]|beta[i]. 
+         // Note: sse_eval_betaUpdate() expects beta_diff = old - new value, so
+         // if old=0, new=beta_new, pass -beta_new; if old is par-val[k] and
+         // new=0, pass par->val[k].
          if (mxi[k] == 0.0l) {
-
+            sse0 = collect_sse();
+            beta_new = R::rnorm(0, 1);
+            sse1 = comp.sse_eval_betaUpdate(resid, fit, -beta_new, k);
          }
          else {
-
+            sse0 = comp.sse_eval_betaUpdate(resid, fit, par->val[k], k);
+            sse1 = collect_sse();
          }
-         comp.resid_decorrect(resid, par->val[k], k);
-         if(varmodel->weights[k]==inf) {
-            par->val[k]=0;
+         log_prob_ratio = -0.5 * (sse1 - sse0) + log_pi_ratio;
+         temp = R::runif(0, 1);
+         if (log(temp/(1-temp)) < log_prob_ratio) { // set mxi[k] to 0.0 (if it was 1)
+            if(mxi[k] == 1.0l) {
+               mxi[k] = 0.0l;
+               comp.resid_decorrect(resid, par->val[k], k);
+               par->val[k] = 0.0l;
+            }
          }
-         else {
+         else { // set mxi[k] to 1.0 )(if it was zero)
+            if(mxi[k] == 0.0l) {
+               mxi[k] = 1.0l;
+               par->val[k] = beta_new;
+               comp.resid_correct(resid, par->val[k], k);
+            }
+         }
+         // Part 2: update beta[i]|mxi[i] (only if mxi[i] is 1)
+         if (mxi[k] == 1.0l) {
+            comp.resid_decorrect(resid, scale*par->val[k], k);
             comp.collectLhsRhs(resid, residPrec, lhs, rhs, k);
-            lhs += varmodel->weights[k];
-            par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
+            lhs += 1.0l;
+            par->val[k] = R::rnorm( (rhs/(lhs*scale)), (sqrt(1.0/lhs)/scale));
+            comp.resid_correct(resid, scale*par->val[k], k);
          }
-         comp.resid_correct(resid, par->val[k], k);
       }
-      comp.fillFit(fit, par->Values);
+      comp.fillFit(fit, par->Values, scale);
    }
 
    void sampleHpars() {

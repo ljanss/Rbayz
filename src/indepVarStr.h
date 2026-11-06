@@ -61,7 +61,7 @@ public:
 
 class scaleVarStr : public indepVarStr {
 public:
-    scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
+    scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar, double initvar);
      ~scaleVarStr();
      void restart();
      void sample();

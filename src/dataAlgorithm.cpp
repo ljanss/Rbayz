@@ -125,10 +125,13 @@ void dataAlgoMatrix::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
    }
 }
 
+// This fillFit() with scale skips zero beta's for efficiency. The case with (many) zero
+// beta's occurs on mixture models which are so far the only class using this fillFit().
 void dataAlgoMatrix::fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale) {
    double * colptr;
    for (size_t obs=0; obs < fit.nelem; obs++) fit.data[obs] = 0.0l;
    for(size_t k=0; k < Mdata.ncol; k++) {
+      if (beta.data[k] == 0.0l) continue;
       colptr = Mdata.data[k];
       for (size_t obs=0; obs < fit.nelem; obs++)
          fit.data[obs] += beta.data[k] * colptr[obsIndex[obs]] * scale;
@@ -168,6 +171,18 @@ void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVecto
       resid.data[obs] += beta_diff * colptr[obsIndex[obs]];
       fit.data[obs] -= beta_diff * colptr[obsIndex[obs]];
    }
+}
+
+// Evaluate SSE for a (proposed) change in beta. It uses the same sign convention as
+// resid_fit_betaUpdate where the beta_diff to pass is (old-new) value.
+double dataAlgoMatrix::sse_eval_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col) {
+   double * colptr = Mdata.data[col];
+   double sse = 0.0l, temp=0.0l;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      temp = resid.data[obs] + beta_diff * colptr[obsIndex[obs]];
+      sse += temp * temp * residPrec[obs];
+   }
+   return sse;
 }
 
 void dataAlgoMatrix::collectLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,

@@ -49,7 +49,6 @@ public:
          else {
             comp.collectLhsRhs(resid, residPrec, lhs, rhs, k);
             lhs += varmodel->weights[k];
-//            lhs += 10000l;
             par->val[k] = R::rnorm( (rhs/lhs), sqrt(1.0/lhs));
          }
          comp.resid_correct(resid, par->val[k], k);

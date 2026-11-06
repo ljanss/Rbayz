@@ -121,6 +121,7 @@ public:
    void resid_correct(simpleDblVector& resid, double& beta, size_t col);
    void resid_decorrect(simpleDblVector& resid, double& beta, size_t col);
    void resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col);
+   double sse_eval_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col)
    void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs, size_t col);
 private:
    dataFactor& Fdata;
