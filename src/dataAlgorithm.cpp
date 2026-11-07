@@ -175,7 +175,9 @@ void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVecto
 
 // Evaluate SSE for a (proposed) change in beta. It uses the same sign convention as
 // resid_fit_betaUpdate where the beta_diff to pass is (old-new) value.
-double dataAlgoMatrix::sse_eval_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col) {
+double dataAlgoMatrix::sse_eval_betaUpdate(simpleDblVector& resid, simpleDblVector& residPrec,
+            simpleDblVector& fit,  double beta_diff, size_t col)
+{
    double * colptr = Mdata.data[col];
    double sse = 0.0l, temp=0.0l;
    for (size_t obs=0; obs < resid.nelem; obs++) {

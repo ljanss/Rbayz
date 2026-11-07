@@ -51,7 +51,7 @@ public:
       // can be used directly as indexes to indicate mixture group.
       // Or it could be both - then use prepForOutput() method to copy from
       // internal Size vector or 'public' double par vector.
-      mxi = new parVector(modeldescr, 0.0l, par, "mxi");
+      mxi = new parVector(modeldescr, 0.0l, *par, "mxi");
       Rbayz::parList.push_back(&mxi);
       // The mixture model can have difficulty starting when initial variance is too
       // large (and the default start value of 1 is often far too large). This causes no
@@ -97,7 +97,7 @@ public:
       // by scale outside the sqrt(). For fit-functions there are versions that do take the scale
       // into account and can work with the N(0,1) beta's. Note: fillFit with scale skips
       // zero beta's but not other fit-functions!
-      double inf = std::numeric_limits<double>::infinity();
+//      double inf = std::numeric_limits<double>::infinity();
       double lhs, rhs;
       double sse0, sse1;
       double beta_new, temp;
@@ -109,38 +109,38 @@ public:
          // Note: sse_eval_betaUpdate() expects beta_diff = old - new value, so
          // if old=0, new=beta_new, pass -beta_new; if old is par-val[k] and
          // new=0, pass par->val[k].
-         if (mxi[k] == 0.0l) {
+         if (mxi->val[k] == 0.0l) {
             sse0 = collect_sse();
             beta_new = R::rnorm(0, 1);
-            sse1 = comp.sse_eval_betaUpdate(resid, fit, -beta_new, k);
+            sse1 = comp.sse_eval_betaUpdate(resid, residPrec, fit, -beta_new, k);
          }
          else {
-            sse0 = comp.sse_eval_betaUpdate(resid, fit, par->val[k], k);
+            sse0 = comp.sse_eval_betaUpdate(resid, residPrec, fit, par->val[k], k);
             sse1 = collect_sse();
          }
          log_prob_ratio = -0.5 * (sse1 - sse0) + log_pi_ratio;
          temp = R::runif(0, 1);
          if (log(temp/(1-temp)) < log_prob_ratio) { // set mxi[k] to 0.0 (if it was 1)
-            if(mxi[k] == 1.0l) {
-               mxi[k] = 0.0l;
+            if(mxi->val[k] == 1.0l) {
+               mxi->val[k] = 0.0l;
                comp.resid_decorrect(resid, par->val[k], k);
                par->val[k] = 0.0l;
             }
          }
          else { // set mxi[k] to 1.0 )(if it was zero)
-            if(mxi[k] == 0.0l) {
-               mxi[k] = 1.0l;
+            if(mxi->val[k] == 0.0l) {
+               mxi->val[k] = 1.0l;
                par->val[k] = beta_new;
                comp.resid_correct(resid, par->val[k], k);
             }
          }
          // Part 2: update beta[i]|mxi[i] (only if mxi[i] is 1)
-         if (mxi[k] == 1.0l) {
-            comp.resid_decorrect(resid, scale*par->val[k], k);
+         if (mxi->val[k] == 1.0l) {
+            comp.resid_decorrect(resid, (temp=scale*par->val[k]), k);
             comp.collectLhsRhs(resid, residPrec, lhs, rhs, k);
             lhs += 1.0l;
             par->val[k] = R::rnorm( (rhs/(lhs*scale)), (sqrt(1.0/lhs)/scale));
-            comp.resid_correct(resid, scale*par->val[k], k);
+            comp.resid_correct(resid, (temp=scale*par->val[k]), k);
          }
       }
       comp.fillFit(fit, par->Values, scale);
