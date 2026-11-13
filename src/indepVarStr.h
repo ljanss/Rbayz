@@ -29,9 +29,19 @@ public:
    double sampleScale(double lhs, double rhs);
    simpleDblVector weights;
    simpleDblVector& getWeights() { return weights; }
+   bool isIDEN() { return false; }
+   bool isDIAG() { return false; }
+   double getScalarVar() { return varmodel->par->val[0]; }
+   simpleDblVector& getDiag() { return nullptr; }
 };
 
+// The following two are currently in use for residual variance and fall in the group of
+// 'simple' structures that are scalar * known diagonal. The main class that should accommodate
+// more complex structures is the logLin structure (under development).
+
 class idenVarStr : public indepVarStr {
+public:
+   bool isIDEN() { return true; }
 public:
     idenVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
     ~idenVarStr();
@@ -40,6 +50,9 @@ public:
 };
 
 class diagVarStr : public indepVarStr {
+public:
+   bool isDIAG() { return true; }
+   simpleDblVector& getDiag() { return diag; }
 public:
     diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar, simpleDblVector & Ddiag);
     diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
@@ -56,8 +69,13 @@ public:
 // it is difficult to avoid it being allocated in the parent class),
 // and the standard sample() methods is disabled. Scale should be updated by calling
 // the general updateScale() method with statistics that can be collected in coefficient
-// model using getFitScaleStats() methods. I made an implementation for the modelRregGRL
-// class in modelRreg, but I will probably revise that one.
+// model using getFitScaleStats() methods, but it may be possible to implement the
+// update in the scaleVarStr.sample() to make it better organized and to allow more
+// general treatment of priors.
+// The scaleVarStr is currently implemted in modelMixt class, and the modelRanfi has
+// test-code that has evaluated it on use for random effects.
+// Note: scaleVarStr is not used / intended for the residual variance, and maybe can
+// not be used for that because there is no 'fit' to regress on.
 
 class scaleVarStr : public indepVarStr {
 public:
@@ -82,20 +100,6 @@ public:
     void restart();
     void sample();
     simpleDblVector diag;
-};
-
-class mixtVarStr : public indepVarStr {
-public:
-    mixtVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
-    ~mixtVarStr();
-    void restart();
-    void sample();
-    int Ncat;
-    std::vector<double> Vars;
-    std::vector<int> Counts;
-    simpleDblVector diag;
-//    getSetOptions(modeldescr.allOptions["V"]); // not yet defined?
-//    modelBVS *mixmod;
 };
 
 class loglinVarStr : public indepVarStr {

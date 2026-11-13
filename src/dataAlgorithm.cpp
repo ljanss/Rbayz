@@ -119,9 +119,10 @@ void dataAlgoMatrix::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
    double * colptr;
    for (size_t obs=0; obs < fit.nelem; obs++) fit.data[obs] = 0.0l;
    for(size_t k=0; k < Mdata.ncol; k++) {
+      if (beta.data[k] == 0.0l) continue;
       colptr = Mdata.data[k];
       for (size_t obs=0; obs < fit.nelem; obs++)
-         fit.data[obs] += beta.data[k] * colptr[Fdata.data[obs]];
+         fit.data[obs] += beta.data[k] * colptr[obsIndex[obs]];
    }
 }
 
@@ -140,7 +141,7 @@ void dataAlgoMatrix::fillFit(simpleDblVector& fit, simpleDblVector& beta, double
 
 void dataAlgoMatrix::accumFit(simpleDblVector& fit, double& beta, size_t& col) {
    double * colptr = Mdata.data[col];
-   for (size_t obs=0; obs < Fdata.nelem; obs++)
+   for (size_t obs=0; obs < fit.nelem; obs++)
       fit.data[obs] += beta * colptr[obsIndex[obs]];
 }
 
@@ -150,7 +151,7 @@ void dataAlgoMatrix::accumFit(simpleDblVector& fit, double& beta, size_t& col, d
       fit.data[obs] += beta * colptr[obsIndex[obs]] * scale;
 }
 
-void dataAlgoMatrix::resid_correct(simpleDblVector& resid, double& beta, size_t col) {
+void dataAlgoMatrix::resid_correct(simpleDblVector& resid, double beta, size_t col) {
    if(beta==0.0l) return;
    double * colptr = Mdata.data[col];
    for (size_t obs=0; obs < resid.nelem; obs++) {
@@ -158,7 +159,7 @@ void dataAlgoMatrix::resid_correct(simpleDblVector& resid, double& beta, size_t 
    }
 }
 
-void dataAlgoMatrix::resid_decorrect(simpleDblVector& resid, double& beta, size_t col) {
+void dataAlgoMatrix::resid_decorrect(simpleDblVector& resid, double beta, size_t col) {
    if(beta==0.0l) return;
    double * colptr = Mdata.data[col];
    for (size_t obs=0; obs < resid.nelem; obs++)
@@ -170,6 +171,37 @@ void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVecto
    for (size_t obs=0; obs < resid.nelem; obs++) {
       resid.data[obs] += beta_diff * colptr[obsIndex[obs]];
       fit.data[obs] -= beta_diff * colptr[obsIndex[obs]];
+   }
+}
+
+void dataAlgoMatrix::resid_fit_betaUpdate_collectLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta_diff, double& lhs, double& rhs, size_t col) {
+   size_t matrixrow;
+   lhs = 0.0l; rhs = 0.0l;
+   double * colptr = Mdata.data[col];
+   double x, temp1;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      matrixrow = obsIndex[obs];
+      x = colptr[matrixrow];
+      resid.data[obs] += beta_diff * x;
+      fit.data[obs] -= beta_diff * x;
+      temp1 = x * residPrec[obs];
+      rhs += temp1 * resid.data[obs];
+      lhs += temp1 * x;
+   }
+}
+
+void dataAlgoMatrix::sse_collectCurrentAndBetaUpdate(simpleDblVector& resid, simpleDblVector& residPrec,
+         double beta_diff, double& sse_current, double& sse_betaUpdate, size_t col) {
+   double * colptr = Mdata.data[col];
+   double temp0, temp1;
+   sse_current = 0.0l;
+   sse_betaUpdate = 0.0l;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      temp0 = resid.data[obs];
+      temp1 = temp0 + beta_diff * colptr[obsIndex[obs]];
+      sse_current += temp0 * temp0 * residPrec[obs];
+      sse_betaUpdate += temp1 * temp1 * residPrec[obs];
    }
 }
 
@@ -201,3 +233,16 @@ void dataAlgoMatrix::collectLhsRhs(simpleDblVector& resid, simpleDblVector& resi
    }
 }
 
+void dataAlgoMatrix::collectLhsRhs_withAccumFit(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double& lhs, double& rhs, size_t col) {
+   size_t matrixrow;
+   lhs = 0.0l; rhs = 0.0l;
+   double * colptr = Mdata.data[col];
+   double temp1;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      matrixrow = obsIndex[obs];
+      temp1 = colptr[matrixrow] * residPrec[obs];
+      rhs += temp1 * (resid.data[obs] - fit.data[obs]);
+      lhs += temp1 * colptr[matrixrow];
+   }
+}

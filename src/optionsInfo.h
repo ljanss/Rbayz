@@ -107,6 +107,7 @@ private:
       {"rr","prior",false},
       {"mx","vars",true},
       {"mx","counts",true},
+      {"mx","xtrain",false},
       {"KERN","dim",false},
       {"KERN","dimp",false},
       {"rn","alpha_est",false},
@@ -125,9 +126,12 @@ private:
       std::make_pair("dimp",3),
       std::make_pair("vdimp",3),
       std::make_pair("alpha_est",4),
-      std::make_pair("alpha_save",4)
+      std::make_pair("alpha_save",4),
+      std::make_pair("xtrain",2)
    };
 public:
+// The optionsInfo class constructor is not doing much, the way it is used is to
+// call the method constr() to actually populate the optionsInfo object.
    optionsInfo() { }
    void constr(std::string fname, std::string optstring);
    ~optionsInfo() { }
@@ -136,16 +140,6 @@ public:
    std::vector<varianceSpec>& Vlist() {
       return this->varstructList;
    }
-   // There is no way (yet...) to directly retrieve values for an option. Issues in providing that are
-   // 1) options can be text, bool or vector<double>, so it would need 3 retrieval functions?
-   // 2) it was difficult to think how to return if option is not present. Text could return "", vector<double>
-   // could return a zero-length vector, but missing bool value?
-   // Now thinking it is still useful to have member variable or function:
-   //  - istrue(): returns if bool option is set true, but can only determine if false together with isgiven
-   //  - text(): return text (valstring) or "" when not given or not appropriate
-   //  - ?? numeric values: there is instances where there is only one value to return, other cases will need the
-   //       whole vector. Using a missing value could help for the one-value cases.
-   // This would allow to use expressions like allOptions["V"].text(), or allOptions["save"].istrue(), etc.
 };
 
 

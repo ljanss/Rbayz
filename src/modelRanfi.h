@@ -43,6 +43,16 @@ public:
 
    void sampleHpars() {
       varmodel->sample();
+/*
+      double oldscale = sqrt(varmodel->par->val[0]);
+      double lhs, rhs;
+      getFitScaleStats(lhs, rhs);
+      double newscale = varmodel->sampleScale(lhs, rhs);
+      resid_fit_scaleUpdate(oldscale,newscale);
+      for(size_t k=0; k < par->nelem; k++) {
+            par->val[k] *= newscale/oldscale;
+      }     
+*/
    }
 
    void restart() {

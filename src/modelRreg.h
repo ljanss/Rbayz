@@ -193,12 +193,4 @@ class modelRregGRL : public modelRreg {                                      // 
 };
 */
 
-class modelRregMixt : public modelRreg {
-public:
-   modelRregMixt(parsedModelTerm & pmdescr, modelResp * rmod)
-      : modelRreg(pmdescr, rmod) {
-      varmodel = new mixtVarStr(pmdescr, this->par);
-   }
-};
-
 #endif /* modelRreg */

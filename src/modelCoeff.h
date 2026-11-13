@@ -6,6 +6,7 @@
 #define modelCoeff_h
 
 #include <Rcpp.h>
+#include "modelBase.h"
 #include "modelResp.h"
 #include "parsedModelTerm.h"
 #include <unistd.h>

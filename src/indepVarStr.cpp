@@ -44,6 +44,8 @@ double indepVarStr::sampleScale(double lhs, double rhs) {
        scale = R::rnorm( sample_mean, sample_sd);
     }
     par->val[0] = scale*scale;
+    double invvar = 1.0l/par->val[0];
+    for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar;
     return abs(scale);
 }
 
@@ -235,52 +237,6 @@ void lassVarStr::sample() {
   par->val[0] = gprior.samplevar(ssq,coefpar->nelem);
   double invvar = 1.0l/par->val[0];
   for(size_t k=0; k < weights.nelem; k++) weights[k] = invvar / diag.data[k];
-}
-
-// ---- mixtVarStr ---- (not yet finished)
-
-// mixtVarStr is now standard 2-class mixture with pi0, pi1, v0, v1
-
-mixtVarStr::mixtVarStr(parsedModelTerm & modeldescr, parVector* coefpar) : indepVarStr(modeldescr, coefpar) {
-
-    // This only accepts one variance-structure MIXT, not combinations, and there should be vars and counts options.
-    std::vector<varianceSpec> varlist = modeldescr.allOptions.Vlist();
-    if(varlist.size()!=1 || !varlist[0]["vars"].isgiven || !varlist[0]["counts"].isgiven) {
-        throw generalRbayzError("In "+modeldescr.shortModelTerm+" MIXT[] is missing vars() and/or counts()");
-    }
-    optionSpec vars_option = varlist[0]["vars"];
-    optionSpec counts_option = varlist[0]["counts"];
-    if(vars_option.valnumb.size() != counts_option.valnumb.size()) {
-        throw generalRbayzError("In "+modeldescr.shortModelTerm+" MIXT[] has different number of elements in vars() and counts()");
-    }
-    Ncat = vars_option.valnumb.size();
-    Vars.resize(Ncat,0.0l);
-    Counts.resize(Ncat,0);
-    int total_counts=0;
-    for(size_t i=0; i<Ncat; i++) {
-        Vars[i]=vars_option.valnumb[i];
-        Counts[i]=(int)vars_option.valnumb[i];
-        total_counts += Counts[i];
-    }
-    std::vector<std::string> temp_labels = generateLabels("pi",Ncat);
-    temp_labels.insert(temp_labels.begin(),"var");
-    par = new parVector(modeldescr, 1.0l, temp_labels);
-    for(size_t i=1; i<=Ncat; i++)          // The pi's are initialized from the prior counts
-        par->val[i] = Counts[i]/total_counts;
-    par->traced=1;
-    par->varianceStruct="MIXT";
-}
-
-mixtVarStr::~mixtVarStr() {
-    delete par;
-}
-
-void mixtVarStr::restart() {
-    // ??
-}
-
-void mixtVarStr::sample() {
-    // add sample implementation
 }
 
 // ---- logLinVarStr ---- (to do)

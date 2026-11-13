@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "Rbayz.h"
 #include "parVector.h"
+#include "rand.h"
 //#include <unistd.h>
 
 class modelBase {
