@@ -29,10 +29,16 @@ public:
    double sampleScale(double lhs, double rhs);
    simpleDblVector weights;
    simpleDblVector& getWeights() { return weights; }
-   bool isIDEN() { return false; }
-   bool isDIAG() { return false; }
-   double getScalarVar() { return varmodel->par->val[0]; }
-   simpleDblVector& getDiag() { return nullptr; }
+   // Now added querying methods to inform if the variance structure is IDEN
+   // or DIAG. For these classes getScalarVar() returns the scalar variance,
+   // and getDiagPtr() returns a pointer to the known diagonal part, or nullptr
+   // for IDEN. For other classes getScalarVar() will return the first variance
+   // in its parameter list (likely meaningless), and getDiagPtr() will return
+   // nullptr.
+   virtual bool isIDEN() const { return false; }
+   virtual bool isDIAG() const { return false; }
+   double getScalarVar() { return par->val[0]; }
+   virtual const simpleDblVector* getDiagPtr() const { return nullptr; }
 };
 
 // The following two are currently in use for residual variance and fall in the group of
@@ -41,24 +47,24 @@ public:
 
 class idenVarStr : public indepVarStr {
 public:
-   bool isIDEN() { return true; }
+   bool isIDEN() const override { return true; }
 public:
     idenVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
     ~idenVarStr();
-    void restart();
-    void sample();
+    void restart() override;
+    void sample() override;
 };
 
 class diagVarStr : public indepVarStr {
 public:
-   bool isDIAG() { return true; }
-   simpleDblVector& getDiag() { return diag; }
+   bool isDIAG() const override { return true; }
+   const simpleDblVector* getDiagPtr() const override { return &diag; }
 public:
     diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar, simpleDblVector & Ddiag);
     diagVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
     ~diagVarStr();
-    void restart();
-    void sample();
+    void restart() override;
+    void sample() override;
     simpleDblVector diag;
 };
 
@@ -81,24 +87,24 @@ class scaleVarStr : public indepVarStr {
 public:
     scaleVarStr(parsedModelTerm & modeldescr, parVector* coefpar, double initvar);
      ~scaleVarStr();
-     void restart();
-     void sample();
+     void restart() override;
+     void sample() override;
 };
 
 class gridLVarStr : public indepVarStr {
 public:
     gridLVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
      ~gridLVarStr();
-     void restart();
-     void sample();
+     void restart() override;
+     void sample() override;
 };
 
 class lassVarStr : public indepVarStr {
 public:
     lassVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
     ~lassVarStr();
-    void restart();
-    void sample();
+    void restart() override;
+    void sample() override;
     simpleDblVector diag;
 };
 
@@ -106,7 +112,7 @@ class loglinVarStr : public indepVarStr {
 public:
     loglinVarStr(parsedModelTerm & modeldescr, parVector* coefpar);
     ~loglinVarStr();
-    void sample();
+    void sample() override;
 };
 
 #endif /* indepVarStr_h */

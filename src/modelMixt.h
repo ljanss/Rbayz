@@ -144,6 +144,7 @@ public:
       double log_pi_ratio = log(pi->val[0]/pi->val[1]);
       double scale = sqrt(varmodel->par->val[0]);
       double invBetaVar = 1.0l/varmodel->par->val[0];
+      comp.residScalarVar = respModel->varModel->getScalarVar();
       for(size_t k=0; k < par->nelem; k++) {
          // Part 1: updating mxi[i]|beta[i]. 
          // Note: sse_eval_betaUpdate() expects beta_diff = old - new value, so
@@ -175,8 +176,7 @@ public:
          }
          // Part 2: update beta[i]|mxi[i] (only if mxi[i] is 1)
         if (mxi->val[k] == 1.0l) {
-           beta_old = par->val[k];
-            comp.resid_fit_betaUpdate_collectLhsRhs(resid, residPrec, fit, beta_old, lhs, rhs, k);
+           comp.merged_adjust_getLhsRhs_dispatch(resid, residPrec, fit, par->val[k], lhs, rhs, k);
            lhs += invBetaVar;
            par->val[k] = R::rnorm( (rhs/lhs), (sqrt(1.0/lhs)));
            comp.resid_fit_betaUpdate(resid, fit, -par->val[k], k);

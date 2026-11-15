@@ -61,7 +61,7 @@ public:
            variableCheck(modeldescr),
            F(modeldescr.variableObjects[0], modeldescr.variableNames[0]),
            M(modeldescr.variableObjects[1], modeldescr.variableNames[1]),
-           comp(F, M)
+           comp(F, M, *(rmod->varModel))
    {
       par = new parVector(modeldescr, 0.0l, M.colnames);
    }

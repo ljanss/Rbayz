@@ -115,6 +115,34 @@ void dataAlgoCovar::collectLhsRhs(simpleDblVector& resid, simpleDblVector& resid
 // Implementations of dataAlgoMatrix methods
 // -----------------------------------------
 
+// pre-computing the x'x diagonals for simple cases. residdiag is an optional diagonal
+// matrix from the residual variance, it can be nullptr and the interface takes pointer
+// instead of reference to allow for this.
+// ***************
+// **** OBS: not yet correct!
+// **** This should also use obsindx to only use Mdata rows that are matched to residuals.
+// ***************
+void dataAlgoMatrix::comp_xx_diag(simpleDblVector& xxdiag, const simpleDblVector* residdiag) {
+   double * colptr;
+   if(residdiag == nullptr) {
+      for(size_t k=0; k < Mdata.ncol; k++) {
+         colptr = Mdata.data[k];
+         xxdiag.data[k] = 0.0;
+         for(size_t obs=0; obs < Mdata.nrow; obs++)
+            xxdiag.data[k] += colptr[obs] * colptr[obs];
+      }
+   }
+   else {
+      for(size_t k=0; k < Mdata.ncol; k++) {
+         colptr = Mdata.data[k];
+         xxdiag.data[k] = 0.0;
+         for(size_t obs=0; obs < Mdata.nrow; obs++)
+            xxdiag.data[k] += colptr[obs] * colptr[obs] * residdiag->data[obs];
+      }
+   }
+}
+
+
 void dataAlgoMatrix::fillFit(simpleDblVector& fit, simpleDblVector& beta) {
    double * colptr;
    for (size_t obs=0; obs < fit.nelem; obs++) fit.data[obs] = 0.0l;
@@ -166,6 +194,7 @@ void dataAlgoMatrix::resid_decorrect(simpleDblVector& resid, double beta, size_t
       resid.data[obs] += beta * colptr[obsIndex[obs]];
 }
 
+// adjusting residuals and fit for a proposed change in beta (beta_diff)
 void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col) {
    double * colptr = Mdata.data[col];
    for (size_t obs=0; obs < resid.nelem; obs++) {
@@ -174,21 +203,59 @@ void dataAlgoMatrix::resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVecto
    }
 }
 
-void dataAlgoMatrix::resid_fit_betaUpdate_collectLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,
-         simpleDblVector& fit, double beta_diff, double& lhs, double& rhs, size_t col) {
-   size_t matrixrow;
+// A version that has merged the residual and fit adjustments AND collects LHS and RHS
+// to update beta. The beta coming in is the old one that is both removed (+) from residual
+// and from fit (-). After updating beta, this is combined with resid_fit_betaUpdate to
+// simultaneously update resid and fit again with the new beta.
+void dataAlgoMatrix::merged_adjust_getLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col) {
    lhs = 0.0l; rhs = 0.0l;
    double * colptr = Mdata.data[col];
    double x, temp1;
    for (size_t obs=0; obs < resid.nelem; obs++) {
-      matrixrow = obsIndex[obs];
-      x = colptr[matrixrow];
-      resid.data[obs] += beta_diff * x;
-      fit.data[obs] -= beta_diff * x;
+      x = colptr[obsIndex[obs]];
+      resid.data[obs] += beta * x;
+      fit.data[obs] -= beta * x;
       temp1 = x * residPrec[obs];
       rhs += temp1 * resid.data[obs];
       lhs += temp1 * x;
    }
+}
+
+// merge_adjust_getLhsRhs versions specialized for IDEN and DIAG structures.
+// Both use the pre-computed x'x (x'Wx for DIAG) LHS diagonals, only need to multiple
+// with the inverse scalar variance. For the RHS computation, IDEN skips diagonal weights,
+// but DIAG still needs (now using the prepared residPrec as in other computations).
+// OBS: these methods depend on the calling function (sample()) storing the current
+// residual variance in the member residScalarVar.
+void dataAlgoMatrix::merged_adjust_getLhsRhs_iden(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col) {
+   lhs = xx_diag[col] / residScalarVar;
+   rhs = 0.0l;
+   double * colptr = Mdata.data[col];
+   double x;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      x = colptr[obsIndex[obs]];
+      resid.data[obs] += beta * x;
+      fit.data[obs] -= beta * x;
+      rhs += x * resid.data[obs];
+   }
+   rhs /= residScalarVar;
+}
+
+void dataAlgoMatrix::merged_adjust_getLhsRhs_diag(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col) {
+   lhs = xx_diag[col] / residScalarVar;
+   rhs = 0.0l;
+   double * colptr = Mdata.data[col];
+   double x;
+   for (size_t obs=0; obs < resid.nelem; obs++) {
+      x = colptr[obsIndex[obs]];
+      resid.data[obs] += beta * x;
+      fit.data[obs] -= beta * x;
+      rhs += x * residPrec[obs] * resid.data[obs];
+   }
+   // note rhs uses here residPrec that already includes the inverse variance
 }
 
 void dataAlgoMatrix::sse_collectCurrentAndBetaUpdate(simpleDblVector& resid, simpleDblVector& residPrec,

@@ -28,6 +28,7 @@
 #include "dataFactor.h"
 #include "dataCovar.h"
 #include "dataMatrix.h"
+#include "indepVarStr.h"
 
 // This function now included in dataAlgorithm.cpp
 void builObsIndex(simpleSizeVector& obsIndex, dataFactor& F, labeledMatrix& M);
@@ -105,15 +106,38 @@ private:
 // de/correction methods, and column-wise fit accumulation.
 class dataAlgoMatrix : public dataAlgorithm {
 public:
-   dataAlgoMatrix(dataFactor& Fdata_, dataMatrix& Mdata_) :
+   dataAlgoMatrix(dataFactor& Fdata_, dataMatrix& Mdata_, indepVarStr& residVarStr) :
+         merged_adjust_getLhsRhs_ptr(&dataAlgoMatrix::merged_adjust_getLhsRhs),
          Fdata(Fdata_),
          Mdata(Mdata_),
-         obsIndex(Fdata.nelem)
+         obsIndex(Fdata.nelem),
+         xx_diag()
    {
       // [ToDo] Is this still needed? Maybe the factor data supplies the same information?
+      // NO - this is not obsolete, the matrix data can have more rows than used and that are not
+      // linked to any known factor level, so it needs a new index to map data rows to matrix rows.
       builObsIndex(obsIndex, Fdata, Mdata);
+      // If the residual variance structure is simple (IDEN or DIAG), the x'x diagonals that come
+      // in LHS computations can be pre-computed (DIAG is with a known diagonal weight matrix).
+      // Both cases can be handled in comp_xx_diag(), IDEN structures will return nullptr for the
+      // diagonal weightes and comp_xx_diag() can handle that. In this case also different
+      // collectLhsRhs methods can be used that exploit the pre-computed diagonals, I can
+      // to organize that with function pointers?
+      if(residVarStr.isIDEN() || residVarStr.isDIAG()) {
+         xx_diag.initWith(Mdata.ncol, 0.0);
+         const simpleDblVector * residdiag = residVarStr.getDiagPtr();
+         comp_xx_diag(xx_diag, residdiag);  // comp_xx_diag() can handle possible nullptr for residdiag
+         diag_pre_computed = true;
+         // set function pointers to the specialized merged_adjust_getLhsRhs functions
+         if(residVarStr.isIDEN()) {
+            merged_adjust_getLhsRhs_ptr = &dataAlgoMatrix::merged_adjust_getLhsRhs_iden;
+         } else if(residVarStr.isDIAG()) {
+            merged_adjust_getLhsRhs_ptr = &dataAlgoMatrix::merged_adjust_getLhsRhs_diag;
+         }
+      }
    }
    ~dataAlgoMatrix() = default;
+   void comp_xx_diag(simpleDblVector& xxdiag, const simpleDblVector* residdiag);
    void fillFit(simpleDblVector& fit, simpleDblVector& beta);
    void fillFit(simpleDblVector& fit, simpleDblVector& beta, double scale);
    void accumFit(simpleDblVector& fit, double& beta, size_t& col);
@@ -121,8 +145,16 @@ public:
    void resid_correct(simpleDblVector& resid, double beta, size_t col);
    void resid_decorrect(simpleDblVector& resid, double beta, size_t col);
    void resid_fit_betaUpdate(simpleDblVector& resid, simpleDblVector& fit, double beta_diff, size_t col);
-   void resid_fit_betaUpdate_collectLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,
-         simpleDblVector& fit, double beta_diff, double& lhs, double& rhs, size_t col);
+   void merged_adjust_getLhsRhs(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col);
+   void merged_adjust_getLhsRhs_iden(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col);
+   void merged_adjust_getLhsRhs_diag(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col);
+   void merged_adjust_getLhsRhs_dispatch(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col) {
+      (this->*merged_adjust_getLhsRhs_ptr)(resid, residPrec, fit, beta, lhs, rhs, col);
+   }
    void sse_collectCurrentAndBetaUpdate(simpleDblVector& resid, simpleDblVector& residPrec,
          double beta_diff, double& sse_current, double& sse_betaUpdate, size_t col);
    double sse_eval_betaUpdate(simpleDblVector& resid, simpleDblVector& residPrec, simpleDblVector& fit,
@@ -130,10 +162,16 @@ public:
    void collectLhsRhs(simpleDblVector& resid, simpleDblVector& residprec, double& lhs, double& rhs, size_t col);
    void collectLhsRhs_withAccumFit(simpleDblVector& resid, simpleDblVector& residPrec,
          simpleDblVector& fit, double& lhs, double& rhs, size_t col);
+public:
+   double residScalarVar;
 private:
+   void (dataAlgoMatrix::*merged_adjust_getLhsRhs_ptr)(simpleDblVector& resid, simpleDblVector& residPrec,
+         simpleDblVector& fit, double beta, double& lhs, double& rhs, size_t col);
    dataFactor& Fdata;
    dataMatrix& Mdata;
    simpleSizeVector obsIndex;
+   simpleDblVector xx_diag;
+   bool diag_pre_computed = false;
 };
 
 #endif /* dataAlgorithm_h */
