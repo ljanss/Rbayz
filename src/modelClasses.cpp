@@ -129,7 +129,7 @@ size_t get_maxmem(const parsedModelTerm & modeldescr) {
 */
 modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       : modelFactor(modeldescr, rmod, modeldescr.allOptions.Vlist()), 
-        regcoeff(nullptr), varmodel(nullptr)
+        regcoeff(nullptr), varmodel(nullptr), obsIndex()
 {
 
    std::vector<varianceSpec> varianceList = modeldescr.allOptions.Vlist();
@@ -228,11 +228,14 @@ modelRanfc1::modelRanfc1(parsedModelTerm & modeldescr, modelResp * rmod)
       regcoeff->saveSamples=true;
    }
 
-   // obsIndex makes new level codes matching F->labels from every row in data to K->labels, it could
-   // in principle replace the F->data and no need for the obsIndex vector.
-   // I'm leaving it for a moment to see in debugging if obsIndex is indeed the same as F->data,
-   // in the sample code it is already removed.
-   builObsIndex(obsIndex, F, static_cast<labeledMatrix&>(*K));
+   // obsIndex makes level codes matching F->labels from every row in data to K->labels, but
+   // this is now the same information that comes in F->data with the update to build factor
+   // with the labels of a kernel matrix. I have double checked, and they are indeed the same on
+   // a test example having both levels in kernel not in the data and duplicates in the data.
+   // Now sample() code is changed to use F->data for matching to the kernel (eigenvec) rows,
+   // and I'm removing building obsIndedx.
+//   obsIndex.initWith(F.nelem, 0);
+//   builObsIndex(obsIndex, F, static_cast<labeledMatrix&>(*K));
 
    // [ToDo] create the variance object - may need to move out as in ranfi when allowing for
    // different variance structures. But this is the variance structure for the alpha coefficients,
